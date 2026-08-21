@@ -1,0 +1,65 @@
+# STACK_RESOLVED — фактически установленные версии проекта
+
+> Этот файл заполняется агентом после создания Expo-проекта.
+> После заполнения он становится источником истины по версиям.
+> Не редактировать вручную без причины.
+
+## Runtime окружение
+
+- Node.js: v20.17.0 (⚠ ниже минимальной для RN 0.86: ^20.19.4)
+- npm: 10.8.2
+- Expo CLI: create-expo-app@4.0.0
+- OS сборки: macOS (darwin)
+
+## Версии из package.json
+
+- expo: ~57.0.15
+- react: 19.2.3
+- react-native: 0.86.2
+- expo-router: ~57.0.15
+- react-native-reanimated: 4.5.1
+- react-native-gesture-handler: ~2.32.0
+- react-native-worklets: 0.10.1
+- typescript: ~6.0.3
+- react-native-safe-area-context: ~5.7.0
+- react-native-screens: ~4.26.0
+- expo-image: ~57.0.3
+
+## Дополнительные библиотеки (заполняется по мере установки)
+
+- gluestack-ui: (не установлен)
+- zustand: (не установлен)
+- react-native-mmkv: (не установлен)
+- jotai: (не установлен)
+- expo-camera: (не установлен)
+- expo-file-system: (не установлен)
+- expo-media-library: (не установлен)
+- expo-local-authentication: (не установлен)
+- expo-secure-store: (не установлен)
+- expo-notifications: (не установлен)
+- expo-image: ~57.0.3 (уже в template)
+- react-native-edge-to-edge: (не установлен)
+
+## Результат expo-doctor
+
+Дата проверки: 2026-08-21
+
+Команда:
+
+```bash
+npx expo-doctor
+```
+
+Результат:
+
+```text
+Running 18 checks on your project...
+18/18 checks passed. No issues detected!
+```
+
+## Замечания по совместимости
+
+- Node v20.17.0 ниже требуемого минимума для react-native@0.86.2
+  (^20.19.4 || ^22.13.0 || ^24.3.0 || >= 25.0.0). npm install выдал
+  EBADENGINE warnings, но установка завершилась. При появлении ошибок
+  сборки — обновить Node.
