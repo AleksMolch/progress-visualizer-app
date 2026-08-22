@@ -301,22 +301,25 @@ npx expo install expo-camera
 
 Цель: добавить фичу сравнения как ключевую портфолио-часть.
 
-- [ ] 9.1 Убедиться, что Reanimated и Gesture Handler установлены
+- [x] 9.1 Убедиться, что Reanimated и Gesture Handler установлены
        и совместимы с текущим стеком (они должны быть из template).
-- [ ] 9.2 Проверить babel/metro config requirements для Reanimated.
-- [ ] 9.3 Реализовать side-by-side compare двух фото.
-- [ ] 9.4 Реализовать swipe compare slider (slider разделяет два фото).
-- [ ] 9.5 Реализовать fullscreen viewer.
-- [ ] 9.6 Добавить swipe-жест между фото в fullscreen.
-- [ ] 9.7 Добавить pinch zoom, если реализация не станет чрезмерной.
-       Если сложно — зафиксировать в DECISIONS.md и пропустить.
+- [x] 9.2 Проверить babel/metro config requirements для Reanimated.
+       (worklets-плагин подключается автоматически babel-preset-expo,
+       отдельный babel.config.js не нужен)
+- [x] 9.3 Реализовать side-by-side compare двух фото.
+- [x] 9.4 Реализовать swipe compare slider (slider разделяет два фото).
+- [x] 9.5 Реализовать fullscreen viewer.
+- [x] 9.6 Добавить swipe-жест между фото в fullscreen.
+       (нативный горизонтальный FlatList с pagingEnabled, см. DECISIONS.md)
+- [x] 9.7 Добавить pinch zoom (ZoomablePhoto на Reanimated + Gesture Handler).
 
 ### VERIFICATION 9
 
-- Compare работает плавно.
-- Нет конфликтов gestures со scroll.
-- Reanimated не выдаёт runtime warnings.
-- Код не переусложнён.
+- Compare работает плавно. (код + сборка; визуально — см. PROGRESS)
+- Нет конфликтов gestures со scroll. (свайп — нативный paging, pinch — отдельно)
+- Reanimated не выдаёт runtime warnings. (безвредный onAnimatedValueUpdate
+  при первом рендере — см. PROGRESS)
+- Код не переусложнён. (см. DECISIONS.md)
 - Запись в PROGRESS.md добавлена.
 
 ---

@@ -1,7 +1,7 @@
 // Тесты утилиты выборки последнего фото проекта.
 
 import { type PhotoMetadata } from '@/models/photo';
-import { getLatestPhoto } from './photos';
+import { getLatestPhoto, getPreviousPhoto, getProjectPhotos } from './photos';
 
 /** Создаёт тестовые метаданные фото. */
 function photo(id: string, projectId: string, takenAt: number): PhotoMetadata {
@@ -38,5 +38,45 @@ describe('getLatestPhoto', () => {
     const photos = [photo('only', 'p1', 42)];
 
     expect(getLatestPhoto(photos, 'p1')?.id).toBe('only');
+  });
+});
+
+describe('getProjectPhotos', () => {
+  it('возвращает только фото проекта, отсортированные по убыванию takenAt', () => {
+    const photos = [
+      photo('old', 'p1', 100),
+      photo('new', 'p1', 300),
+      photo('mid', 'p1', 200),
+      photo('other', 'p2', 999),
+    ];
+
+    const result = getProjectPhotos(photos, 'p1');
+
+    expect(result.map((p) => p.id)).toEqual(['new', 'mid', 'old']);
+  });
+
+  it('возвращает пустой массив, если у проекта нет фото', () => {
+    expect(getProjectPhotos([photo('a', 'p2', 1)], 'p1')).toEqual([]);
+  });
+});
+
+describe('getPreviousPhoto', () => {
+  const photos = [
+    photo('old', 'p1', 100),
+    photo('mid', 'p1', 200),
+    photo('new', 'p1', 300),
+  ];
+
+  it('возвращает фото с максимальным takenAt меньше текущего', () => {
+    expect(getPreviousPhoto(photos, 'p1', 'new')?.id).toBe('mid');
+    expect(getPreviousPhoto(photos, 'p1', 'mid')?.id).toBe('old');
+  });
+
+  it('возвращает null для самого раннего фото', () => {
+    expect(getPreviousPhoto(photos, 'p1', 'old')).toBeNull();
+  });
+
+  it('возвращает null, если фото не принадлежит проекту', () => {
+    expect(getPreviousPhoto(photos, 'p1', 'unknown')).toBeNull();
   });
 });

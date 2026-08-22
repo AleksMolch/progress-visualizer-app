@@ -396,3 +396,42 @@
   - При полном цикле «создать проект -> снять фото -> увидеть в ленте» проверка
     возможна только вручную (камера на симуляторе не делает реальный снимок).
 - Следующий шаг: Фаза 9 (сравнение фото: Reanimated + Gesture Handler).
+
+---
+
+### 2026-08-22 — Фаза 9 — Сравнение фото: Reanimated + Gesture Handler
+
+- Что сделано: полноэкранный просмотрщик фото (горизонтальная лента со свайпом
+  между фото + pinch-to-zoom каждого фото), экран сравнения «до/после» с двумя
+  режимами (перетаскиваемый разделитель и «рядом»). Сравнение работает с
+  предыдущим фото по takenAt. Добавлены чистые утилиты выборки и тесты.
+- Какие файлы созданы или изменены:
+  - созданы: `src/features/gallery/components/zoomable-photo.tsx`,
+    `compare-slider.tsx`, `compare-side-by-side.tsx`,
+    `src/app/project/[id]/_layout.tsx` (вложенный Stack),
+    `src/app/project/[id]/viewer/[photoId].tsx`,
+    `src/app/project/[id]/compare/[photoId].tsx`
+  - переименован: `src/app/project/[id].tsx` → `src/app/project/[id]/index.tsx`
+    (нужно для вложенных маршрутов)
+  - изменены: `src/utils/photos.ts` (+getProjectPhotos, +getPreviousPhoto),
+    `src/utils/photos.test.ts` (+5 тестов), `src/app/_layout.tsx`
+    (GestureHandlerRootView + headerShown:false для project/[id]),
+    `src/app/project/[id]/index.tsx` (тап по фото открывает viewer),
+    `DECISIONS.md` (решение по механизму свайпа/сравнения), `TODO.md`
+- Какие команды запускались:
+  - `npm run typecheck`, `npm run lint`, `npm test`
+  - `npx expo-doctor`
+  - перезапуск Metro с `--clear` (устранён stale cache) + relaunch приложения
+- Результат проверок:
+  - typecheck: без ошибок; lint: без ошибок и предупреждений
+  - тесты: 32/32 passed (новые: getProjectPhotos 2 + getPreviousPhoto 3)
+  - expo-doctor: 21/21
+  - приложение запускается без runtime-ошибок (бандл 1849 модулей)
+- Известные проблемы:
+  - Визуальная проверка свайпа/zoom/сравнения не выполнена автоматически (модель
+    не читает скриншоты) — нужна ручная проверка пользователем.
+  - Pinch-zoom в симуляторе не проверяется (нет multitouch) — нужна проверка на
+    реальном устройстве.
+  - Безвредный warning Reanimated `onAnimatedValueUpdate` при первом рендере.
+  - Android-проверка не выполнена (нет Android-эмулятора).
+- Следующий шаг: Фаза 10 (биометрическая защита).

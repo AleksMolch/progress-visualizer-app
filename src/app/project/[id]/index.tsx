@@ -13,7 +13,7 @@
  */
 
 import { Image } from 'expo-image';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, FlatList, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppScreen } from '@/components/ui/app-screen';
@@ -24,6 +24,7 @@ import { useAppTheme } from '@/theme/ThemeProvider';
 
 export default function ProjectScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
 
   const project = useProjectStore((s) => s.projects.find((p) => p.id === id));
   const photos = useProjectStore((s) => s.photos);
@@ -74,6 +75,7 @@ export default function ProjectScreen() {
           renderItem={({ item }) => (
             <PhotoTile
               uri={item.uri}
+              onOpen={() => router.push(`/project/${id}/viewer/${item.id}`)}
               onDelete={() => handleDeletePhoto(item.id)}
             />
           )}
@@ -84,14 +86,24 @@ export default function ProjectScreen() {
 }
 
 /**
- * Плитка одного фото с кнопкой удаления.
+ * Плитка одного фото: тап открывает viewer, крестик удаляет фото.
  */
-function PhotoTile({ uri, onDelete }: { uri: string; onDelete: () => void }) {
+function PhotoTile({
+  uri,
+  onOpen,
+  onDelete,
+}: {
+  uri: string;
+  onOpen: () => void;
+  onDelete: () => void;
+}) {
   const { colors } = useAppTheme();
 
   return (
     <View style={styles.tile}>
-      <Image source={{ uri }} style={styles.photo} contentFit="cover" />
+      <Pressable onPress={onOpen} accessibilityRole="imagebutton" accessibilityLabel="Открыть фото">
+        <Image source={{ uri }} style={styles.photo} contentFit="cover" />
+      </Pressable>
       <Pressable
         onPress={onDelete}
         accessibilityRole="button"
