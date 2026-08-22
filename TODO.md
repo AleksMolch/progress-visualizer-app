@@ -213,20 +213,20 @@ npx expo install expo-file-system
 
 Цель: сделать базовую съёмку.
 
-- [ ] 6.1 Установить expo-camera:
+- [x] 6.1 Установить expo-camera:
 
 ```bash
 npx expo install expo-camera
 ```
 
-- [ ] 6.2 Проверить актуальный API expo-camera по установленным типам
+- [x] 6.2 Проверить актуальный API expo-camera по установленным типам
        в node_modules, не по памяти.
-- [ ] 6.3 Реализовать экран Camera.
-- [ ] 6.4 Реализовать запрос разрешения камеры.
-- [ ] 6.5 Реализовать выбор активного проекта для съёмки.
-- [ ] 6.6 Реализовать capture photo.
-- [ ] 6.7 Сохранить фото в sandbox через photoFiles.ts.
-- [ ] 6.8 Добавить metadata в Zustand store.
+- [x] 6.3 Реализовать экран Camera.
+- [x] 6.4 Реализовать запрос разрешения камеры.
+- [x] 6.5 Реализовать выбор активного проекта для съёмки.
+- [x] 6.6 Реализовать capture photo.
+- [x] 6.7 Сохранить фото в sandbox через photoFiles.ts.
+- [x] 6.8 Добавить metadata в Zustand store.
 
 ### VERIFICATION 6
 

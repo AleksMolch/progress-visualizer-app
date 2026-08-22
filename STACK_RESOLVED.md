@@ -32,7 +32,7 @@
 - react-native-mmkv: ^4.3.2 (Nitro-модуль)
 - react-native-nitro-modules: ^0.37.0 (зависимость MMKV v4)
 - jotai: (не установлен)
-- expo-camera: (не установлен)
+- expo-camera: ~57.0.4
 - expo-file-system: ~57.0.5
 - expo-media-library: (не установлен)
 - expo-local-authentication: (не установлен)

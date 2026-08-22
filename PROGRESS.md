@@ -222,3 +222,39 @@
     приведён к ~29.5.14, expo-doctor больше не ругается.
 - Следующий шаг: Фаза 6 (камера и разрешения: expo-camera, экран съёмки,
   сохранение в sandbox через photoFiles.ts).
+
+---
+
+### 2026-08-22 — Фаза 6 — Камера и разрешения
+
+- Что сделано: установлен expo-camera (~57.0.4); изучен актуальный API по типам
+  (CameraView/useCameraPermissions/takePictureAsync); реализован экран съёмки
+  (запрос разрешения, превью, выбор активного проекта чипами, кнопка затвора);
+  захват сохраняется в sandbox через store-действие saveCapturedPhoto
+  (копирование файла + метаданные); микрофон и сканер штрих-кодов отключены
+  (минимальные разрешения).
+- Какие файлы созданы или изменены:
+  - изменены: `src/app/(tabs)/camera.tsx` (реальный экран камеры),
+    `src/store/projectStore.ts` (+saveCapturedPhoto), `src/store/projectStore.test.ts`
+    (+тест сохранения кадра), `app.json` (плагин expo-camera с минимальными
+    разрешениями), `DECISIONS.md` (минимальные разрешения), `STACK_RESOLVED.md`
+    (expo-camera), `TODO.md` (Фаза 6 закрыта)
+- Какие команды запускались:
+  - `npx expo install expo-camera`
+  - `npm run typecheck`
+  - `npm run lint`
+  - `npm test` (и `npx jest src/store/projectStore.test.ts`)
+  - `npx expo export --platform ios` (проверка бандла)
+  - `npx expo-doctor`
+- Результат проверок:
+  - typecheck: без ошибок
+  - lint: без ошибок и предупреждений
+  - тесты: 18/18 passed (новый тест saveCapturedPhoto: файл + метаданные)
+  - бандл: iOS Bundled 14989ms (1243 модуля), без ошибок
+  - expo-doctor: 17/18 (единственный fail — CocoaPods)
+- Известные проблемы:
+  - Реальная съёмка НЕ проверена: camera preview и permission-диалог требуют
+    development build, а CocoaPods не установлен (требует sudo). Логика
+    сохранения покрыта unit-тестами с моками; ручная проверка — после
+    установки CocoaPods (`npx expo run:ios`).
+- Следующий шаг: Фаза 7 (ghost overlay и сетка поверх превью камеры).

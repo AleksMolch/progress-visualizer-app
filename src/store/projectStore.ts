@@ -4,9 +4,11 @@
  * Функции:
  * - создание/обновление/удаление проектов;
  * - добавление/удаление метаданных фото;
+ * - saveCapturedPhoto(input): копирует снятый кадр в sandbox и добавляет метаданные;
  * - персистентность в зашифрованное MMKV.
  *
- * Слой: state (/src/store). Работает только с метаданными, файлы не трогает.
+ * Слой: state (/src/store). Работает с файлами только через storage-слой
+ * (photoFiles), UI файловую систему напрямую не трогает.
  */
 
 import { create } from 'zustand';
@@ -15,7 +17,16 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { type PhotoMetadata } from '@/models/photo';
 import { type Project } from '@/models/project';
 import { mmkvStorage } from '@/storage/mmkv';
+import { savePhotoToProject } from '@/storage/photoFiles';
 import { generateId } from '@/utils/ids';
+
+/** Входные данные для сохранения снятого кадра. */
+interface SaveCapturedPhotoInput {
+  projectId: string;
+  tempUri: string;
+  width?: number;
+  height?: number;
+}
 
 interface ProjectState {
   projects: Project[];
@@ -25,6 +36,7 @@ interface ProjectState {
   deleteProject: (id: string) => void;
   addPhoto: (photo: PhotoMetadata) => void;
   deletePhoto: (id: string) => void;
+  saveCapturedPhoto: (input: SaveCapturedPhotoInput) => Promise<void>;
 }
 
 // Создаёт объект проекта с идентификатором и метками времени.
@@ -64,6 +76,21 @@ export const useProjectStore = create<ProjectState>()(
       // Удаление метаданных фото по идентификатору.
       deletePhoto: (id) =>
         set((state) => ({ photos: state.photos.filter((photo) => photo.id !== id) })),
+
+      // Сохранение снятого кадра: копирует файл в sandbox и пишет метаданные.
+      // UI не трогает файловую систему — вся работа с файлами здесь, через storage-слой.
+      saveCapturedPhoto: async ({ projectId, tempUri, width, height }) => {
+        const uri = await savePhotoToProject(projectId, tempUri);
+        const photo: PhotoMetadata = {
+          id: generateId(),
+          projectId,
+          uri,
+          takenAt: Date.now(),
+          width,
+          height,
+        };
+        set((state) => ({ photos: [...state.photos, photo] }));
+      },
     }),
     {
       name: 'project-store',

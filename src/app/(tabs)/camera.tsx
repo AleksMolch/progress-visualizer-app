@@ -1,34 +1,292 @@
 /**
- * Назначение: экран-заглушка вкладки «Камера».
+ * Назначение: экран съёмки с выбором активного проекта.
  *
  * Функции:
- * - показывает заголовок и пустое состояние экрана съёмки.
+ * - запрашивает разрешение камеры;
+ * - показывает превью камеры (CameraView);
+ * - позволяет выбрать активный проект для съёмки;
+ * - делает снимок и сохраняет его в sandbox (через store, не напрямую).
  *
- * Слой: UI (/src/app). Позже будет заменён реальной камерой с ghost overlay (Фаза 6–7).
+ * Слой: UI (/src/app). Файловую систему не трогает: захват идёт через
+ * useProjectStore.saveCapturedPhoto, который сам работает со storage-слоем.
  */
 
-import { StyleSheet, View } from 'react-native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useRef, useState, type ReactNode } from 'react';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AppScreen } from '@/components/ui/app-screen';
+import { AppButton } from '@/components/ui/app-button';
 import { AppText } from '@/components/ui/app-text';
+import { useAppStore } from '@/store/appStore';
+import { useProjectStore } from '@/store/projectStore';
+import { radii, spacing } from '@/theme';
+
+/** Мин. нижний отступ контролов от края экрана. */
+const CONTROLS_BOTTOM_INSET = 24;
 
 export default function CameraScreen() {
+  const [permission, requestPermission] = useCameraPermissions();
+  const cameraRef = useRef<CameraView>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [captureError, setCaptureError] = useState<string | null>(null);
+
+  // Активный проект берём из appStore, список — из projectStore.
+  const projects = useProjectStore((s) => s.projects);
+  const activeProjectId = useAppStore((s) => s.activeProjectId);
+  const setActiveProjectId = useAppStore((s) => s.setActiveProjectId);
+  const saveCapturedPhoto = useProjectStore((s) => s.saveCapturedPhoto);
+
+  // Эффективный активный проект: выбранный или первый из списка.
+  const activeProject = projects.find((p) => p.id === activeProjectId) ?? projects[0] ?? null;
+
+  // Захват кадра и сохранение в sandbox через store.
+  const handleCapture = async () => {
+    if (!activeProject || isCapturing) {
+      return;
+    }
+    setIsCapturing(true);
+    setCaptureError(null);
+    try {
+      const picture = await cameraRef.current?.takePictureAsync();
+      if (!picture) {
+        throw new Error('Камера ещё не готова');
+      }
+      await saveCapturedPhoto({
+        projectId: activeProject.id,
+        tempUri: picture.uri,
+        width: picture.width,
+        height: picture.height,
+      });
+    } catch {
+      setCaptureError('Не удалось сохранить снимок');
+    } finally {
+      setIsCapturing(false);
+    }
+  };
+
+  // Пока разрешение загружается — показываем индикатор.
+  if (!permission) {
+    return (
+      <CenteredState>
+        <ActivityIndicator />
+      </CenteredState>
+    );
+  }
+
+  // Разрешение не выдано — экран запроса.
+  if (!permission.granted) {
+    return (
+      <CenteredState>
+        <AppText variant="subtitle">Нужен доступ к камере</AppText>
+        <AppText color="textSecondary">
+          {permission.canAskAgain
+            ? 'Разрешите доступ, чтобы делать фотографии прогресса.'
+            : 'Доступ запрещён. Разрешите камеру в настройках устройства.'}
+        </AppText>
+        {permission.canAskAgain ? (
+          <AppButton label="Разрешить доступ" onPress={requestPermission} />
+        ) : null}
+      </CenteredState>
+    );
+  }
+
+  // Камера доступна, но проектов нет — съёмке некуда сохраняться.
+  if (projects.length === 0) {
+    return (
+      <CenteredState>
+        <AppText variant="subtitle">Пока нет проектов</AppText>
+        <AppText color="textSecondary">
+          Создайте проект на вкладке «Проекты», чтобы начать съёмку.
+        </AppText>
+      </CenteredState>
+    );
+  }
+
   return (
-    <AppScreen>
-      <View style={styles.container}>
-        <AppText variant="title">Камера</AppText>
-        <AppText color="textSecondary">Здесь появится съёмка с ghost overlay.</AppText>
-      </View>
-    </AppScreen>
+    <View style={styles.container}>
+      <CameraView
+        ref={cameraRef}
+        style={StyleSheet.absoluteFill}
+        facing="back"
+        onMountError={(event) => setCaptureError(event.message)}
+      />
+
+      <ProjectSelector
+        projects={projects}
+        activeId={activeProject?.id ?? null}
+        onSelect={setActiveProjectId}
+      />
+
+      {captureError ? (
+        <View style={styles.errorBadge}>
+          <AppText color="primaryText" variant="caption">
+            {captureError}
+          </AppText>
+        </View>
+      ) : null}
+
+      <ShutterButton isCapturing={isCapturing} onPress={handleCapture} />
+    </View>
+  );
+}
+
+/**
+ * Центрированный экран-состояние (загрузка / нет разрешения / нет проектов).
+ * Использует safe area сверху, как остальные экраны.
+ */
+function CenteredState({ children }: { children: ReactNode }) {
+  const insets = useSafeAreaInsets();
+  return (
+    <View
+      style={[
+        styles.centered,
+        { paddingTop: insets.top, paddingBottom: insets.bottom },
+      ]}>
+      {children}
+    </View>
+  );
+}
+
+/**
+ * Горизонтальный селектор активного проекта (чипы поверх камеры).
+ */
+function ProjectSelector({
+  projects,
+  activeId,
+  onSelect,
+}: {
+  projects: { id: string; name: string }[];
+  activeId: string | null;
+  onSelect: (id: string) => void;
+}) {
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={[styles.selector, { paddingTop: insets.top + spacing.sm }]}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.selectorContent}>
+        {projects.map((project) => {
+          const isActive = project.id === activeId;
+          return (
+            <Pressable
+              key={project.id}
+              onPress={() => onSelect(project.id)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isActive }}
+              style={[styles.chip, isActive && styles.chipActive]}>
+              <AppText variant="caption" color={isActive ? 'primaryText' : 'text'}>
+                {project.name}
+              </AppText>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+}
+
+/**
+ * Круглая кнопка спуска затвора с индикатором съёмки.
+ */
+function ShutterButton({
+  isCapturing,
+  onPress,
+}: {
+  isCapturing: boolean;
+  onPress: () => void;
+}) {
+  const insets = useSafeAreaInsets();
+  return (
+    <View
+      style={[
+        styles.shutterWrap,
+        { paddingBottom: insets.bottom + CONTROLS_BOTTOM_INSET },
+      ]}>
+      <Pressable
+        onPress={onPress}
+        disabled={isCapturing}
+        accessibilityRole="button"
+        accessibilityLabel="Сделать снимок"
+        style={styles.shutter}>
+        {isCapturing ? (
+          <ActivityIndicator color="#FFFFFF" />
+        ) : (
+          <View style={styles.shutterInner} />
+        )}
+      </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000000',
+  },
+  centered: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
-    padding: 24,
+    gap: spacing.md,
+    padding: spacing.lg,
+  },
+  selector: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+  },
+  selectorContent: {
+    paddingHorizontal: spacing.md,
+    gap: spacing.sm,
+  },
+  chip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.full,
+    backgroundColor: 'rgba(255,255,255,0.85)',
+  },
+  chipActive: {
+    backgroundColor: '#208AEF',
+  },
+  errorBadge: {
+    position: 'absolute',
+    top: 96,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(255,59,48,0.9)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.md,
+  },
+  shutterWrap: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  shutter: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+  },
+  shutterInner: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#FFFFFF',
   },
 });
