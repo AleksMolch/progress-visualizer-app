@@ -82,3 +82,36 @@
     шаблона (будет заменён в Фазе 2).
 - Следующий шаг: Фаза 2 (навигация Expo Router: root layout, tabs, экран
   проекта, placeholder-экраны).
+
+---
+
+### 2026-08-21 — Фаза 2 — Навигация Expo Router
+
+- Что сделано: корневой layout на Stack (expo-router/stack); группа вкладок
+  (tabs) с Projects/Camera/Settings на Tabs (expo-router/js-tabs); экран
+  project/[id]; placeholder-экраны; удалён демо-код шаблона.
+- Какие файлы созданы или изменены:
+  - созданы: `src/app/(tabs)/_layout.tsx`, `src/app/(tabs)/index.tsx`,
+    `src/app/(tabs)/camera.tsx`, `src/app/(tabs)/settings.tsx`,
+    `src/app/project/[id].tsx`
+  - переписан: `src/app/_layout.tsx` (Stack вместо AppTabs/ThemeProvider)
+  - удалены: демо-файлы шаблона (`src/app/index.tsx`, `src/app/explore.tsx`,
+    `src/components/*`, `src/hooks/*`, `src/constants/theme.ts`, `src/global.css`)
+- Какие команды запускались:
+  - `npm run typecheck`
+  - `npm run lint`
+  - `npx expo start --ios` (регенерация typed routes + проверка бандла)
+  - `xcrun simctl openurl` (deep link `/project/demo`)
+- Результат проверок:
+  - typecheck: без ошибок (после регенерации typed routes)
+  - lint: без ошибок
+  - бандл: iOS Bundled 2228ms (1269 модулей), без ошибок
+  - навигация: маршруты `/camera`, `/settings`, `/`, `/project/[id]`
+    сгенерированы; deep link на `/project/demo` открылся без ошибок
+- Известные проблемы:
+  - Визуальную проверку навигации по табам автоматически выполнить не удалось
+    (модель не поддерживает ввод изображений) — нужна ручная проверка.
+  - Остались неиспользуемые зависимости шаблона (expo-device, expo-symbols,
+    @expo/ui, expo-glass-effect) и демо-ассеты — чистка в Фазе 15.
+- Следующий шаг: Фаза 3 (gluestack-ui: проверить совместимость, подключить
+  UI-систему, базовые компоненты, тема, edge-to-edge).
