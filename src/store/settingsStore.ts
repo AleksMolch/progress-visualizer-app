@@ -17,6 +17,7 @@ import { mmkvStorage } from '@/storage/mmkv';
 // Значения настроек по умолчанию (до первого изменения пользователем).
 export const DEFAULT_SETTINGS: AppSettings = {
   themeMode: 'system',
+  ghostEnabled: true,
   ghostOpacity: 0.5,
   gridEnabled: true,
   requireBiometrics: false,

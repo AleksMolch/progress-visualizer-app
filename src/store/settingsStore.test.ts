@@ -37,4 +37,13 @@ describe('settingsStore', () => {
     expect(settings.gridEnabled).toBe(false);
     expect(settings.requireBiometrics).toBe(true);
   });
+
+  it('переключает ghost overlay независимо от прозрачности', () => {
+    useSettingsStore.getState().updateSettings({ ghostEnabled: false });
+
+    const { settings } = useSettingsStore.getState();
+    expect(settings.ghostEnabled).toBe(false);
+    // Прозрачность сохраняется и не сбрасывается при выключении overlay.
+    expect(settings.ghostOpacity).toBe(DEFAULT_SETTINGS.ghostOpacity);
+  });
 });

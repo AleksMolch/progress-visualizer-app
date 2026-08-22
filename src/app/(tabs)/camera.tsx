@@ -24,9 +24,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/ui/app-button';
 import { AppText } from '@/components/ui/app-text';
+import { GhostOverlay } from '@/features/camera/components/ghost-overlay';
+import { GridOverlay } from '@/features/camera/components/grid-overlay';
+import { OverlayControls } from '@/features/camera/components/overlay-controls';
 import { useAppStore } from '@/store/appStore';
 import { useProjectStore } from '@/store/projectStore';
+import { useSettingsStore } from '@/store/settingsStore';
 import { radii, spacing } from '@/theme';
+import { getLatestPhoto } from '@/utils/photos';
 
 /** Мин. нижний отступ контролов от края экрана. */
 const CONTROLS_BOTTOM_INSET = 24;
@@ -39,12 +44,17 @@ export default function CameraScreen() {
 
   // Активный проект берём из appStore, список — из projectStore.
   const projects = useProjectStore((s) => s.projects);
+  const photos = useProjectStore((s) => s.photos);
   const activeProjectId = useAppStore((s) => s.activeProjectId);
   const setActiveProjectId = useAppStore((s) => s.setActiveProjectId);
   const saveCapturedPhoto = useProjectStore((s) => s.saveCapturedPhoto);
+  const settings = useSettingsStore((s) => s.settings);
 
   // Эффективный активный проект: выбранный или первый из списка.
   const activeProject = projects.find((p) => p.id === activeProjectId) ?? projects[0] ?? null;
+
+  // Последнее фото активного проекта для ghost overlay (null — фото ещё нет).
+  const latestPhoto = activeProject ? getLatestPhoto(photos, activeProject.id) : null;
 
   // Захват кадра и сохранение в sandbox через store.
   const handleCapture = async () => {
@@ -118,6 +128,14 @@ export default function CameraScreen() {
         onMountError={(event) => setCaptureError(event.message)}
       />
 
+      <GhostOverlay
+        uri={latestPhoto?.uri ?? null}
+        opacity={settings.ghostOpacity}
+        enabled={settings.ghostEnabled}
+      />
+
+      <GridOverlay enabled={settings.gridEnabled} />
+
       <ProjectSelector
         projects={projects}
         activeId={activeProject?.id ?? null}
@@ -131,6 +149,10 @@ export default function CameraScreen() {
           </AppText>
         </View>
       ) : null}
+
+      <View style={styles.controlsWrap}>
+        <OverlayControls hasPhoto={latestPhoto !== null} />
+      </View>
 
       <ShutterButton isCapturing={isCapturing} onPress={handleCapture} />
     </View>
@@ -265,6 +287,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
     borderRadius: radii.md,
+  },
+  controlsWrap: {
+    position: 'absolute',
+    left: spacing.md,
+    right: spacing.md,
+    bottom: 120,
   },
   shutterWrap: {
     position: 'absolute',

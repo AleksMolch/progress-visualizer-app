@@ -321,3 +321,42 @@
   - Ошибка `osascript ... Simulator` при `run:ios` — некритична (это про
     активацию окна симулятора); сборка и запуск проходят.
 - Следующий шаг: Фаза 7 (ghost overlay и сетка).
+
+---
+
+### 2026-08-22 — Фаза 7 — Ghost overlay и сетка
+
+- Что сделано: реализован ghost overlay (последнее фото активного проекта
+  полупрозрачно поверх превью камеры), регулируемая прозрачность слайдером,
+  toggle overlay on/off и toggle сетки (правило третей). Обработано состояние
+  первого фото (overlay скрыт, контрол отключён). Добавлено поле `ghostEnabled`
+  в AppSettings. Логика вынесена в feature-компоненты и чистую утилиту.
+- Какие файлы созданы или изменены:
+  - созданы: `src/features/camera/components/ghost-overlay.tsx`,
+    `grid-overlay.tsx`, `overlay-controls.tsx`, `src/utils/photos.ts`,
+    `src/utils/photos.test.ts`
+  - изменены: `src/models/settings.ts` (+ghostEnabled),
+    `src/store/settingsStore.ts` (DEFAULT_SETTINGS + ghostEnabled),
+    `src/store/settingsStore.test.ts` (+тест переключения overlay),
+    `src/app/(tabs)/camera.tsx` (подключение overlay/grid/controls),
+    `STACK_RESOLVED.md` (+slider), `TODO.md` (Фаза 7 закрыта)
+  - package.json: добавлен `@react-native-community/slider` 5.2.0
+- Какие команды запускались:
+  - `npx expo install @react-native-community/slider`
+  - `npm run typecheck`, `npm run lint`, `npm test`
+  - `npx expo prebuild --platform ios` (автолинковка slider)
+  - `npx expo run:ios` (Build Succeeded, 0 errors)
+  - `npx expo-doctor`
+- Результат проверок:
+  - typecheck: без ошибок; lint: без ошибок и предупреждений
+  - тесты: 23/23 passed (новые: getLatestPhoto 4 теста + settings 1 тест)
+  - expo-doctor: 21/21
+  - сборка iOS: успешно, слайдер залинкован (`react-native-slider 5.2.0` в
+    Podfile.lock), приложение запускается без runtime-ошибок
+- Известные проблемы:
+  - Визуальная проверка overlay/grid/slider не выполнена автоматически (модель
+    не читает скриншоты) — нужна ручная проверка пользователем.
+  - Android-проверка не выполнена (нет Android-эмулятора в окружении).
+  - Проверка с реальным фото невозможна без UI создания проекта (Фаза 8) —
+    overlay показывается только при наличии фото в проекте.
+- Следующий шаг: Фаза 8 (просмотр проектов и фотографий).

@@ -13,6 +13,8 @@ export type ThemeMode = 'system' | 'light' | 'dark';
 export interface AppSettings {
   /** Режим темы: системная / светлая / тёмная. */
   themeMode: ThemeMode;
+  /** Включён ли ghost overlay (показ последнего фото поверх камеры). */
+  ghostEnabled: boolean;
   /** Прозрачность ghost overlay (0..1). */
   ghostOpacity: number;
   /** Включена ли сетка-направляющая поверх камеры. */

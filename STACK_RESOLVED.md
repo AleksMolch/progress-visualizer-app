@@ -58,6 +58,7 @@
 - expo-notifications: (не установлен)
 - expo-image: ~57.0.3 (уже в template)
 - react-native-edge-to-edge: не нужен (нативно в RN 0.86, см. DECISIONS.md)
+- @react-native-community/slider: 5.2.0 (слайдер прозрачности ghost overlay, Фаза 7)
 
 ## Результат expo-doctor
 
