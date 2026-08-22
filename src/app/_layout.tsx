@@ -2,19 +2,43 @@
  * Назначение: корневой layout приложения (Expo Router).
  *
  * Функции:
- * - оборачивает навигацию в ThemeProvider (тема приложения);
- * - объявляет навигационный стек верхнего уровня;
- * - объединяет группу вкладок (tabs) и экран отдельного проекта.
+ * - инициализирует локальное хранилище (SecureStore + MMKV) до отрисовки UI;
+ * - оборачивает навигацию в ThemeProvider;
+ * - объявляет навигационный стек верхнего уровня (вкладки + экран проекта).
  *
  * Слой: UI (/src/app). Использует Stack из expo-router/stack.
  */
 
+import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router/stack';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 
+import { initializeStorage } from '@/storage/init';
 import { ThemeProvider } from '@/theme/ThemeProvider';
 
+// Держим splash-экран, пока не завершится инициализация хранилища.
+SplashScreen.preventAutoHideAsync();
+
 export default function RootLayout() {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    initializeStorage()
+      .catch((error) => {
+        // Ошибка инициализации не должна блокировать запуск, но логируется.
+        console.error('Ошибка инициализации хранилища:', error);
+      })
+      .finally(() => {
+        setReady(true);
+        SplashScreen.hideAsync();
+      });
+  }, []);
+
+  if (!ready) {
+    return null;
+  }
+
   return (
     <ThemeProvider>
       <StatusBar style="auto" />

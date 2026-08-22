@@ -146,3 +146,41 @@
   - Визуальная проверка темы/компонентов — ручная (модель не читает скриншоты).
 - Следующий шаг: Фаза 4 (MMKV + SecureStore + Zustand: локальное хранилище,
   store с persist, unit-тесты).
+
+---
+
+### 2026-08-21 — Фаза 4 — Локальное хранилище: MMKV + SecureStore + Zustand
+
+- Что сделано: установлены zustand, react-native-mmkv (v4, Nitro-модуль),
+  react-native-nitro-modules, expo-secure-store, expo-crypto; реализованы
+  secureKeys (ключ через SecureStore), mmkv (AES-256), три store с persist;
+  написаны unit-тесты.
+- Какие файлы созданы или изменены:
+  - созданы: `src/storage/secureKeys.ts`, `src/storage/mmkv.ts`,
+    `src/storage/init.ts`, `src/store/projectStore.ts`, `src/store/settingsStore.ts`,
+    `src/store/appStore.ts`, `src/store/index.ts`, `src/utils/ids.ts`,
+    `jest.config.js`, `__mocks__/react-native-mmkv.ts`,
+    `src/store/projectStore.test.ts`, `src/store/settingsStore.test.ts`
+  - изменены: `src/app/_layout.tsx` (инициализация хранилища до рендера),
+    `tsconfig.json` (`types: jest`), `package.json` (зависимости),
+    `app.json` (bundleIdentifier + plugin expo-secure-store),
+    `STACK_RESOLVED.md`
+- Какие команды запускались:
+  - `npx expo install react-native-mmkv react-native-nitro-modules expo-secure-store zustand expo-crypto`
+  - `npm install --save-dev jest jest-expo @types/jest`
+  - `npm test`, `npm run typecheck`, `npm run lint`
+  - `npx expo prebuild --platform ios --no-install`
+- Результат проверок:
+  - unit-тесты: 9/9 passed
+  - typecheck: без ошибок; lint: без ошибок
+  - prebuild: успешно (нативный iOS-проект, автолинковка nitro/mkv настроена)
+  - для Jest: react-native-mmkv замокан вручную (`__mocks__/react-native-mmkv.ts`),
+    т.к. Nitro-модули падают при импорте в тестовом окружении
+- Известные проблемы:
+  - 4.8 (development build + persist после перезапуска) НЕ проверено:
+    CocoaPods не установлен и требует sudo (Homebrew отсутствует, системный
+    Ruby 2.6.10). Нужна ручная установка CocoaPods и `npx expo run:ios`.
+  - Node v20.17.0 ниже минимума RN 0.86 — риск при нативной сборке.
+  - bundleIdentifier временный (`com.anonymous.*`) — заменить в Фазе 15.
+- Следующий шаг: Фаза 5 (file storage фотографий в sandbox); dev-build
+  (4.8) вернуться к ручной проверке при наличии CocoaPods.

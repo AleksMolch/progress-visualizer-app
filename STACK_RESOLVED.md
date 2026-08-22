@@ -28,14 +28,16 @@
 ## Дополнительные библиотеки (заполняется по мере установки)
 
 - gluestack-ui: НЕ используется (отказ в Фазе 3, см. DECISIONS.md)
-- zustand: (не установлен)
-- react-native-mmkv: (не установлен)
+- zustand: ^5.0.15
+- react-native-mmkv: ^4.3.2 (Nitro-модуль)
+- react-native-nitro-modules: ^0.37.0 (зависимость MMKV v4)
 - jotai: (не установлен)
 - expo-camera: (не установлен)
 - expo-file-system: (не установлен)
 - expo-media-library: (не установлен)
 - expo-local-authentication: (не установлен)
-- expo-secure-store: (не установлен)
+- expo-secure-store: ~57.0.1
+- expo-crypto: ~57.0.1 (генерация ключа шифрования)
 - expo-notifications: (не установлен)
 - expo-image: ~57.0.3 (уже в template)
 - react-native-edge-to-edge: не нужен (нативно в RN 0.86, см. DECISIONS.md)

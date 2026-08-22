@@ -131,36 +131,40 @@ npx gluestack-ui init
 
 Цель: создать приватный локальный слой данных.
 
-- [ ] 4.1 Установить zustand:
+- [x] 4.1 Установить zustand:
 
 ```bash
 npx expo install zustand
 ```
 
-- [ ] 4.2 Установить react-native-mmkv совместимо с текущим Expo/RN:
+- [x] 4.2 Установить react-native-mmkv совместимо с текущим Expo/RN
+       (v4.3.2 — Nitro-модуль, плюс react-native-nitro-modules):
 
 ```bash
-npx expo install react-native-mmkv
+npx expo install react-native-mmkv react-native-nitro-modules
 ```
 
-- [ ] 4.3 Установить expo-secure-store:
+- [x] 4.3 Установить expo-secure-store:
 
 ```bash
 npx expo install expo-secure-store
 ```
 
-- [ ] 4.4 Реализовать получение/создание encryption key через SecureStore
+- [x] 4.4 Реализовать получение/создание encryption key через SecureStore
        в /src/storage/secureKeys.ts.
-- [ ] 4.5 Реализовать инициализацию MMKV с encryption key
+- [x] 4.5 Реализовать инициализацию MMKV с encryption key
        в /src/storage/mmkv.ts.
-- [ ] 4.6 Создать Zustand store с persist через MMKV.
-- [ ] 4.7 Написать unit-тесты (TDD: сначала тест, потом реализация) для:
+- [x] 4.6 Создать Zustand store с persist через MMKV.
+- [x] 4.7 Написать unit-тесты (TDD: сначала тест, потом реализация) для:
        - создания проекта
        - удаления проекта
        - добавления photo metadata
        - удаления photo metadata
        - изменения settings
 - [ ] 4.8 Проверить, что данные переживают перезапуск приложения.
+       БЛОКИРОВАНО: нужен development build (MMKV — нативный модуль),
+       а CocoaPods не установлен и требует sudo. `npx expo prebuild` прошёл
+       успешно (автолинковка nitro/mkv настроена) — осталась ручная проверка.
 
 ### VERIFICATION 4
 

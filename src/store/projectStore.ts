@@ -1,0 +1,77 @@
+/**
+ * Назначение: хранилище проектов и метаданных фото (Zustand store).
+ *
+ * Функции:
+ * - создание/обновление/удаление проектов;
+ * - добавление/удаление метаданных фото;
+ * - персистентность в зашифрованное MMKV.
+ *
+ * Слой: state (/src/store). Работает только с метаданными, файлы не трогает.
+ */
+
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
+
+import { type PhotoMetadata } from '@/models/photo';
+import { type Project } from '@/models/project';
+import { mmkvStorage } from '@/storage/mmkv';
+import { generateId } from '@/utils/ids';
+
+interface ProjectState {
+  projects: Project[];
+  photos: PhotoMetadata[];
+  createProject: (name: string) => void;
+  updateProject: (id: string, name: string) => void;
+  deleteProject: (id: string) => void;
+  addPhoto: (photo: PhotoMetadata) => void;
+  deletePhoto: (id: string) => void;
+}
+
+// Создаёт объект проекта с идентификатором и метками времени.
+function buildProject(name: string): Project {
+  const now = Date.now();
+  return { id: generateId(), name, createdAt: now, updatedAt: now };
+}
+
+export const useProjectStore = create<ProjectState>()(
+  persist(
+    (set) => ({
+      projects: [],
+      photos: [],
+
+      // Создание проекта: добавляем в список.
+      createProject: (name) =>
+        set((state) => ({ projects: [...state.projects, buildProject(name)] })),
+
+      // Обновление проекта: меняем имя и метку времени изменения.
+      updateProject: (id, name) =>
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === id ? { ...p, name, updatedAt: Date.now() } : p,
+          ),
+        })),
+
+      // Удаление проекта: удаляем проект и все его метаданные фото.
+      deleteProject: (id) =>
+        set((state) => ({
+          projects: state.projects.filter((p) => p.id !== id),
+          photos: state.photos.filter((photo) => photo.projectId !== id),
+        })),
+
+      // Добавление метаданных фото (вызывающий код сам формирует объект).
+      addPhoto: (photo) => set((state) => ({ photos: [...state.photos, photo] })),
+
+      // Удаление метаданных фото по идентификатору.
+      deletePhoto: (id) =>
+        set((state) => ({ photos: state.photos.filter((photo) => photo.id !== id) })),
+    }),
+    {
+      name: 'project-store',
+      storage: createJSONStorage(() => mmkvStorage),
+      // Персистим только данные, без действий.
+      partialize: (state) => ({ projects: state.projects, photos: state.photos }),
+      // Гидратация выполняется вручную после инициализации MMKV.
+      skipHydration: true,
+    },
+  ),
+);
