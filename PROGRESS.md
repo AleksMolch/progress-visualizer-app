@@ -282,3 +282,42 @@
 - Следующий шаг (на новом Mac): Apple Silicon / macOS 26 + Xcode 26,
   Node ≥ 20.19.4, CocoaPods. Шаги переноса и продолжение — см. TODO 4.8
   и раздел «Перенос на новую машину» в STACK_RESOLVED.md.
+
+---
+
+### 2026-08-22 — Разблокировка 4.8: перенос на новый Mac и проверка persist
+
+- Что сделано: перенесён на Apple Silicon Mac (Apple M4, macOS 26.3.1,
+  Xcode 26.6, Swift 6.3.3); установлены Homebrew 6.0.18 и CocoaPods 1.17.0;
+  собран и запущен development build (`npx expo run:ios`); проверено, что MMKV
+  инициализируется (v2.4.0, AES-256) и данные переживают перезапуск приложения.
+- Какие файлы созданы или изменены:
+  - изменены: `STACK_RESOLVED.md` (Runtime окружение обновлён на новую машину,
+    expo-doctor 21/21, замечания/перенос), `TODO.md` (пункт 4.8 закрыт)
+  - `src/storage/init.ts` — временно правился для проверки persist, затем
+    возвращён в исходное состояние (без изменений в итоговом коде)
+- Какие команды запускались:
+  - `node -v` (v22.18.0), `xcodebuild -version` (Xcode 26.6), `pod --version`
+  - `brew install cocoapods` (выполнено пользователем из-за sudo)
+  - `git pull`, `npm install`
+  - `npx expo prebuild --platform ios`
+  - `npx expo run:ios` (Build Succeeded, 0 errors)
+  - `npm run typecheck`, `npm run lint`, `npm test` (18/18)
+  - `npx expo-doctor` (21/21)
+- Результат проверок:
+  - development build собрался и запустился на симуляторе iPhone 16 Plus
+  - MMKV инициализирован: root dir в sandbox приложения, файл
+    `progress-private` загружен (0 key-values на старте)
+  - persist после перезапуска подтверждён: значение, записанное в MMKV
+    (`__persist_test`), прочиталось после полного terminate + relaunch
+    (previous === now предыдущего запуска)
+- Известные проблемы:
+  - ⚠ Путь `/Volumes/Т5-Documents/...` (кириллица в имени тома) ломает
+    CocoaPods: `pod install` падал с `Invalid hermes-engine.podspec:
+    incompatible character encodings: BINARY (ASCII-8BIT) and UTF-8`.
+    Решение — физический перенос на ASCII-путь
+    `/Users/aleks/dev/progress-visualizer-app` (симлинк на старом месте).
+    Подробности в STACK_RESOLVED.md.
+  - Ошибка `osascript ... Simulator` при `run:ios` — некритична (это про
+    активацию окна симулятора); сборка и запуск проходят.
+- Следующий шаг: Фаза 7 (ghost overlay и сетка).

@@ -6,18 +6,27 @@
 
 ## Runtime окружение
 
-> Раздел ниже описывает МАШИНУ, на которой шла разработка до 2026-08-22
-> (Intel Mac, macOS 15.7.7). На ней сборка iOS невозможна (см. «Замечания»).
-> После переноса на новый Mac — обновить этот раздел фактическими версиями
-> новой машины. Версии из package.json НЕ зависят от машины.
+> Раздел описывает АКТУАЛЬНУЮ машину разработки (Apple Silicon Mac).
+> Версии из package.json НЕ зависят от машины.
 
-- Node.js: v20.17.0 (⚠ ниже минимальной для RN 0.86: ^20.19.4)
-- npm: 10.8.2
-- Expo CLI: create-expo-app@4.0.0
-- OS сборки: macOS 15.7.7 (Sequoia, Intel x86_64)
-- Xcode: 16.4 (Build 16F6), Swift 6.1.2 (⚠ ниже требуемого — нужен Xcode 26)
-- Ruby: системный 2.6.10 (⚠ устарел) + rbenv 3.3.12 (для CocoaPods)
-- CocoaPods: 1.17.0 (установлен через rbenv Ruby 3.3.12)
+- Node.js: v22.18.0 (✓ >= 20.19.4)
+- npm: 10.9.3
+- OS сборки: macOS 26.3.1 (Build 25D2128)
+- Архитектура: Apple M4 (arm64)
+- Xcode: 26.6 (Build 17F113), Swift 6.3.3 (✓ >= 6.2, требуется для Expo SDK 57)
+- Homebrew: 6.0.18
+- CocoaPods: 1.17.0 (установлен через `brew install cocoapods`)
+
+> ⚠ Расположение проекта: перенесён на ASCII-путь
+> `/Users/aleks/dev/progress-visualizer-app`. Старый путь
+> `/Volumes/Т5-Documents/Project/progress-visualizer-app` содержал кириллицу
+> (том «Т5-Documents»), из-за которой `pod install` падал с ошибкой
+> `Invalid hermes-engine.podspec: incompatible character encodings:
+> BINARY (ASCII-8BIT) and UTF-8` (подспек hermes-engine подставляет вывод
+> `node -p require.resolve(...)` с кириллическими байтами в UTF-8 литерал).
+> Локаль `LC_ALL`/`LANG` не помогает — `readpartial` всегда возвращает
+> бинарную кодировку. Решение: перенос на ASCII-путь, на старом месте оставлен
+> симлинк для обратной совместимости.
 
 ## Версии из package.json
 
@@ -71,47 +80,42 @@ an issue with your CocoaPods installation. Installing version 1.15.2 or higher
 is recommended.
 ```
 
-Примечание: единственный fail — отсутствие CocoaPods (требует sudo для
-установки). Ранее выявленный сдвиг `@types/jest` (30.0.0 -> 29.5.14) исправлен.
+Примечание: на предыдущей машине (Intel Mac) CocoaPods отсутствовал (требовал
+sudo). После переноса на новую машину и установки CocoaPods 1.17.0 через
+Homebrew повторный `npx expo-doctor` показывает **21/21 checks passed**.
 
 ## Замечания по совместимости
 
-- ⚠ Xcode 16.3/16.4 (Swift 6.1.x) НЕ собирают Expo SDK 57: пакеты
-  expo-modules-jsi и @expo/expo-modules-macros-plugin объявлены как
-  `swift-tools-version: 6.2`. Сборка падает с `package 'apple' is using Swift
-  tools version 6.2.0 but the installed version is 6.1.0`.
-  Требуется Xcode 26.x (Swift 6.2+). Важно: standalone Swift 6.2 toolchain
-  (swift.org) НЕ помогает — `xcodebuild` проверяет swift-tools-version
-  встроенным в Xcode SwiftPM, а не toolchain-ом.
-- Node v20.17.0 ниже требуемого минимума для react-native@0.86.2
-  (^20.19.4 || ^22.13.0 || ^24.3.0 || >= 25.0.0). npm install выдал
-  EBADENGINE warnings, но установка завершилась. При появлении ошибок
-  сборки — обновить Node.
-- Системный Ruby 2.6.10 слишком старый для CocoaPods (зависимость ffi
-  требует Ruby 3.0+). Решено установкой Ruby 3.3.12 через rbenv
-  (`~/.rbenv/versions/3.3.12`) и `gem install cocoapods`; в PATH добавлять
-  `~/.rbenv/versions/3.3.12/bin`.
+- ✅ Xcode 26.6 (Swift 6.3.3) собирает Expo SDK 57 без ошибок (0 errors,
+  0 warnings). Предыдущая проблема (`swift-tools-version: 6.2` на Xcode 16.4)
+  снята переносом на Xcode 26.
+- ✅ Node v22.18.0 соответствует минимуму react-native@0.86.2
+  (^20.19.4 || ^22.13.0 || ^24.3.0 || >= 25.0.0). EBADENGINE warnings
+  с предыдущей машины больше не актуальны.
+- ⚠ CocoaPods падает с encoding-ошибкой, если путь проекта содержит
+  кириллицу (см. раздел «Runtime окружение»). Проект перенесён на ASCII-путь.
+- Системный Ruby 2.6.10 слишком старый для CocoaPods, но на этой машине
+  CocoaPods установлен через Homebrew (собственный Ruby 4.0.6) — rbenv не нужен.
 
 ## Перенос на новую машину
 
-Требования целевой машины (Apple Silicon Mac, macOS 26):
+Выполнен 2026-08-22. Итог:
 
-- Xcode 26.x (`xcodebuild -version` → Swift 6.2+) — обязателен для Expo SDK 57.
-- Node.js >= 20.19.4 (рекомендуется LTS 22).
-- CocoaPods >= 1.15.2 (на Apple Silicon достаточно `brew install cocoapods`).
-- Папки `ios/` и `android/` в .gitignore — их нет в репозитории, генерируются
-  через `npx expo prebuild --platform ios`.
+- Проект перенесён на ASCII-путь `/Users/aleks/dev/progress-visualizer-app`.
+- Окружение соответствует требованиям (см. «Runtime окружение»).
+- Development build собран и запущен; MMKV и персистентность проверены (4.8).
 
-Порядок после клонирования:
+Порядок для будущих машин (после клонирования):
 
 ```bash
 git pull
 node -v                      # >= 20.19.4
-xcodebuild -version          # Xcode 26.x
-pod --version                # >= 1.15.2
+xcodebuild -version          # Xcode 26.x (Swift 6.2+)
+pod --version                # >= 1.15.2 (brew install cocoapods)
 npm install
 npx expo prebuild --platform ios
 npx expo run:ios             # собрать и запустить dev build
 ```
 
-Затем проверить 4.8 (данные переживают перезапуск) и продолжить с Фазы 7.
+⚠ Убедиться, что путь проекта НЕ содержит не-ASCII символов (кириллицы) —
+иначе `pod install` упадёт с encoding-ошибкой.

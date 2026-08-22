@@ -161,25 +161,19 @@ npx expo install expo-secure-store
        - добавления photo metadata
        - удаления photo metadata
        - изменения settings
-- [ ] 4.8 Проверить, что данные переживают перезапуск приложения.
+- [x] 4.8 Проверить, что данные переживают перезапуск приложения.
 
-       БЛОКИРОВАНО на Intel Mac (macOS 15.7.7): Expo SDK 57 требует
-       Swift 6.2 (Xcode 26), а здесь максимум Xcode 16.4 (Swift 6.1.2).
-       Локальная iOS-сборка невозможна; без dev build не запустить приложение
-       (MMKV не работает в Expo Go). Перенести на новый Mac и продолжить:
+       Выполнено на Apple Silicon Mac (macOS 26.3.1, Xcode 26.6, Swift 6.3.3).
+       Development build собран и запущен (`npx expo run:ios`). MMKV
+       инициализируется (v2.4.0, AES-256) и сохраняет данные в sandbox.
+       Персистентность проверена перезапуском приложения: значение, записанное
+       в MMKV, прочиталось после полного terminate + relaunch процесса.
 
-       На новом Mac (Apple Silicon, macOS 26, Xcode 26):
-       1) `git pull` актуальную ветку.
-       2) Проверить окружение: Node ≥ 20.19.4 (`node -v`), Xcode 26
-          (`xcodebuild -version` → Swift 6.2+), CocoaPods (`pod --version`,
-          на Apple Silicon ставится через `brew install cocoapods`).
-       3) `npm install`.
-       4) `npx expo prebuild --platform ios` (папки `ios/`/`android/` в
-          .gitignore — их в репозитории нет, генерируются заново).
-       5) `npx expo run:ios` — собрать dev build.
-       6) Запустить приложение, создать данные (или проверить init MMKV),
-          перезапустить приложение, убедиться, что данные пережили перезапуск.
-       7) После 4.8 — продолжить с Фазы 7 (ghost overlay и сетка).
+       ПРИМЕЧАНИЕ: проект физически перенесён на ASCII-путь
+       `/Users/aleks/dev/progress-visualizer-app` (старый путь
+       `/Volumes/Т5-Documents/...` содержал кириллицу, из-за которой CocoaPods
+       падал с encoding-ошибкой `BINARY (ASCII-8BIT) and UTF-8`). Подробности
+       в STACK_RESOLVED.md.
 
 ### VERIFICATION 4
 
