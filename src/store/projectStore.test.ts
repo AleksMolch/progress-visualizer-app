@@ -111,4 +111,44 @@ describe('projectStore', () => {
     // Файл реально записан в (замоканную) файловую систему.
     expect(new File(photos[0].uri).exists).toBe(true);
   });
+
+  it('удаляет файл фото из sandbox при удалении метаданных', async () => {
+    const tempFile = new File('file:///tmp/capture.jpg');
+    tempFile.create();
+    tempFile.write('image-bytes');
+
+    await useProjectStore.getState().saveCapturedPhoto({
+      projectId: 'project-1',
+      tempUri: tempFile.uri,
+    });
+    const { uri, id } = useProjectStore.getState().photos[0];
+    expect(new File(uri).exists).toBe(true);
+
+    useProjectStore.getState().deletePhoto(id);
+
+    expect(useProjectStore.getState().photos).toHaveLength(0);
+    // Файл фото должен быть удалён из sandbox.
+    expect(new File(uri).exists).toBe(false);
+  });
+
+  it('удаляет папку фото проекта из sandbox при удалении проекта', async () => {
+    useProjectStore.getState().createProject('Проект');
+    const { id } = useProjectStore.getState().projects[0];
+
+    const tempFile = new File('file:///tmp/capture.jpg');
+    tempFile.create();
+    tempFile.write('image-bytes');
+    await useProjectStore.getState().saveCapturedPhoto({
+      projectId: id,
+      tempUri: tempFile.uri,
+    });
+    const { uri } = useProjectStore.getState().photos[0];
+    expect(new File(uri).exists).toBe(true);
+
+    useProjectStore.getState().deleteProject(id);
+
+    expect(useProjectStore.getState().photos).toHaveLength(0);
+    // Файл фото удалён вместе с папкой проекта.
+    expect(new File(uri).exists).toBe(false);
+  });
 });

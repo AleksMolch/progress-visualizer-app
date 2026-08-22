@@ -17,7 +17,11 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { type PhotoMetadata } from '@/models/photo';
 import { type Project } from '@/models/project';
 import { mmkvStorage } from '@/storage/mmkv';
-import { savePhotoToProject } from '@/storage/photoFiles';
+import {
+  deletePhotoFile,
+  deleteProjectPhotoDirectory,
+  savePhotoToProject,
+} from '@/storage/photoFiles';
 import { generateId } from '@/utils/ids';
 
 /** Входные данные для сохранения снятого кадра. */
@@ -47,7 +51,7 @@ function buildProject(name: string): Project {
 
 export const useProjectStore = create<ProjectState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       projects: [],
       photos: [],
 
@@ -63,19 +67,27 @@ export const useProjectStore = create<ProjectState>()(
           ),
         })),
 
-      // Удаление проекта: удаляем проект и все его метаданные фото.
-      deleteProject: (id) =>
+      // Удаление проекта: удаляем проект, все его метаданные фото и файлы.
+      deleteProject: (id) => {
+        // Физическое удаление папки с фото проекта из sandbox.
+        deleteProjectPhotoDirectory(id);
         set((state) => ({
           projects: state.projects.filter((p) => p.id !== id),
           photos: state.photos.filter((photo) => photo.projectId !== id),
-        })),
+        }));
+      },
 
       // Добавление метаданных фото (вызывающий код сам формирует объект).
       addPhoto: (photo) => set((state) => ({ photos: [...state.photos, photo] })),
 
-      // Удаление метаданных фото по идентификатору.
-      deletePhoto: (id) =>
-        set((state) => ({ photos: state.photos.filter((photo) => photo.id !== id) })),
+      // Удаление метаданных фото и его файла из sandbox по идентификатору.
+      deletePhoto: (id) => {
+        const photo = get().photos.find((p) => p.id === id);
+        if (photo) {
+          deletePhotoFile(photo.uri);
+        }
+        set((state) => ({ photos: state.photos.filter((photo) => photo.id !== id) }));
+      },
 
       // Сохранение снятого кадра: копирует файл в sandbox и пишет метаданные.
       // UI не трогает файловую систему — вся работа с файлами здесь, через storage-слой.
