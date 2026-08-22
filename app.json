@@ -43,6 +43,12 @@
           "recordAudioAndroid": false,
           "barcodeScannerEnabled": false
         }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Разрешите доступ к Face ID, чтобы защитить фотографии приложения."
+        }
       ]
     ],
     "experiments": {

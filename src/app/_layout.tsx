@@ -15,6 +15,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { BiometricsGate } from '@/features/privacy/components/biometrics-gate';
 import { initializeStorage } from '@/storage/init';
 import { ThemeProvider } from '@/theme/ThemeProvider';
 
@@ -44,10 +45,12 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>
         <StatusBar style="auto" />
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="project/[id]" options={{ headerShown: false }} />
-        </Stack>
+        <BiometricsGate>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="project/[id]" options={{ headerShown: false }} />
+          </Stack>
+        </BiometricsGate>
       </ThemeProvider>
     </GestureHandlerRootView>
   );

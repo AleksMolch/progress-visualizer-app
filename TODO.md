@@ -328,22 +328,28 @@ npx expo install expo-camera
 
 Цель: защитить доступ к фото.
 
-- [ ] 10.1 Установить expo-local-authentication:
+- [x] 10.1 Установить expo-local-authentication:
 
 ```bash
 npx expo install expo-local-authentication
 ```
 
-- [ ] 10.2 Создать privacy settings в AppSettings (флаг requireBiometrics).
-- [ ] 10.3 Реализовать lock screen.
-- [ ] 10.4 Реализовать route protection в Expo Router.
-- [ ] 10.5 Проверить fallback, если биометрия недоступна на устройстве.
+- [x] 10.2 Создать privacy settings в AppSettings (флаг requireBiometrics).
+       (флаг уже был создан в Фазе 4; добавлен UI-переключатель в Settings)
+- [x] 10.3 Реализовать lock screen.
+- [x] 10.4 Реализовать route protection в Expo Router.
+       (BiometricsGate в root layout оборачивает весь Stack)
+- [x] 10.5 Проверить fallback, если биометрия недоступна на устройстве.
+       (shouldLock не блокирует, если биометрия недоступна; подтверждено
+       на симуляторе — биометрия не зарегистрирована, приложение не заблокировано)
 
 ### VERIFICATION 10
 
-- При включённой защите приложение требует биометрию.
+- При включённой защите приложение требует биометрию. (код + сборка;
+  на симуляторе биометрия не зарегистрирована — см. PROGRESS)
 - Без успешной аутентификации фото недоступны.
-- Если биометрия недоступна — приложение не ломается.
+- Если биометрия недоступна — приложение не ломается. (подтверждено:
+  code -7 «No identities are enrolled» → fallback без блокировки)
 - Запись в PROGRESS.md добавлена.
 
 ---

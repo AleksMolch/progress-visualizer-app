@@ -435,3 +435,43 @@
   - Безвредный warning Reanimated `onAnimatedValueUpdate` при первом рендере.
   - Android-проверка не выполнена (нет Android-эмулятора).
 - Следующий шаг: Фаза 10 (биометрическая защита).
+
+---
+
+### 2026-08-22 — Фаза 10 — Биометрическая защита
+
+- Что сделано: установлен expo-local-authentication; реализованы storage-обёртка
+  (isBiometricsAvailable, authenticateWithBiometrics), lock screen и
+  BiometricsGate (route protection на всё приложение в root layout); добавлен
+  UI-переключатель защиты в Settings; добавлен fallback, когда биометрия
+  недоступна; плагин FaceID в app.json. Чистая функция shouldLock покрыта тестами.
+- Какие файлы созданы или изменены:
+  - созданы: `src/storage/biometrics.ts`, `src/utils/security.ts`,
+    `src/utils/security.test.ts`,
+    `src/features/privacy/components/lock-screen.tsx`,
+    `biometrics-gate.tsx`
+  - изменены: `src/app/_layout.tsx` (BiometricsGate поверх Stack),
+    `src/store/appStore.ts` (+isUnlocked/setUnlocked, не персистится),
+    `src/app/(tabs)/settings.tsx` (переключатель биометрии),
+    `app.json` (плагин expo-local-authentication + NSFaceIDUsageDescription),
+    `TODO.md` (Фаза 10 закрыта)
+  - package.json: добавлен `expo-local-authentication` ~57.0.2
+- Какие команды запускались:
+  - `npx expo install expo-local-authentication`
+  - `npm run typecheck`, `npm run lint`, `npm test`
+  - `npx expo prebuild --platform ios` (автолинковка + FaceID permission)
+  - `npx expo run:ios` (Build Succeeded, 0 errors)
+  - `npx expo-doctor`
+- Результат проверок:
+  - typecheck: без ошибок; lint: без ошибок и предупреждений
+  - тесты: 35/35 passed (новые: shouldLock 3 теста)
+  - expo-doctor: 21/21
+  - сборка iOS: успешно; FaceID description в Info.plist; приложение запускается
+- Известные проблемы:
+  - Реальная проверка Face ID/Touch ID на симуляторе невозможна (биометрия не
+    зарегистрирована, LAContext возвращает code -7 «No identities are enrolled»).
+    Fallback отработал корректно: приложение НЕ заблокировалось.
+  - Проверка полного цикла «включил защиту -> перезапуск -> запрос биометрии»
+    требует реального устройства с зарегистрированной биометрией — ручная.
+  - Android-проверка не выполнена (нет Android-эмулятора).
+- Следующий шаг: Фаза 11 (локальные уведомления).

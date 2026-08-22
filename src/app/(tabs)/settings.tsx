@@ -1,24 +1,64 @@
 /**
- * Назначение: экран-заглушка вкладки «Настройки».
+ * Назначение: экран «Настройки».
  *
  * Функции:
- * - показывает заголовок и пустое состояние экрана настроек.
+ * - переключатель биометрической защиты (requireBiometrics);
+ * - при недоступной биометрии — показывает подсказку и отключает переключатель.
  *
- * Слой: UI (/src/app). Позже будет заполнен настройками приватности
- * (биометрия, напоминания, экспорт) в Фазах 10–13.
+ * Слой: UI (/src/app). Данные — useSettingsStore, доступность биометрии —
+ * через storage-слой (isBiometricsAvailable).
  */
 
-import { StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { StyleSheet, Switch, View } from 'react-native';
 
+import { AppCard } from '@/components/ui/app-card';
 import { AppScreen } from '@/components/ui/app-screen';
 import { AppText } from '@/components/ui/app-text';
+import { isBiometricsAvailable } from '@/storage/biometrics';
+import { useSettingsStore } from '@/store/settingsStore';
+import { spacing } from '@/theme';
+import { useAppTheme } from '@/theme/ThemeProvider';
 
 export default function SettingsScreen() {
+  const { colors } = useAppTheme();
+  const requireBiometrics = useSettingsStore((s) => s.settings.requireBiometrics);
+  const updateSettings = useSettingsStore((s) => s.updateSettings);
+
+  // null — ещё не определили доступность биометрии.
+  const [available, setAvailable] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    isBiometricsAvailable().then(setAvailable);
+  }, []);
+
   return (
-    <AppScreen>
+    <AppScreen scroll>
       <View style={styles.container}>
         <AppText variant="title">Настройки</AppText>
-        <AppText color="textSecondary">Здесь появятся настройки приложения.</AppText>
+
+        <AppCard style={styles.card}>
+          <View style={styles.row}>
+            <View style={styles.rowText}>
+              <AppText variant="subtitle">Защита биометрией</AppText>
+              <AppText color="textSecondary" variant="caption">
+                Требовать Face ID / Touch ID при входе
+              </AppText>
+            </View>
+            <Switch
+              value={requireBiometrics}
+              disabled={available === null || available === false}
+              onValueChange={(value) => updateSettings({ requireBiometrics: value })}
+              trackColor={{ true: colors.primary }}
+            />
+          </View>
+
+          {available === false ? (
+            <AppText color="textSecondary" variant="caption">
+              Биометрия недоступна на этом устройстве.
+            </AppText>
+          ) : null}
+        </AppCard>
       </View>
     </AppScreen>
   );
@@ -26,10 +66,20 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    padding: spacing.lg,
+    gap: spacing.lg,
+  },
+  card: {
+    gap: spacing.sm,
+  },
+  row: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    padding: 24,
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  rowText: {
+    flex: 1,
+    gap: spacing.xs,
   },
 });
