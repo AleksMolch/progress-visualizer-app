@@ -1,21 +1,28 @@
-import { useEffect, useState } from 'react';
+/**
+ * Назначение: хук определения цветовой схемы для web-платформы.
+ *
+ * Функции:
+ * - возвращает системную цветовую схему;
+ * - при статическом рендеринге (SSR) до гидратации возвращает 'light'.
+ *
+ * Слой: UI (hook). Код шаблона Expo, будет заменён при настройке навигации (Фаза 2).
+ */
+
+import { useSyncExternalStore } from 'react';
 import { useColorScheme as useRNColorScheme } from 'react-native';
 
-/**
- * To support static rendering, this value needs to be re-calculated on the client side for web
- */
+// Заглушка подписки: внешнего хранилища нет, нужна только для контракта useSyncExternalStore.
+const emptySubscribe = () => () => {};
+
 export function useColorScheme() {
-  const [hasHydrated, setHasHydrated] = useState(false);
-
-  useEffect(() => {
-    setHasHydrated(true);
-  }, []);
-
   const colorScheme = useRNColorScheme();
 
-  if (hasHydrated) {
-    return colorScheme;
-  }
+  // Флаг гидратации: на сервере (SSR) — false, после гидратации на клиенте — true.
+  const hasHydrated = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
 
-  return 'light';
+  return hasHydrated ? colorScheme : 'light';
 }

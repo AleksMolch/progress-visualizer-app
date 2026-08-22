@@ -46,14 +46,14 @@
 
 Цель: создать устойчивый фундамент до добавления UI-библиотек.
 
-- [ ] 1.1 Включить/проверить TypeScript strict в tsconfig.json.
-- [ ] 1.2 Настроить ESLint и Prettier, совместимые с установленным Expo template.
-- [ ] 1.3 Создать структуру папок по ARCHITECTURE.md.
-- [ ] 1.4 Создать базовые типы в /src/models:
+- [x] 1.1 Включить/проверить TypeScript strict в tsconfig.json.
+- [x] 1.2 Настроить ESLint и Prettier, совместимые с установленным Expo template.
+- [x] 1.3 Создать структуру папок по ARCHITECTURE.md.
+- [x] 1.4 Создать базовые типы в /src/models:
        Project, PhotoMetadata, AppSettings.
-- [ ] 1.5 Создать пустые feature-папки:
+- [x] 1.5 Создать пустые feature-папки:
        projects, camera, gallery, settings, privacy, support.
-- [ ] 1.6 Проверить:
+- [x] 1.6 Проверить:
 
 ```bash
 npm run typecheck
