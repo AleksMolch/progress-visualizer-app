@@ -27,7 +27,7 @@
 
 ## Дополнительные библиотеки (заполняется по мере установки)
 
-- gluestack-ui: (не установлен)
+- gluestack-ui: НЕ используется (отказ в Фазе 3, см. DECISIONS.md)
 - zustand: (не установлен)
 - react-native-mmkv: (не установлен)
 - jotai: (не установлен)
@@ -38,7 +38,7 @@
 - expo-secure-store: (не установлен)
 - expo-notifications: (не установлен)
 - expo-image: ~57.0.3 (уже в template)
-- react-native-edge-to-edge: (не установлен)
+- react-native-edge-to-edge: не нужен (нативно в RN 0.86, см. DECISIONS.md)
 
 ## Результат expo-doctor
 

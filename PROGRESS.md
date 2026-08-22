@@ -115,3 +115,34 @@
     @expo/ui, expo-glass-effect) и демо-ассеты — чистка в Фазе 15.
 - Следующий шаг: Фаза 3 (gluestack-ui: проверить совместимость, подключить
   UI-систему, базовые компоненты, тема, edge-to-edge).
+
+---
+
+### 2026-08-21 — Фаза 3 — UI-система (отказ от gluestack-ui, custom UI)
+
+- Что сделано: исследована совместимость gluestack-ui — отказ; создана
+  собственная UI-система (токены темы + базовые компоненты); тема следует
+  системной схеме; edge-to-edge оставлен нативным.
+- Какие файлы созданы или изменены:
+  - созданы: `src/theme/index.ts` (токены), `src/theme/ThemeProvider.tsx`
+    (провайдер + useAppTheme), `src/components/ui/app-text.tsx`,
+    `app-button.tsx`, `app-screen.tsx`, `app-card.tsx`
+  - изменены: `src/app/_layout.tsx` (ThemeProvider), `src/app/(tabs)/_layout.tsx`
+    (headerShown: false), все экраны (`index/camera/settings/project[id]`)
+    переведены на новые компоненты
+  - обновлены: `DECISIONS.md` (2 решения), `STACK_RESOLVED.md`,
+    `STACK_LOCK.md`, `TODO.md`
+- Какие команды запускались:
+  - `npm view gluestack-ui / nativewind / @gluestack-ui/*` (исследование)
+  - `npm run typecheck`
+  - `npm run lint`
+  - `npx expo start --ios`
+- Результат проверок:
+  - typecheck: без ошибок
+  - lint: без ошибок
+  - запуск: iOS Bundled 2095ms (1276 модулей), без runtime-ошибок
+- Известные проблемы:
+  - Android-проверка не выполнена (нет эмулятора в окружении) — нужна ручная.
+  - Визуальная проверка темы/компонентов — ручная (модель не читает скриншоты).
+- Следующий шаг: Фаза 4 (MMKV + SecureStore + Zustand: локальное хранилище,
+  store с persist, unit-тесты).

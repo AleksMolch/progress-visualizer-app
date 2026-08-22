@@ -72,7 +72,9 @@ npx expo-doctor
 ### UI / UX
 
 - gluestack-ui — использовать только если актуальная версия совместима
-  с установленным Expo/RN
+  с установленным Expo/RN.
+  РЕШЕНИЕ (Фаза 3): НЕ используется — отказ в пользу собственной UI-системы,
+  подробности в DECISIONS.md.
 - react-native-reanimated — версия, совместимая с Expo SDK
 - react-native-gesture-handler — версия, совместимая с Expo SDK
 - react-native-edge-to-edge — подключать только после проверки совместимости

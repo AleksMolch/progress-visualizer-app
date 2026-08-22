@@ -8,14 +8,19 @@
  * (биометрия, напоминания, экспорт) в Фазах 10–13.
  */
 
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+
+import { AppScreen } from '@/components/ui/app-screen';
+import { AppText } from '@/components/ui/app-text';
 
 export default function SettingsScreen() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Настройки</Text>
-      <Text style={styles.hint}>Здесь появятся настройки приложения.</Text>
-    </View>
+    <AppScreen>
+      <View style={styles.container}>
+        <AppText variant="title">Настройки</AppText>
+        <AppText color="textSecondary">Здесь появятся настройки приложения.</AppText>
+      </View>
+    </AppScreen>
   );
 }
 
@@ -26,13 +31,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 12,
     padding: 24,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  hint: {
-    fontSize: 14,
-    color: '#666666',
   },
 });

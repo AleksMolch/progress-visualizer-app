@@ -7,14 +7,19 @@
  * Слой: UI (/src/app). Позже будет заменён реальной камерой с ghost overlay (Фаза 6–7).
  */
 
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+
+import { AppScreen } from '@/components/ui/app-screen';
+import { AppText } from '@/components/ui/app-text';
 
 export default function CameraScreen() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Камера</Text>
-      <Text style={styles.hint}>Здесь появится съёмка с ghost overlay.</Text>
-    </View>
+    <AppScreen>
+      <View style={styles.container}>
+        <AppText variant="title">Камера</AppText>
+        <AppText color="textSecondary">Здесь появится съёмка с ghost overlay.</AppText>
+      </View>
+    </AppScreen>
   );
 }
 
@@ -25,13 +30,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 12,
     padding: 24,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  hint: {
-    fontSize: 14,
-    color: '#666666',
   },
 });

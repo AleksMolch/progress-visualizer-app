@@ -51,3 +51,70 @@
 Статус:
 
 Принято.
+
+---
+
+### 2026-08-21 — Отказ от gluestack-ui: собственная UI-система
+
+Контекст:
+
+gluestack-ui v5 сменил архитектуру: требует NativeWind v5 (находится в
+`5.0.0-preview.4`) + Tailwind CSS v4 (PostCSS/lightningcss, правки
+`metro.config.js`/`babel.config.js`). Поверх нового Expo SDK 57 это даёт
+высокий риск несовместимости.
+
+Решение:
+
+Отказаться от gluestack-ui. Использовать собственную лёгкую UI-систему:
+дизайн-токены в `/src/theme` + базовые компоненты (AppText, AppButton,
+AppScreen, AppCard) на React Native StyleSheet.
+
+Альтернативы:
+
+- legacy gluestack «themed» (`@gluestack-ui/themed` + `@gluestack-style/react`);
+- gluestack v5 + NativeWind v5 (preview).
+
+Почему выбрано это решение:
+
+Соответствует принципам YAGNI и «простое решение лучше сложного»; нет
+зависимости от preview-библиотеки и шага сборки Tailwind.
+
+Риски:
+
+Придётся реализовывать компоненты, которые gluestack даёт из коробки.
+Компенсируется небольшим набором нужных компонентов.
+
+Статус:
+
+Принято (подтверждено пользователем).
+
+---
+
+### 2026-08-21 — Без react-native-edge-to-edge (нативно в RN 0.86)
+
+Контекст:
+
+В плане был `react-native-edge-to-edge` для edge-to-edge отображения.
+RN 0.86 (Expo SDK 57) включает edge-to-edge нативно (Android 15+ по умолчанию),
+и пакет отсутствует в bundledNativeModules Expo.
+
+Решение:
+
+Не подключать `react-native-edge-to-edge`; использовать нативный edge-to-edge
+и `react-native-safe-area-context` для отступов.
+
+Альтернативы:
+
+Подключить `react-native-edge-to-edge`.
+
+Почему выбрано это решение:
+
+Нет причины добавлять библиотеку, чья функция уже встроена в платформу.
+
+Риски:
+
+Минимальны.
+
+Статус:
+
+Принято.

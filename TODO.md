@@ -95,22 +95,27 @@ npm run lint
 
 Цель: подключить UI-библиотеку только если она реально совместима.
 
-- [ ] 3.1 Проверить актуальную инструкцию установки gluestack-ui
+> ИТОГ (2026-08-21): gluestack-ui v5 требует NativeWind v5 (preview) + Tailwind v4 —
+> рискованно на SDK 57. По решению пользователя — отказ, собственная UI-система
+> (токены /src/theme + AppText/AppButton/AppScreen/AppCard). См. DECISIONS.md.
+
+- [x] 3.1 Проверить актуальную инструкцию установки gluestack-ui
        для установленного Expo/RN из STACK_RESOLVED.md.
-- [ ] 3.2 Подключить gluestack-ui:
+- [x] 3.2 Подключить gluestack-ui (НЕ выполнено — отказ, custom UI):
 
 ```bash
 npx gluestack-ui init
 ```
 
-- [ ] 3.3 Если gluestack-ui конфликтует с текущим стеком —
+- [x] 3.3 Если gluestack-ui конфликтует с текущим стеком —
        остановиться и спросить пользователя. Не заменять молча.
-- [ ] 3.4 Подключить GluestackUIProvider в root layout.
-- [ ] 3.5 Создать базовые компоненты:
+       (выполнено: остановился, пользователь выбрал custom UI)
+- [x] 3.4 Подключить ThemeProvider (custom) в root layout.
+- [x] 3.5 Создать базовые компоненты:
        AppButton, AppText, AppScreen, AppCard.
-- [ ] 3.6 Настроить светлую/тёмную тему.
-- [ ] 3.7 Подключить react-native-edge-to-edge через config plugin в app.json.
-- [ ] 3.8 Проверить отображение на iOS и Android.
+- [x] 3.6 Настроить светлую/тёмную тему (следует системной).
+- [x] 3.7 Подключить react-native-edge-to-edge (НЕ нужно — нативно в RN 0.86).
+- [x] 3.8 Проверить отображение на iOS (Android — нет эмулятора, вручную).
 
 ### VERIFICATION 3
 

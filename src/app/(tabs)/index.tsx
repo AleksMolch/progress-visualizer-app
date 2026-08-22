@@ -3,45 +3,52 @@
  *
  * Функции:
  * - показывает заголовок и пустое состояние списка проектов;
- * - даёт переход на пример экрана проекта для проверки навигации.
+ * - демонстрирует базовые UI-компоненты и переход на экран проекта.
  *
  * Слой: UI (/src/app). Позже будет заменён реальным списком проектов (Фаза 8).
  */
 
-import { Link } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { StyleSheet, View } from 'react-native';
+
+import { AppButton } from '@/components/ui/app-button';
+import { AppCard } from '@/components/ui/app-card';
+import { AppScreen } from '@/components/ui/app-screen';
+import { AppText } from '@/components/ui/app-text';
+import { spacing } from '@/theme';
 
 export default function ProjectsScreen() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Проекты</Text>
-      <Text style={styles.hint}>Здесь появится список проектов.</Text>
-      <Link href="/project/demo" style={styles.link}>
-        Открыть пример проекта
-      </Link>
-    </View>
+    <AppScreen>
+      <View style={styles.container}>
+        <AppText variant="title">Проекты</AppText>
+        <AppText color="textSecondary">Здесь появится список проектов.</AppText>
+
+        <AppCard style={styles.card}>
+          <View style={styles.cardBody}>
+            <AppText variant="subtitle">Демо-навигация</AppText>
+            <AppText color="textSecondary">Проверка перехода на экран проекта.</AppText>
+            <AppButton
+              label="Открыть пример проекта"
+              onPress={() => router.push('/project/demo')}
+            />
+          </View>
+        </AppCard>
+      </View>
+    </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    padding: 24,
+    padding: spacing.lg,
+    gap: spacing.md,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '600',
+  card: {
+    width: '100%',
   },
-  hint: {
-    fontSize: 14,
-    color: '#666666',
-  },
-  link: {
-    fontSize: 16,
-    color: '#208AEF',
-    marginTop: 8,
+  cardBody: {
+    gap: spacing.sm,
   },
 });
