@@ -182,22 +182,22 @@ npx expo install expo-secure-store
 
 Цель: сохранять фотографии только в sandbox приложения.
 
-- [ ] 5.1 Установить/проверить expo-file-system:
+- [x] 5.1 Установить/проверить expo-file-system:
 
 ```bash
 npx expo install expo-file-system
 ```
 
-- [ ] 5.2 Создать /src/storage/photoFiles.ts.
-- [ ] 5.3 Реализовать функции:
+- [x] 5.2 Создать /src/storage/photoFiles.ts.
+- [x] 5.3 Реализовать функции:
        - ensureAppPhotoDirectory
        - createProjectPhotoDirectory
        - savePhotoToProject
        - deletePhotoFile
        - deleteProjectPhotoDirectory
-- [ ] 5.4 Не использовать общую галерею для сохранения по умолчанию.
-- [ ] 5.5 Написать тесты для storage-функций с замоканным file API.
-- [ ] 5.6 Зафиксировать privacy-решение по хранению в DECISIONS.md.
+- [x] 5.4 Не использовать общую галерею для сохранения по умолчанию.
+- [x] 5.5 Написать тесты для storage-функций с замоканным file API.
+- [x] 5.6 Зафиксировать privacy-решение по хранению в DECISIONS.md.
 
 ### VERIFICATION 5
 

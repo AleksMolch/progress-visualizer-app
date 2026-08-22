@@ -184,3 +184,41 @@
   - bundleIdentifier временный (`com.anonymous.*`) — заменить в Фазе 15.
 - Следующий шаг: Фаза 5 (file storage фотографий в sandbox); dev-build
   (4.8) вернуться к ручной проверке при наличии CocoaPods.
+
+---
+
+### 2026-08-22 — Фаза 5 — File storage для фотографий
+
+- Что сделано: установлен expo-file-system (~57.0.5); реализован storage-модуль
+  photoFiles.ts (ensureAppPhotoDirectory, createProjectPhotoDirectory,
+  savePhotoToProject, deletePhotoFile, deleteProjectPhotoDirectory) на новом
+  объектном API (Directory/File/Paths); фото хранятся в
+  `Paths.document/photos/<projectId>/`; написан ручной мок expo-file-system и
+  unit-тесты; исправлен сдвиг версии @types/jest (30.0.0 -> ~29.5.14) по
+  expo-doctor; зафиксировано privacy-решение в DECISIONS.md.
+- Какие файлы созданы или изменены:
+  - созданы: `src/storage/photoFiles.ts`, `src/storage/photoFiles.test.ts`,
+    `__mocks__/expo-file-system.ts`
+  - изменены: `DECISIONS.md` (решение о sandbox-хранении), `STACK_RESOLVED.md`
+    (expo-file-system), `TODO.md` (Фаза 5 закрыта), `package.json` (@types/jest)
+- Какие команды запускались:
+  - `npx expo install expo-file-system`
+  - `npm run typecheck`
+  - `npm run lint`
+  - `npm test` (и `npx jest src/storage/photoFiles.test.ts`)
+  - `npx expo-doctor`
+  - `npm install --save-dev @types/jest@~29.5.14`
+- Результат проверок:
+  - typecheck: без ошибок
+  - lint: без ошибок и предупреждений
+  - тесты: 17/17 passed (8 новых для photoFiles, мок file API in-memory)
+  - expo-doctor: 17/18 (единственный fail — отсутствие CocoaPods, см. ниже)
+- Известные проблемы:
+  - Реальная запись файла в sandbox НЕ проверена: нужен development build
+    (MMKV не работает в Expo Go), а CocoaPods не установлен и требует sudo.
+    Функции покрыты unit-тестами с моком; ручная проверка — после установки
+    CocoaPods (`npx expo run:ios`).
+  - `@types/jest` был 30.0.0 при ожидаемом 29.5.14 (сдвиг из Фазы 4) —
+    приведён к ~29.5.14, expo-doctor больше не ругается.
+- Следующий шаг: Фаза 6 (камера и разрешения: expo-camera, экран съёмки,
+  сохранение в sandbox через photoFiles.ts).

@@ -33,7 +33,7 @@
 - react-native-nitro-modules: ^0.37.0 (зависимость MMKV v4)
 - jotai: (не установлен)
 - expo-camera: (не установлен)
-- expo-file-system: (не установлен)
+- expo-file-system: ~57.0.5
 - expo-media-library: (не установлен)
 - expo-local-authentication: (не установлен)
 - expo-secure-store: ~57.0.1
@@ -44,7 +44,7 @@
 
 ## Результат expo-doctor
 
-Дата проверки: 2026-08-21
+Дата проверки: 2026-08-22
 
 Команда:
 
@@ -56,8 +56,15 @@ npx expo-doctor
 
 ```text
 Running 18 checks on your project...
-18/18 checks passed. No issues detected!
+17/18 checks passed. 1 checks failed. Possible issues detected:
+✖ Check native tooling versions
+CocoaPods version check failed. CocoaPods may not be installed or there may be
+an issue with your CocoaPods installation. Installing version 1.15.2 or higher
+is recommended.
 ```
+
+Примечание: единственный fail — отсутствие CocoaPods (требует sudo для
+установки). Ранее выявленный сдвиг `@types/jest` (30.0.0 -> 29.5.14) исправлен.
 
 ## Замечания по совместимости
 
