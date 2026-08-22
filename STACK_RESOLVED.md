@@ -6,10 +6,18 @@
 
 ## Runtime окружение
 
+> Раздел ниже описывает МАШИНУ, на которой шла разработка до 2026-08-22
+> (Intel Mac, macOS 15.7.7). На ней сборка iOS невозможна (см. «Замечания»).
+> После переноса на новый Mac — обновить этот раздел фактическими версиями
+> новой машины. Версии из package.json НЕ зависят от машины.
+
 - Node.js: v20.17.0 (⚠ ниже минимальной для RN 0.86: ^20.19.4)
 - npm: 10.8.2
 - Expo CLI: create-expo-app@4.0.0
-- OS сборки: macOS (darwin)
+- OS сборки: macOS 15.7.7 (Sequoia, Intel x86_64)
+- Xcode: 16.4 (Build 16F6), Swift 6.1.2 (⚠ ниже требуемого — нужен Xcode 26)
+- Ruby: системный 2.6.10 (⚠ устарел) + rbenv 3.3.12 (для CocoaPods)
+- CocoaPods: 1.17.0 (установлен через rbenv Ruby 3.3.12)
 
 ## Версии из package.json
 
@@ -68,7 +76,42 @@ is recommended.
 
 ## Замечания по совместимости
 
+- ⚠ Xcode 16.3/16.4 (Swift 6.1.x) НЕ собирают Expo SDK 57: пакеты
+  expo-modules-jsi и @expo/expo-modules-macros-plugin объявлены как
+  `swift-tools-version: 6.2`. Сборка падает с `package 'apple' is using Swift
+  tools version 6.2.0 but the installed version is 6.1.0`.
+  Требуется Xcode 26.x (Swift 6.2+). Важно: standalone Swift 6.2 toolchain
+  (swift.org) НЕ помогает — `xcodebuild` проверяет swift-tools-version
+  встроенным в Xcode SwiftPM, а не toolchain-ом.
 - Node v20.17.0 ниже требуемого минимума для react-native@0.86.2
   (^20.19.4 || ^22.13.0 || ^24.3.0 || >= 25.0.0). npm install выдал
   EBADENGINE warnings, но установка завершилась. При появлении ошибок
   сборки — обновить Node.
+- Системный Ruby 2.6.10 слишком старый для CocoaPods (зависимость ffi
+  требует Ruby 3.0+). Решено установкой Ruby 3.3.12 через rbenv
+  (`~/.rbenv/versions/3.3.12`) и `gem install cocoapods`; в PATH добавлять
+  `~/.rbenv/versions/3.3.12/bin`.
+
+## Перенос на новую машину
+
+Требования целевой машины (Apple Silicon Mac, macOS 26):
+
+- Xcode 26.x (`xcodebuild -version` → Swift 6.2+) — обязателен для Expo SDK 57.
+- Node.js >= 20.19.4 (рекомендуется LTS 22).
+- CocoaPods >= 1.15.2 (на Apple Silicon достаточно `brew install cocoapods`).
+- Папки `ios/` и `android/` в .gitignore — их нет в репозитории, генерируются
+  через `npx expo prebuild --platform ios`.
+
+Порядок после клонирования:
+
+```bash
+git pull
+node -v                      # >= 20.19.4
+xcodebuild -version          # Xcode 26.x
+pod --version                # >= 1.15.2
+npm install
+npx expo prebuild --platform ios
+npx expo run:ios             # собрать и запустить dev build
+```
+
+Затем проверить 4.8 (данные переживают перезапуск) и продолжить с Фазы 7.

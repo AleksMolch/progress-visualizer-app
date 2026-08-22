@@ -162,9 +162,24 @@ npx expo install expo-secure-store
        - удаления photo metadata
        - изменения settings
 - [ ] 4.8 Проверить, что данные переживают перезапуск приложения.
-       БЛОКИРОВАНО: нужен development build (MMKV — нативный модуль),
-       а CocoaPods не установлен и требует sudo. `npx expo prebuild` прошёл
-       успешно (автолинковка nitro/mkv настроена) — осталась ручная проверка.
+
+       БЛОКИРОВАНО на Intel Mac (macOS 15.7.7): Expo SDK 57 требует
+       Swift 6.2 (Xcode 26), а здесь максимум Xcode 16.4 (Swift 6.1.2).
+       Локальная iOS-сборка невозможна; без dev build не запустить приложение
+       (MMKV не работает в Expo Go). Перенести на новый Mac и продолжить:
+
+       На новом Mac (Apple Silicon, macOS 26, Xcode 26):
+       1) `git pull` актуальную ветку.
+       2) Проверить окружение: Node ≥ 20.19.4 (`node -v`), Xcode 26
+          (`xcodebuild -version` → Swift 6.2+), CocoaPods (`pod --version`,
+          на Apple Silicon ставится через `brew install cocoapods`).
+       3) `npm install`.
+       4) `npx expo prebuild --platform ios` (папки `ios/`/`android/` в
+          .gitignore — их в репозитории нет, генерируются заново).
+       5) `npx expo run:ios` — собрать dev build.
+       6) Запустить приложение, создать данные (или проверить init MMKV),
+          перезапустить приложение, убедиться, что данные пережили перезапуск.
+       7) После 4.8 — продолжить с Фазы 7 (ghost overlay и сетка).
 
 ### VERIFICATION 4
 
