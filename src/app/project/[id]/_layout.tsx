@@ -17,6 +17,7 @@ export default function ProjectLayout() {
       <Stack.Screen name="index" options={{ title: 'Проект' }} />
       <Stack.Screen name="viewer/[photoId]" options={{ title: 'Фото' }} />
       <Stack.Screen name="compare/[photoId]" options={{ title: 'Сравнение' }} />
+      <Stack.Screen name="timelapse" options={{ title: 'Timelapse' }} />
     </Stack>
   );
 }

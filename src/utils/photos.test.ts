@@ -1,7 +1,12 @@
 // Тесты утилиты выборки последнего фото проекта.
 
 import { type PhotoMetadata } from '@/models/photo';
-import { getLatestPhoto, getPreviousPhoto, getProjectPhotos } from './photos';
+import {
+  getChronologicalPhotos,
+  getLatestPhoto,
+  getPreviousPhoto,
+  getProjectPhotos,
+} from './photos';
 
 /** Создаёт тестовые метаданные фото. */
 function photo(id: string, projectId: string, takenAt: number): PhotoMetadata {
@@ -57,6 +62,25 @@ describe('getProjectPhotos', () => {
 
   it('возвращает пустой массив, если у проекта нет фото', () => {
     expect(getProjectPhotos([photo('a', 'p2', 1)], 'p1')).toEqual([]);
+  });
+});
+
+describe('getChronologicalPhotos', () => {
+  it('возвращает фото проекта от ранних к поздним', () => {
+    const photos = [
+      photo('new', 'p1', 300),
+      photo('old', 'p1', 100),
+      photo('mid', 'p1', 200),
+      photo('other', 'p2', 999),
+    ];
+
+    const result = getChronologicalPhotos(photos, 'p1');
+
+    expect(result.map((p) => p.id)).toEqual(['old', 'mid', 'new']);
+  });
+
+  it('возвращает пустой массив, если у проекта нет фото', () => {
+    expect(getChronologicalPhotos([photo('a', 'p2', 1)], 'p1')).toEqual([]);
   });
 });
 

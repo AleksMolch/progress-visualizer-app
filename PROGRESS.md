@@ -626,39 +626,47 @@
 
 ---
 
-### 2026-08-24 — Фаза 14 — Timelapse: research (кода нет)
+### 2026-08-24 — Фаза 14 — Timelapse: research + псевдо-timelapse
 
-- Что сделано: исследована возможность локальной генерации видео-timelapse из
-  фото без deprecated библиотек. Проверены npm-реестр и docs Expo SDK 57.
-  Результат: поддерживаемой НЕ-deprecated JS-библиотеки нет — подходит только
-  собственный нативный Expo Module (iOS AVAssetWriter, Android MediaMuxer/MediaCodec
-  или Media3 Transformer). Записано в DECISIONS.md. Код НЕ писался.
+- Что сделано: (1) исследована локальная генерация видео-timelapse — поддерживаемой
+  НЕ-deprecated JS-библиотеки нет, «чистый» путь только через собственный нативный
+  модуль; записано в DECISIONS.md. (2) По решению владельца реализован
+  «псевдо-timelapse» без видеофайла: экран `/project/[id]/timelapse` с
+  авто-прокруткой фото в хронологическом порядке, паузой/продолжением,
+  зацикливанием и счётчиком кадров. Настоящий видео-timelapse записан в TODO.md
+  как факультативная задача на будущее (с выводами анализа).
 - Какие файлы созданы или изменены:
-  - изменены: `DECISIONS.md` (research note «Timelapse: research»), `TODO.md`
-    (14.1–14.4 закрыты, 14.5 — решение владельца)
+  - созданы: `src/app/project/[id]/timelapse.tsx`
+  - изменены: `src/utils/photos.ts` (+getChronologicalPhotos),
+    `src/utils/photos.test.ts` (+2 теста), `src/app/project/[id]/_layout.tsx`
+    (маршрут timelapse), `src/app/project/[id]/index.tsx` (кнопка «Timelapse» в
+    шапке при ≥2 фото), `DECISIONS.md` (статус решения), `TODO.md`
+    (14.5/VERIFICATION + факультативная задача), `README.md`
 - Какие команды запускались:
   - `npm view ffmpeg-kit-react-native / react-native-ffmpeg /
     react-native-image-sequence / expo-video / react-native-vision-camera`
-    (проверка версий и deprecated-статуса)
-  - webfetch docs.expo.dev/versions/v57.0.0/sdk/video (возможности expo-video)
+  - webfetch docs.expo.dev/versions/v57.0.0/sdk/video
+  - `npm run typecheck`, `npm run lint`, `npm test`
 - Результат проверок:
-  - кода нет — сборка/тесты не менялись (57/57 тестов из Фазы 13 актуальны)
-- Вывод исследования (кратко):
-  - expo-video — только playback + thumbnails, склейки изображений нет;
-  - ffmpeg-kit-react-native и react-native-ffmpeg — deprecated;
-  - react-native-image-sequence — не обновляется с 2022 и не создаёт видеофайл;
-  - vision-camera — реалтайм, не склейка;
-  - единственный «чистый» путь — custom native module (значительный объём).
-- Следующий шаг: решение владельца (реализовывать / оставить вне MVP).
+  - typecheck: без ошибок; lint: без ошибок и предупреждений
+  - тесты: 59/59 passed (новые: getChronologicalPhotos 2)
+  - expo-doctor: не перезапускался (новых зависимостей нет, предыдущий 21/21)
+- Известные проблемы:
+  - Псевдо-timelapse не создаёт видеофайл — это осознанный выбор владельца.
+  - Визуальная проверка слайд-шоу (тайминг, пауза, зацикливание) — ручная.
+- Следующий шаг: Фаза 15 (полировка и подготовка портфолио).
 
 ---
 
 ### 2026-08-24 — ПАМЯТКА ДЛЯ СЛЕДУЮЩЕЙ СЕССИИ (handoff)
 
-- Прогресс: закрыты Фазы 0–13; Фаза 14 (research) выполнена, ЖДЁТ РЕШЕНИЯ
-  владельца по timelapse.
-- Как только решение принято: зафиксировать его в TODO 14.5, VERIFICATION 14
-  и DECISIONS.md (статус research-записи), затем Фаза 15 (полировка/портфолио).
+- Прогресс: закрыты Фазы 0–14. Последняя — Фаза 14 (псевдо-timelapse).
+- Следующая подзадача — Фаза 15 «Полировка и подготовка портфолио» (TODO.md,
+  раздел 15): empty/error states, permission texts, app icon/splash, README,
+  Privacy Policy draft, аудит отсутствия network/analytics/ads SDK и лишних
+  разрешений, финальный прогон 4 команд.
+- Отдельная факультативная задача (НЕ входит в MVP) — нативный модуль для
+  генерации видео-timelapse, с выводами анализа — описана в конце TODO.md.
 - Перед Фазой 15 перечитай якорные файлы: CONSTITUTION.md, STACK_LOCK.md,
   STACK_RESOLVED.md, TODO.md (раздел 15), и эту памятку.
 - Обрати внимание: патч-версии SDK 57 выровнены в Фазе 11 (expo ~57.0.16 и др.).

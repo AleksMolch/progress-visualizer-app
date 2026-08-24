@@ -16,6 +16,7 @@ import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, FlatList, Pressable, StyleSheet, View } from 'react-native';
 
+import { AppButton } from '@/components/ui/app-button';
 import { AppScreen } from '@/components/ui/app-screen';
 import { AppText } from '@/components/ui/app-text';
 import { useProjectStore } from '@/store/projectStore';
@@ -57,7 +58,19 @@ export default function ProjectScreen() {
 
   return (
     <AppScreen>
-      <Stack.Screen options={{ title: project.name }} />
+      <Stack.Screen
+        options={{
+          title: project.name,
+          headerRight: () =>
+            projectPhotos.length >= 2 ? (
+              <AppButton
+                label="Timelapse"
+                variant="ghost"
+                onPress={() => router.push(`/project/${id}/timelapse`)}
+              />
+            ) : null,
+        }}
+      />
 
       {projectPhotos.length === 0 ? (
         <View style={styles.empty}>

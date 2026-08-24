@@ -48,6 +48,22 @@ export function getProjectPhotos(
 }
 
 /**
+ * Возвращает фото проекта в хронологическом порядке (от ранних к поздним).
+ * Используется для «псевдо-timelapse»: последовательный показ прогресса.
+ * @param photos — полный список метаданных фото.
+ * @param projectId — идентификатор проекта.
+ * @returns Массив фото проекта, отсортированный по takenAt (старые первыми).
+ */
+export function getChronologicalPhotos(
+  photos: PhotoMetadata[],
+  projectId: string,
+): PhotoMetadata[] {
+  return photos
+    .filter((photo) => photo.projectId === projectId)
+    .sort((a, b) => a.takenAt - b.takenAt);
+}
+
+/**
  * Возвращает предыдущее (более раннее) фото проекта относительно заданного.
  * Используется для сравнения «до/после»: текущее фото против предыдущего.
  * @param photos — полный список метаданных фото.
