@@ -626,17 +626,41 @@
 
 ---
 
+### 2026-08-24 — Фаза 14 — Timelapse: research (кода нет)
+
+- Что сделано: исследована возможность локальной генерации видео-timelapse из
+  фото без deprecated библиотек. Проверены npm-реестр и docs Expo SDK 57.
+  Результат: поддерживаемой НЕ-deprecated JS-библиотеки нет — подходит только
+  собственный нативный Expo Module (iOS AVAssetWriter, Android MediaMuxer/MediaCodec
+  или Media3 Transformer). Записано в DECISIONS.md. Код НЕ писался.
+- Какие файлы созданы или изменены:
+  - изменены: `DECISIONS.md` (research note «Timelapse: research»), `TODO.md`
+    (14.1–14.4 закрыты, 14.5 — решение владельца)
+- Какие команды запускались:
+  - `npm view ffmpeg-kit-react-native / react-native-ffmpeg /
+    react-native-image-sequence / expo-video / react-native-vision-camera`
+    (проверка версий и deprecated-статуса)
+  - webfetch docs.expo.dev/versions/v57.0.0/sdk/video (возможности expo-video)
+- Результат проверок:
+  - кода нет — сборка/тесты не менялись (57/57 тестов из Фазы 13 актуальны)
+- Вывод исследования (кратко):
+  - expo-video — только playback + thumbnails, склейки изображений нет;
+  - ffmpeg-kit-react-native и react-native-ffmpeg — deprecated;
+  - react-native-image-sequence — не обновляется с 2022 и не создаёт видеофайл;
+  - vision-camera — реалтайм, не склейка;
+  - единственный «чистый» путь — custom native module (значительный объём).
+- Следующий шаг: решение владельца (реализовывать / оставить вне MVP).
+
+---
+
 ### 2026-08-24 — ПАМЯТКА ДЛЯ СЛЕДУЮЩЕЙ СЕССИИ (handoff)
 
-- Прогресс: закрыты Фазы 0–13. Последняя — Фаза 13 (экспорт в галерею).
-- Следующая подзадача — Фаза 14 «Timelapse: исследование, НЕ кодить»
-  (TODO.md, раздел 14). ВАЖНО: фаза рискованная — исследовать варианты
-  локальной генерации видео на текущем Expo/RN БЕЗ deprecated библиотек,
-  записать варианты/риски в DECISIONS.md и ОСТАНОВИТЬСЯ, спросить пользователя
-  (реализовывать или оставить вне MVP). НЕ писать код timelapse до согласования.
-- Перед Фазой 14 перечитай якорные файлы: CONSTITUTION.md, STACK_LOCK.md,
-  STACK_RESOLVED.md, TODO.md (раздел 14), и эту памятку. Используй skill
-  brainstorming для исследовательской задачи.
+- Прогресс: закрыты Фазы 0–13; Фаза 14 (research) выполнена, ЖДЁТ РЕШЕНИЯ
+  владельца по timelapse.
+- Как только решение принято: зафиксировать его в TODO 14.5, VERIFICATION 14
+  и DECISIONS.md (статус research-записи), затем Фаза 15 (полировка/портфолио).
+- Перед Фазой 15 перечитай якорные файлы: CONSTITUTION.md, STACK_LOCK.md,
+  STACK_RESOLVED.md, TODO.md (раздел 15), и эту памятку.
 - Обрати внимание: патч-версии SDK 57 выровнены в Фазе 11 (expo ~57.0.16 и др.).
   Если pod install упадёт с «CocoaPods could not find compatible versions for
   pod ExpoModulesCore» — удали `ios/Pods` и `ios/Podfile.lock`, перезапусти
