@@ -12,7 +12,9 @@
 
 import { useEffect, useState } from 'react';
 import { StyleSheet, Switch, View } from 'react-native';
+import { router } from 'expo-router';
 
+import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppScreen } from '@/components/ui/app-screen';
 import { AppText } from '@/components/ui/app-text';
@@ -63,6 +65,12 @@ export default function SettingsScreen() {
         </AppCard>
 
         <ReminderSettingsCard />
+
+        <AppButton
+          label="Поддержать разработчика"
+          variant="secondary"
+          onPress={() => router.push('/support')}
+        />
       </View>
     </AppScreen>
   );
