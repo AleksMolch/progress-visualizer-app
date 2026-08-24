@@ -497,20 +497,71 @@
 
 ---
 
-### 2026-08-22 — ПАМЯТКА ДЛЯ СЛЕДУЮЩЕЙ СЕССИИ (handoff)
+### 2026-08-24 — Фаза 11 — Локальные уведомления
 
-- Прогресс: закрыты Фазы 0–10. Последняя — Фаза 10 (биометрия).
-- Следующая подзадача — Фаза 11 «Локальные уведомления» (TODO.md, раздел 11):
-  1) `npx expo install expo-notifications`
-  2) запрос permission
-  3) локальное расписание напоминаний
-  4) настройки напоминаний в Settings (флаг `remindersEnabled` уже есть в AppSettings)
-  5) офлайн-сценарий без сервера.
-- Перед Фазой 11 перечитай якорные файлы: CONSTITUTION.md, STACK_LOCK.md,
-  STACK_RESOLVED.md, TODO.md (раздел 11), и эту памятку.
-- Осторожно: expo-notifications на iOS-симуляторе имеет ограничения
-  (push/notification отображение). Проверь API по типам node_modules,
-  не по памяти. Если симулятор не покажет уведомление — честно запиши это
-  в PROGRESS, не симулируй успех.
+- Что сделано: установлен expo-notifications (~57.0.14); изучен актуальный API по
+  типам (getPermissionsAsync/requestPermissionsAsync/scheduleNotificationAsync/
+  cancelScheduledNotificationAsync/setNotificationHandler + DailyTriggerInput).
+  Реализована storage-обёртка `notifications.ts` (permission, ежедневное
+  расписание с фиксированным id, отмена, обработчик foreground). Добавлена
+  карточка «Напоминания» в Settings (переключатель + предустановленное время)
+  и чистая функция `parseReminderTime`. Настроен обработчик уведомлений в root
+  layout. Выровнены патч-версии SDK 57 через `npx expo install --fix`.
+- Какие файлы созданы или изменены:
+  - созданы: `src/storage/notifications.ts`, `src/storage/notifications.test.ts`,
+    `src/utils/reminders.ts`, `src/utils/reminders.test.ts`,
+    `src/features/settings/components/reminder-settings-card.tsx`,
+    `__mocks__/expo-notifications.ts`
+  - изменены: `src/models/settings.ts` (+reminderTime),
+    `src/store/settingsStore.ts` (+reminderTime default),
+    `src/app/(tabs)/settings.tsx` (карточка напоминаний),
+    `src/app/_layout.tsx` (configureNotificationHandler),
+    `STACK_RESOLVED.md`, `DECISIONS.md`, `TODO.md`
+  - package.json: добавлен `expo-notifications` ~57.0.14; выровнены
+    `expo` ~57.0.16, `expo-router` ~57.0.16, `expo-splash-screen` ~57.0.8,
+    `expo-crypto` ~57.0.2, `@expo/ui` ~57.0.13
+- Какие команды запускались:
+  - `npx expo install expo-notifications`
+  - `npx expo install --fix` (выравнивание патч-версий SDK 57)
+  - `npm run typecheck`, `npm run lint`, `npm test`
+  - `npx expo-doctor`
+  - `rm -rf ios/Pods ios/Podfile.lock` + `pod install --repo-update`
+    (после смены версии expo-modules-core pod install падал с
+    «CocoaPods could not find compatible versions for pod ExpoModulesCore»)
+  - `npx expo run:ios` (Build Succeeded, 0 errors, 0 warnings)
+- Результат проверок:
+  - typecheck: без ошибок; lint: без ошибок и предупреждений
+  - тесты: 49/49 passed (новые: parseReminderTime 8 + notifications wrapper 6)
+  - expo-doctor: 21/21
+  - сборка iOS: успешно; pod `ExpoNotifications 57.0.14` в Podfile.lock;
+    приложение запускается без runtime-ошибок (в логах нет redbox/fatal;
+    LocalAuthentication code -7 «No identities» — ожидаемо из Фазы 10)
+- Известные проблемы:
+  - Фактический показ баннера напоминания НЕ проверен автоматически: на
+    симуляторе для этого нужен ручной цикл «принять permission-диалог →
+    включить тумблер → дождаться времени». Permission-диалог невозможно принять
+    программно (`xcrun simctl privacy` не поддерживает `notifications`). Само
+    расписание покрыто unit-тестами с моком. iOS-симулятор технически умеет
+    показывать локальные уведомления, но живой баннер я не наблюдал.
+  - Android-проверка не выполнена (нет Android-эмулятора); POST_NOTIFICATIONS
+    уже в манифесте библиотеки.
+  - После отказа на iOS повторный запрос разрешения невозможен — показана
+    подсказка включить уведомления в настройках устройства.
+- Следующий шаг: Фаза 12 (экран «Поддержать разработчика»).
+
+---
+
+### 2026-08-24 — ПАМЯТКА ДЛЯ СЛЕДУЮЩЕЙ СЕССИИ (handoff)
+
+- Прогресс: закрыты Фазы 0–11. Последняя — Фаза 11 (локальные уведомления).
+- Следующая подзадача — Фаза 12 «Поддержать разработчика / Premium placeholder»
+  (TODO.md, раздел 12): экран Support, честное описание, premium-флаг как
+  dev-заглушка, НЕ подключать IAP, записать в DECISIONS.md отложенный IAP.
+- Перед Фазой 12 перечитай якорные файлы: CONSTITUTION.md, STACK_LOCK.md,
+  STACK_RESOLVED.md, TODO.md (раздел 12), и эту памятку.
+- Обрати внимание: в Фазе 11 патч-версии SDK 57 выровнены через
+  `npx expo install --fix` (expo ~57.0.16 и др.). Если pod install снова упадёт
+  с «CocoaPods could not find compatible versions for pod ExpoModulesCore» —
+  удали `ios/Pods` и `ios/Podfile.lock` и перезапусти `pod install`.
 - Все проверки — `npm run typecheck`, `npm run lint`, `npm test`,
   `npx expo-doctor`; коммит после каждой фазы.

@@ -17,10 +17,14 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { BiometricsGate } from '@/features/privacy/components/biometrics-gate';
 import { initializeStorage } from '@/storage/init';
+import { configureNotificationHandler } from '@/storage/notifications';
 import { ThemeProvider } from '@/theme/ThemeProvider';
 
 // Держим splash-экран, пока не завершится инициализация хранилища.
 SplashScreen.preventAutoHideAsync();
+
+// Задаём поведение уведомлений при открытом приложении (показывать баннер).
+configureNotificationHandler();
 
 export default function RootLayout() {
   const [ready, setReady] = useState(false);

@@ -23,4 +23,6 @@ export interface AppSettings {
   requireBiometrics: boolean;
   /** Включены ли локальные напоминания. */
   remindersEnabled: boolean;
+  /** Время ежедневного напоминания в формате «HH:MM» (24 часа). */
+  reminderTime: string;
 }

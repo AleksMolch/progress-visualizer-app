@@ -30,10 +30,10 @@
 
 ## Версии из package.json
 
-- expo: ~57.0.15
+- expo: ~57.0.16
 - react: 19.2.3
 - react-native: 0.86.2
-- expo-router: ~57.0.15
+- expo-router: ~57.0.16
 - react-native-reanimated: 4.5.1
 - react-native-gesture-handler: ~2.32.0
 - react-native-worklets: 0.10.1
@@ -54,8 +54,8 @@
 - expo-media-library: (не установлен)
 - expo-local-authentication: (не установлен)
 - expo-secure-store: ~57.0.1
-- expo-crypto: ~57.0.1 (генерация ключа шифрования)
-- expo-notifications: (не установлен)
+- expo-crypto: ~57.0.2 (генерация ключа шифрования)
+- expo-notifications: ~57.0.14 (локальные напоминания, Фаза 11)
 - expo-image: ~57.0.3 (уже в template)
 - react-native-edge-to-edge: не нужен (нативно в RN 0.86, см. DECISIONS.md)
 - @react-native-community/slider: 5.2.0 (слайдер прозрачности ghost overlay, Фаза 7)
@@ -85,6 +85,11 @@ is recommended.
 Примечание: на предыдущей машине (Intel Mac) CocoaPods отсутствовал (требовал
 sudo). После переноса на новую машину и установки CocoaPods 1.17.0 через
 Homebrew повторный `npx expo-doctor` показывает **21/21 checks passed**.
+
+Примечание (Фаза 11): при добавлении expo-notifications выяснилось, что часть
+патч-версий SDK 57 отстала от опубликованных upstream (`expo`, `expo-router`,
+`expo-splash-screen`, `expo-crypto`, `@expo/ui`). Выровнено через
+`npx expo install --fix`, после чего `npx expo-doctor` снова **21/21**.
 
 ## Замечания по совместимости
 

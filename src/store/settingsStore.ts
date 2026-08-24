@@ -22,6 +22,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   gridEnabled: true,
   requireBiometrics: false,
   remindersEnabled: false,
+  reminderTime: '20:00',
 };
 
 interface SettingsState {

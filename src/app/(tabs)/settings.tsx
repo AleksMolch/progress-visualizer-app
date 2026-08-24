@@ -3,7 +3,8 @@
  *
  * Функции:
  * - переключатель биометрической защиты (requireBiometrics);
- * - при недоступной биометрии — показывает подсказку и отключает переключатель.
+ * - при недоступной биометрии — показывает подсказку и отключает переключатель;
+ * - карточка локальных напоминаний (ReminderSettingsCard).
  *
  * Слой: UI (/src/app). Данные — useSettingsStore, доступность биометрии —
  * через storage-слой (isBiometricsAvailable).
@@ -15,6 +16,7 @@ import { StyleSheet, Switch, View } from 'react-native';
 import { AppCard } from '@/components/ui/app-card';
 import { AppScreen } from '@/components/ui/app-screen';
 import { AppText } from '@/components/ui/app-text';
+import { ReminderSettingsCard } from '@/features/settings/components/reminder-settings-card';
 import { isBiometricsAvailable } from '@/storage/biometrics';
 import { useSettingsStore } from '@/store/settingsStore';
 import { spacing } from '@/theme';
@@ -59,6 +61,8 @@ export default function SettingsScreen() {
             </AppText>
           ) : null}
         </AppCard>
+
+        <ReminderSettingsCard />
       </View>
     </AppScreen>
   );
