@@ -51,7 +51,7 @@
 - jotai: (не установлен)
 - expo-camera: ~57.0.4
 - expo-file-system: ~57.0.5
-- expo-media-library: (не установлен)
+- expo-media-library: ~57.0.4 (экспорт фото в галерею, Фаза 13)
 - expo-local-authentication: (не установлен)
 - expo-secure-store: ~57.0.1
 - expo-crypto: ~57.0.2 (генерация ключа шифрования)

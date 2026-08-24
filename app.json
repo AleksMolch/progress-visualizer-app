@@ -49,6 +49,14 @@
         {
           "faceIDPermission": "Разрешите доступ к Face ID, чтобы защитить фотографии приложения."
         }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": false,
+          "savePhotosPermission": "Приложению нужен доступ к сохранению, чтобы экспортировать снимки прогресса в галерею.",
+          "granularPermissions": []
+        }
       ]
     ],
     "experiments": {

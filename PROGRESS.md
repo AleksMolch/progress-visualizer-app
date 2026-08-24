@@ -581,19 +581,65 @@
 
 ---
 
+### 2026-08-24 — Фаза 13 — Экспорт в галерею
+
+- Что сделано: установлен expo-media-library (~57.0.4); изучен новый объектный
+  API (Asset.create вместо deprecated saveToLibraryAsync, который в SDK 57
+  выбрасывает ошибку в runtime). Реализована storage-обёртка `mediaLibrary.ts`
+  (write-only permission + экспорт). В полноэкранном просмотрщике добавлена
+  кнопка «Экспорт» с Alert-предупреждением «фото окажется вне sandbox».
+  Текущее фото отслеживается при свайпе ленты (кнопки «Экспорт»/«Сравнить»
+  действуют на видимое фото). Минимальные разрешения: на iOS только
+  NSPhotoLibraryAddUsageDescription (без чтения), Android granularPermissions [].
+- Какие файлы созданы или изменены:
+  - созданы: `src/storage/mediaLibrary.ts`, `src/storage/mediaLibrary.test.ts`,
+    `__mocks__/expo-media-library.ts`
+  - изменены: `src/app/project/[id]/viewer/[photoId].tsx` (кнопка «Экспорт» +
+    отслеживание текущего фото + предупреждение), `app.json` (плагин
+    expo-media-library write-only), `DECISIONS.md` (экспорт write-only),
+    `TODO.md`, `STACK_RESOLVED.md`
+  - package.json: добавлен `expo-media-library` ~57.0.4
+- Какие команды запускались:
+  - `npx expo install expo-media-library`
+  - `npm run typecheck`, `npm run lint`, `npm test`
+  - `npx expo prebuild --platform ios` (применение плагина → Info.plist)
+  - `npx expo run:ios` (Build Succeeded, 0 errors, 0 warnings)
+  - `npx expo-doctor`
+- Результат проверок:
+  - typecheck: без ошибок; lint: без ошибок и предупреждений
+  - тесты: 57/57 passed (новые: mediaLibrary 5 — permission/export)
+  - expo-doctor: 21/21
+  - сборка iOS: успешно; pod `ExpoMediaLibrary 57.0.4` в Podfile.lock;
+    в Info.plist есть `NSPhotoLibraryAddUsageDescription` (write-only) и НЕТ
+    `NSPhotoLibraryUsageDescription` (чтение не запрашивается)
+  - приложение запускается без runtime-ошибок (redbox/fatal не найдены)
+- Известные проблемы:
+  - Реальный экспорт файла в галерею на симуляторе требует ручной проверки
+    (нужно фото в проекте, камера на симуляторе не делает реальный снимок).
+    Логика покрыта unit-тестами с моком; permission-диалог «сохранить в фото»
+    и фактическое появление фото в «Фото» — ручная проверка на устройстве.
+  - Плагин на Android безусловно добавляет legacy-разрешения
+    READ/WRITE_EXTERNAL_STORAGE — проверить в Фазе 15 (на Android 10+ они
+    не дают доступа, scoped storage).
+  - Android-проверка не выполнена (нет Android-эмулятора).
+- Следующий шаг: Фаза 14 (timelapse — research, НЕ кодить).
+
+---
+
 ### 2026-08-24 — ПАМЯТКА ДЛЯ СЛЕДУЮЩЕЙ СЕССИИ (handoff)
 
-- Прогресс: закрыты Фазы 0–12. Последняя — Фаза 12 (поддержка/premium).
-- Следующая подзадача — Фаза 13 «Экспорт в галерею» (TODO.md, раздел 13):
-  1) `npx expo install expo-media-library`
-  2) permission flow для media library
-  3) экспорт выбранного фото только по кнопке пользователя
-  4) предупреждение, что после экспорта фото вне sandbox.
-- Перед Фазой 13 перечитай якорные файлы: CONSTITUTION.md, STACK_LOCK.md,
-  STACK_RESOLVED.md, TODO.md (раздел 13), и эту памятку.
+- Прогресс: закрыты Фазы 0–13. Последняя — Фаза 13 (экспорт в галерею).
+- Следующая подзадача — Фаза 14 «Timelapse: исследование, НЕ кодить»
+  (TODO.md, раздел 14). ВАЖНО: фаза рискованная — исследовать варианты
+  локальной генерации видео на текущем Expo/RN БЕЗ deprecated библиотек,
+  записать варианты/риски в DECISIONS.md и ОСТАНОВИТЬСЯ, спросить пользователя
+  (реализовывать или оставить вне MVP). НЕ писать код timelapse до согласования.
+- Перед Фазой 14 перечитай якорные файлы: CONSTITUTION.md, STACK_LOCK.md,
+  STACK_RESOLVED.md, TODO.md (раздел 14), и эту памятку. Используй skill
+  brainstorming для исследовательской задачи.
 - Обрати внимание: патч-версии SDK 57 выровнены в Фазе 11 (expo ~57.0.16 и др.).
   Если pod install упадёт с «CocoaPods could not find compatible versions for
   pod ExpoModulesCore» — удали `ios/Pods` и `ios/Podfile.lock`, перезапусти
-  `pod install`.
+  `pod install`. После изменения app.json (плагины) нужен `npx expo prebuild`.
 - Все проверки — `npm run typecheck`, `npm run lint`, `npm test`,
   `npx expo-doctor`; коммит после каждой фазы.
