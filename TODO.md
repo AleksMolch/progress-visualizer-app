@@ -493,6 +493,27 @@ npx expo-doctor
 
 ---
 
+## ПОДГОТОВКА К ПУБЛИКАЦИИ — App icon и splash
+
+> Сейчас иконка и splash — дефолтные Expo-заглушки. Полное руководство
+> (концепция, источники, промпты для Nano Banana, инструкции по конвертации
+> и настройке app.json) — в файле `APP_ICON_AND_SPLASH.md`.
+
+- [ ] Сгенерировать/получить основную иконку 1024×1024 (opaque) и заменить
+      `assets/images/icon.png`.
+- [ ] Сгенерировать adaptive-foreground (прозрачный mark) и заменить
+      `assets/images/android-icon-foreground.png`.
+- [ ] Сгенерировать splash-логотип (прозрачный) и заменить
+      `assets/images/splash-icon.png`.
+- [ ] Обновить `app.json`: `ios.icon` → PNG (убрать `./assets/expo.icon`),
+      `android.adaptiveIcon.backgroundColor` → `#208AEF`, убрать лишние
+      `backgroundImage`/`monochromeImage`, подобрать `imageWidth` splash.
+- [ ] `npx expo prebuild --platform ios` + `npx expo run:ios`, проверить
+      иконку на домашнем экране и splash при холодном старте.
+- [ ] Заменить временный `bundleIdentifier` перед публикацией.
+
+---
+
 ## ФАКУЛЬТАТИВНО (на будущее) — Нативный модуль timelapse (генерация видео)
 
 > Это НЕ обязательная задача MVP. Реализуется только по отдельному решению
