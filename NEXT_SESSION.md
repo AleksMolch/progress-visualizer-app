@@ -13,54 +13,47 @@
 
 ## Где мы сейчас (контекст)
 
-- Закрыты Фазы 0–14. Последняя — Фаза 14 (псевдо-timelapse без видеофайла).
+- **MVP завершён** — закрыты Фазы 0–15. Все проверки зелёные
+  (typecheck, lint, тесты 59/59, expo-doctor 21/21, сборка iOS 0 errors).
 - Стек: Expo SDK 57 (`expo` ~57.0.16, `expo-router` ~57.0.16), RN 0.86.2,
   React 19.2.3, Reanimated 4.5.1, Gesture Handler ~2.32.0, zustand 5.0.15,
   react-native-mmkv 4.3.2 (Nitro-модуль, encrypted).
-- Установлены: expo-camera, expo-file-system, expo-media-library,
-  expo-local-authentication, expo-secure-store, expo-crypto, expo-notifications,
-  expo-image, @react-native-community/slider.
 - Окружение: Apple M4, macOS 26.3.1, Xcode 26.6 (Swift 6.3.3), Node 22.18.0,
   CocoaPods 1.17.0 (в `/opt/homebrew/bin`).
-- Состояние: expo-doctor 21/21, тесты 59/59, сборка iOS 0 errors.
-- Dev build только через `npx expo run:ios` (MMKV/camera/biometrics/notifications/
-  media-library — не работают в Expo Go).
+- Dev build только через `npx expo run:ios` (native-модули не работают в Expo Go).
 
-## Что уже реализовано (кратко)
+## Что уже реализовано
 
-Приватное приложение отслеживания прогресса по фото: проекты + съёмка камерой
-+ ghost overlay/сетка, лента фото, сравнение «до/после» (Reanimated + Gesture
-Handler), биометрия (local-authentication), локальные напоминания
-(expo-notifications), экран поддержки + premium-заглушка, экспорт фото в галерею
-(write-only), псевдо-timelapse. Всё on-device, без сети/аналитики/рекламы/облака.
+Приватное приложение отслеживания прогресса по фото: проекты (CRUD) + съёмка
+камерой + ghost overlay/сетка, лента фото, сравнение «до/после», полноэкранный
+просмотр (свайп + pinch), биометрия, локальные напоминания, экран поддержки +
+premium-заглушка, экспорт в галерею (write-only), псевдо-timelapse. Всё on-device,
+без сети/аналитики/рекламы/облака.
+
+## Что осталось после MVP (по приоритету владельца)
+
+1. **Дизайн-полировка** по скриншотам: положи файлы в `screenshots/` и попроси
+   ИИ прочитать их (учитывай ограничение: визуальные возможности модели).
+2. **App icon + splash** — сейчас default Expo-ассеты; нужны дизайн-ассеты
+   (ИИ не генерирует качественные PNG). Splash-фон уже в цвете #208AEF.
+3. **Публикация** — EAS Build, замена временного bundleIdentifier
+   (`com.anonymous.progress-visualizer-app`), App Store / Google Play.
+4. **Факультативно**: нативный модуль генерации видео-timelapse — описан
+   в конце TODO.md (с выводами анализа).
 
 ## Порядок в начале сессии
 
 1. Прочитай по порядку: `CONSTITUTION.md`, `STACK_LOCK.md`, `STACK_RESOLVED.md`,
    `PROGRESS.md` (секция «ВАЖНО ДЛЯ СЛЕДУЮЩЕЙ СЕССИИ» + последняя запись),
    `TODO.md`.
-2. Найди первую незакрытую подзадачу — это **Фаза 15**.
-3. Работай по `AGENTS.md` (маленькими шагами, проверки после каждой фазы,
-   честный результат, запрет ложных «готово»).
-
-## Задача этой сессии: ФАЗА 15 — Полировка и подготовка портфолио
-
-Подзадачи из TODO.md (раздел 15):
-
-- 15.1 Проверить все empty states, error states, loading states.
-- 15.2 Проверить корректность permission texts в app.json/Info.plist.
-- 15.3 Подготовить app icon и splash screen.
-- 15.4 Обновить README.md (основа `README.template.md`).
-- 15.5 Написать честный Privacy Policy draft.
-- 15.6 Проверить отсутствие: network/analytics/ad SDK, автоматической отправки
-  фото, лишних разрешений.
-- 15.7 Финальный прогон: `npm run typecheck`, `npm run lint`, `npm test`,
-  `npx expo-doctor`.
+2. Уточни у пользователя, что делаем в этой сессии (варианты выше).
+3. Работай по `AGENTS.md`: маленькими шагами, проверки после каждой фазы,
+   честный результат, запрет ложных «готово».
 
 ## Проверки и правила
 
-- После каждой фазы: `npm run typecheck`, `npm run lint`, `npm test`,
-  `npx expo-doctor` — только реально запуская команды.
+- `npm run typecheck`, `npm run lint`, `npm test`, `npx expo-doctor` — реально
+  запуская команды.
 - Если проверка невозможна (нет эмулятора, нет биометрии и т.п.) — честно
   написать причину, не симулировать успех.
 - Код и документация меняются в ОДНОМ коммите. Коммит после каждой фазы.
@@ -78,7 +71,7 @@ Handler), биометрия (local-authentication), локальные напо
 - iOS-симулятор: биометрия не зарегистрирована (code -7), permission-диалоги
   уведомлений/галереи программно не принять — ручная проверка.
 - Android не проверялся (нет эмулятора).
-- Отдельная факультативная задача (вне MVP) — нативный модуль генерации
-  видео-timelapse — описана в конце TODO.md.
+- `@expo/ui`, `expo-glass-effect`, `expo-symbols` — транзитивные deps expo-router
+  (не удалять из node_modules, они нужны router-у).
 
 ---

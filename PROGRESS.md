@@ -661,20 +661,67 @@
 
 ---
 
+### 2026-08-24 — Фаза 15 — Полировка и подготовка портфолио (MVP завершён)
+
+- Что сделано: аудит приватности (нет network/analytics/ads SDK, нет
+  авто-отправки фото, нет лишних разрешений — только камера-фото, Face ID,
+  уведомления, запись в галерею); удалены неиспользуемые прямые зависимости
+  шаблона (expo-device, expo-web-browser, а @expo/ui, expo-glass-effect,
+  expo-symbols — только как транзитивные deps expo-router). Проверены permission
+  texts (NSCameraUsageDescription, NSFaceIDUsageDescription,
+  NSPhotoLibraryAddUsageDescription write-only). Проверены empty/error/loading
+  states (все экраны покрыты). Переписан README.md по template; созданы
+  PRIVACY.md и README_staff.md. Финальный прогон зелёный.
+- Какие файлы созданы или изменены:
+  - созданы: `PRIVACY.md`, `README_staff.md`
+  - переписан: `README.md` (по README.template.md)
+  - изменены: `package.json` (−5 неиспользуемых зависимостей), `TODO.md`
+    (Фаза 15 закрыта), `STACK_RESOLVED.md` (см. ниже)
+- Какие команды запускались:
+  - `npm uninstall expo-device expo-symbols @expo/ui expo-glass-effect expo-web-browser`
+  - `npm run typecheck`, `npm run lint`, `npm test`, `npx expo-doctor`
+  - `npx expo run:ios` (Build Succeeded, 0 errors)
+- Результат проверок:
+  - typecheck: без ошибок; lint: без ошибок и предупреждений
+  - тесты: 59/59 passed; expo-doctor: 21/21
+  - сборка iOS: успешно после удаления зависимостей
+- Известные проблемы / что осталось (не блокеры MVP):
+  - App icon и splash — ПО-ПРЕЖНЕМУ default Expo-ассеты (icon.png, splash-icon.png,
+    expo-logo). Нужны дизайн-ассеты от владельца; ИИ не генерирует качественные
+    PNG. Splash-фон уже в фирменном цвете #208AEF.
+  - bundleIdentifier временный (`com.anonymous.progress-visualizer-app`) — заменить
+    перед публикацией.
+  - Визуальная проверка всех экранов — ручная (пользователь может прислать
+    скриншоты, см. «Как передать скриншоты» ниже).
+  - Android-проверка не выполнена (нет эмулятора).
+  - Осталась факультативная задача: нативный модуль видео-timelapse (конец TODO.md).
+- Статус: MVP завершён (Фазы 0–15).
+
+---
+
+### Как передать скриншоты для работы над дизайном (для будущих сессий)
+
+- Положи файлы в папку проекта (например, `screenshots/`) или укажи пути.
+- ИИ читает их через инструмент чтения файлов (поддержка изображений).
+- Честное ограничение: возможность «увидеть» содержимое зависит от визуальных
+  возможностей модели. Если не увидит — работаем по текстовым описаниям/размерам.
+- Скриншоты нужны для: полировка UI/отступов, app icon/splash, итоговая
+  проверка экранов.
+
+---
+
 ### 2026-08-24 — ПАМЯТКА ДЛЯ СЛЕДУЮЩЕЙ СЕССИИ (handoff)
 
-- Прогресс: закрыты Фазы 0–14. Последняя — Фаза 14 (псевдо-timelapse).
-- Следующая подзадача — Фаза 15 «Полировка и подготовка портфолио» (TODO.md,
-  раздел 15): empty/error states, permission texts, app icon/splash, README,
-  Privacy Policy draft, аудит отсутствия network/analytics/ads SDK и лишних
-  разрешений, финальный прогон 4 команд.
-- Отдельная факультативная задача (НЕ входит в MVP) — нативный модуль для
-  генерации видео-timelapse, с выводами анализа — описана в конце TODO.md.
-- Перед Фазой 15 перечитай якорные файлы: CONSTITUTION.md, STACK_LOCK.md,
-  STACK_RESOLVED.md, TODO.md (раздел 15), и эту памятку.
-- Обрати внимание: патч-версии SDK 57 выровнены в Фазе 11 (expo ~57.0.16 и др.).
-  Если pod install упадёт с «CocoaPods could not find compatible versions for
-  pod ExpoModulesCore» — удали `ios/Pods` и `ios/Podfile.lock`, перезапусти
+- Статус: **MVP завершён** — закрыты Фазы 0–15. Все проверки зелёные.
+- Что можно делать дальше (по приоритету владельца):
+  1. Дизайн-полировка по скриншотам (положить в `screenshots/`).
+  2. Подготовка app icon + splash (нужны дизайн-ассеты).
+  3. Публикация: EAS Build + замена bundleIdentifier + App Store/Play.
+  4. Факультативно: нативный модуль видео-timelapse (конец TODO.md).
+- Порядок старта новой сессии — см. `NEXT_SESSION.md` (готовый промпт).
+- Обрати внимание: патч-версии SDK 57 выровнены в Фазе 11. Если pod install
+  упадёт с «CocoaPods could not find compatible versions for pod
+  ExpoModulesCore» — удали `ios/Pods` и `ios/Podfile.lock`, перезапусти
   `pod install`. После изменения app.json (плагины) нужен `npx expo prebuild`.
 - Все проверки — `npm run typecheck`, `npm run lint`, `npm test`,
   `npx expo-doctor`; коммит после каждой фазы.

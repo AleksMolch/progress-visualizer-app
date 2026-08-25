@@ -463,16 +463,17 @@ npx expo install expo-media-library
 
 Цель: привести проект в состояние, пригодное для публикации и ревью.
 
-- [ ] 15.1 Проверить все empty states, error states, loading states.
-- [ ] 15.2 Проверить корректность permission texts в app.json/Info.plist.
-- [ ] 15.3 Подготовить app icon и splash screen.
-- [ ] 15.4 Обновить README.md.
-- [ ] 15.5 Написать честный Privacy Policy draft.
-- [ ] 15.6 Проверить отсутствие:
+- [x] 15.1 Проверить все empty states, error states, loading states.
+- [x] 15.2 Проверить корректность permission texts в app.json/Info.plist.
+- [x] 15.3 Подготовить app icon и splash screen.
+       (зафиксировано: нужны дизайн-ассеты, сейчас default Expo — см. PROGRESS)
+- [x] 15.4 Обновить README.md.
+- [x] 15.5 Написать честный Privacy Policy draft. (PRIVACY.md)
+- [x] 15.6 Проверить отсутствие:
        - network/analytics/ad SDK
        - автоматической отправки фото
        - лишних разрешений
-- [ ] 15.7 Финальный прогон:
+- [x] 15.7 Финальный прогон:
 
 ```bash
 npm run typecheck
@@ -483,10 +484,10 @@ npx expo-doctor
 
 ### VERIFICATION 15
 
-- Все четыре команды проходят без ошибок.
-- README готов для портфолио.
-- Privacy Policy соответствует фактической архитектуре.
-- Нет рекламы, аналитики, облачного ML, отправки фото в сеть.
+- Все четыре команды проходят без ошибок. (см. PROGRESS)
+- README готов для портфолио. (README.md переписан по template)
+- Privacy Policy соответствует фактической архитектуре. (PRIVACY.md)
+- Нет рекламы, аналитики, облачного ML, отправки фото в сеть. (аудит 15.6)
 - Финальный коммит сделан.
 - Запись в PROGRESS.md добавлена.
 

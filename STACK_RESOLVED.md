@@ -52,7 +52,6 @@
 - expo-camera: ~57.0.4
 - expo-file-system: ~57.0.5
 - expo-media-library: ~57.0.4 (экспорт фото в галерею, Фаза 13)
-- expo-local-authentication: (не установлен)
 - expo-secure-store: ~57.0.1
 - expo-crypto: ~57.0.2 (генерация ключа шифрования)
 - expo-notifications: ~57.0.14 (локальные напоминания, Фаза 11)
@@ -60,6 +59,11 @@
 - react-native-edge-to-edge: не нужен (нативно в RN 0.86, см. DECISIONS.md)
 - @react-native-community/slider: 5.2.0 (слайдер прозрачности ghost overlay, Фаза 7)
 - expo-local-authentication: ~57.0.2 (биометрическая защита, Фаза 10)
+
+Примечание (Фаза 15): из прямых зависимостей удалены неиспользуемые пакеты
+шаблона — `expo-device`, `expo-web-browser` (удалены полностью), а `@expo/ui`,
+`expo-glass-effect`, `expo-symbols` остались только как транзитивные зависимости
+`expo-router` (нужны ему для нативных табов).
 
 ## Результат expo-doctor
 
