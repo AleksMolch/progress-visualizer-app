@@ -30,17 +30,17 @@
 
 ## Версии из package.json
 
-- expo: ~57.0.16
+- expo: ~57.0.22
 - react: 19.2.3
-- react-native: 0.86.2
-- expo-router: ~57.0.16
+- react-native: 0.86.3
+- expo-router: ~57.0.21
 - react-native-reanimated: 4.5.1
 - react-native-gesture-handler: ~2.32.0
 - react-native-worklets: 0.10.1
 - typescript: ~6.0.3
 - react-native-safe-area-context: ~5.7.0
 - react-native-screens: ~4.26.0
-- expo-image: ~57.0.3
+- expo-image: ~57.0.5
 
 ## Дополнительные библиотеки (заполняется по мере установки)
 
@@ -49,16 +49,17 @@
 - react-native-mmkv: ^4.3.2 (Nitro-модуль)
 - react-native-nitro-modules: ^0.37.0 (зависимость MMKV v4)
 - jotai: (не установлен)
-- expo-camera: ~57.0.4
-- expo-file-system: ~57.0.5
-- expo-media-library: ~57.0.4 (экспорт фото в галерею, Фаза 13)
-- expo-secure-store: ~57.0.1
-- expo-crypto: ~57.0.2 (генерация ключа шифрования)
-- expo-notifications: ~57.0.14 (локальные напоминания, Фаза 11)
-- expo-image: ~57.0.3 (уже в template)
+- expo-camera: ~57.0.5
+- expo-file-system: ~57.0.7
+- expo-media-library: ~57.0.5 (экспорт фото в галерею, Фаза 13)
+- expo-secure-store: ~57.0.4
+- expo-crypto: ~57.0.3 (генерация ключа шифрования)
+- expo-notifications: ~57.0.18 (локальные напоминания, Фаза 11)
+- expo-image: ~57.0.5 (уже в template)
 - react-native-edge-to-edge: не нужен (нативно в RN 0.86, см. DECISIONS.md)
 - @react-native-community/slider: 5.2.0 (слайдер прозрачности ghost overlay, Фаза 7)
-- expo-local-authentication: ~57.0.2 (биометрическая защита, Фаза 10)
+- expo-local-authentication: ~57.0.3 (биометрическая защита, Фаза 10)
+- @react-native/jest-preset: 0.86.3 (явный devDep — см. примечание ниже)
 
 Примечание (Фаза 15): из прямых зависимостей удалены неиспользуемые пакеты
 шаблона — `expo-device`, `expo-web-browser` (удалены полностью), а `@expo/ui`,
@@ -94,6 +95,16 @@ Homebrew повторный `npx expo-doctor` показывает **21/21 check
 патч-версий SDK 57 отстала от опубликованных upstream (`expo`, `expo-router`,
 `expo-splash-screen`, `expo-crypto`, `@expo/ui`). Выровнено через
 `npx expo install --fix`, после чего `npx expo-doctor` снова **21/21**.
+
+Примечание (App icon/splash, 2026-09-12): снова накопился дрейф patch-версий
+(18 пакетов, включая `react-native 0.86.2 → 0.86.3`, `expo 57.0.16 → 57.0.22`).
+`npx expo install --fix` падал с ERESOLVE: `react-native@0.86.3` требует
+peerOptional `@react-native/jest-preset@0.86.3`, а в дереве был `0.86.2`.
+Решено: обновлены версии в package.json, затем `npm install --legacy-peer-deps`
++ явная установка `@react-native/jest-preset@0.86.3` как devDependency
+(jest-expo@57.0.5 объявил jest-preset как peer-зависимость и без неё `npm test`
+падал с «The React Native Jest preset ... has moved to a separate package»).
+После этого `npx expo-doctor` снова **21/21**.
 
 ## Замечания по совместимости
 

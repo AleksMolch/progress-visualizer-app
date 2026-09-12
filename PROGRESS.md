@@ -7,9 +7,10 @@
 
 ## ⚠️ ВАЖНО ДЛЯ СЛЕДУЮЩЕЙ СЕССИИ (читай первым)
 
-- **Где мы сейчас**: закрыты Фазы 0–14. Последняя — Фаза 14 (псевдо-timelapse).
-  Следующая — **Фаза 15 «Полировка и подготовка портфолио»** (TODO.md, раздел 15).
-  Готовый стартовый промпт для новой сессии — в файле `NEXT_SESSION.md`.
+- **Где мы сейчас**: закрыты Фазы 0–15 + App icon/splash (2026-09-12). Осталось
+  до публикации: заменить временный `bundleIdentifier`
+  (`com.anonymous.progress-visualizer-app`) и, опционально, нативный
+  видео-timelapse (факультатив в TODO.md).
 - **Рабочая папка проекта теперь**: `/Users/aleks/dev/progress-visualizer-app`
   (ASCII-путь). СТАРЫЙ путь `/Volumes/Т5-Documents/Project/progress-visualizer-app`
   содержит кириллицу в имени тома и ломает CocoaPods — там НЕ работай.
@@ -696,6 +697,53 @@
   - Android-проверка не выполнена (нет эмулятора).
   - Осталась факультативная задача: нативный модуль видео-timelapse (конец TODO.md).
 - Статус: MVP завершён (Фазы 0–15).
+
+---
+
+### 2026-09-12 — App icon и splash + выравнивание patch-версий
+
+- Что сделано: сгенерированы фирменные иконка и splash (владелец планировал
+  положить PNG из Nano Banana, но файлы в `assets/images/` не появились — по
+  решению владельца ИИ сделал ассеты сам). Векторный mark — кольцо-диафрагма
+  с дугой прогресса (~2/3, точка на конце) + точка-линза, белый на `#208AEF`;
+  растеризован через `sharp` во временной папке (зависимости проекта не тронуты).
+  Обновлён `app.json` по APP_ICON_AND_SPLASH.md. Выровнен дрейф patch-версий
+  (18 пакетов) до `expo-doctor 21/21`.
+- Какие файлы созданы или изменены:
+  - заменены: `assets/images/icon.png` (1024×1024 RGB без альфы),
+    `assets/images/android-icon-foreground.png` (1024 прозрачный),
+    `assets/images/splash-icon.png` (512 прозрачный)
+  - изменены: `app.json` (`ios.icon` → PNG, adaptive `backgroundColor` → `#208AEF`,
+    убраны `backgroundImage`/`monochromeImage`, splash `imageWidth` 200),
+    `package.json` (+`@react-native/jest-preset` 0.86.3, версии пакетов),
+    `package-lock.json`, `TODO.md` (иконка/splash закрыты), `STACK_RESOLVED.md`
+  - созданы: `screenshots/home-icon.png`, `screenshots/splash.png` (для
+    визуальной проверки владельцем)
+- Какие команды запускались:
+  - `npx expo install --fix` (упал с ERESOLVE по jest-preset)
+  - `npm install --legacy-peer-deps` + `npm install --save-dev @react-native/jest-preset@0.86.3`
+  - `npm run typecheck`, `npm run lint`, `npm test`
+  - `npx expo prebuild --platform ios` + `pod install` + `npx expo run:ios`
+  - `npx expo-doctor`
+- Результат проверок:
+  - typecheck/lint: без ошибок; тесты: 59/59; expo-doctor: 21/21
+  - сборка iOS: Build Succeeded (0 errors, 0 warnings), Metro 1937 модулей без ошибок
+  - иконка: AppIcon 1024×1024 без альфы (угол `#208AEF`, центр белый), на
+    домашнем экране симулятора ~9k синих пикселей `#208AEF`
+  - splash: SplashScreenLogo прозрачный белый mark; при холодном старте экран
+    97.4% синий фон + белый mark (проверено по пикселям скриншотов)
+- Известные проблемы:
+  - Визуальная эстетика иконки/splash не проверена (модель не читает картинки) —
+    владельцу смотреть `screenshots/home-icon.png` и `screenshots/splash.png`.
+  - Android-проверка иконки не выполнена (нет Android-эмулятора); adaptive-иконка
+    настроена, но собрать/увидеть её можно только на Android.
+  - `npm install` требует `--legacy-peer-deps` из-за peer-конфликта
+    react-native/jest-preset (см. STACK_RESOLVED.md); `@react-native/jest-preset`
+    добавлен явным devDep.
+  - `pod install` дважды падал на скачивании `react-native-artifacts-0.86.3`
+    (~94 МБ с repo1.maven.org, «Transferred a partial file») — лечится повтором.
+- Следующий шаг: заменить временный `bundleIdentifier` перед публикацией;
+  опционально — нативный видео-timelapse (факультатив в TODO.md).
 
 ---
 
