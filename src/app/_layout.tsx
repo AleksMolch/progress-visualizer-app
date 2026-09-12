@@ -50,7 +50,11 @@ export default function RootLayout() {
       <ThemeProvider>
         <StatusBar style="auto" />
         <BiometricsGate>
-          <Stack>
+          <Stack
+            screenOptions={{
+              // Без текста на кнопке «назад» — иначе показывается имя группы «(tabs)».
+              headerBackButtonDisplayMode: 'minimal',
+            }}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="project/[id]/index" options={{ title: 'Проект' }} />
             <Stack.Screen name="project/[id]/viewer/[photoId]" options={{ title: 'Фото' }} />
