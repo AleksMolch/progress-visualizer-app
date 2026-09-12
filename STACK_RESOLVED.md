@@ -60,6 +60,7 @@
 - @react-native-community/slider: 5.2.0 (слайдер прозрачности ghost overlay, Фаза 7)
 - expo-local-authentication: ~57.0.3 (биометрическая защита, Фаза 10)
 - @react-native/jest-preset: 0.86.3 (явный devDep — см. примечание ниже)
+- @expo/vector-icons: ^15.0.2 (иконки нижних вкладок, Ionicons — MIT; post-MVP)
 
 Примечание (Фаза 15): из прямых зависимостей удалены неиспользуемые пакеты
 шаблона — `expo-device`, `expo-web-browser` (удалены полностью), а `@expo/ui`,

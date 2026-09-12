@@ -114,7 +114,11 @@ function PhotoTile({
 
   return (
     <View style={styles.tile}>
-      <Pressable onPress={onOpen} accessibilityRole="imagebutton" accessibilityLabel="Открыть фото">
+      <Pressable
+        onPress={onOpen}
+        accessibilityRole="imagebutton"
+        accessibilityLabel="Открыть фото"
+        style={styles.photoButton}>
         <Image source={{ uri }} style={styles.photo} contentFit="cover" />
       </Pressable>
       <Pressable
@@ -142,8 +146,12 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     overflow: 'hidden',
   },
-  photo: {
+  photoButton: {
     flex: 1,
+  },
+  photo: {
+    width: '100%',
+    height: '100%',
   },
   deleteButton: {
     position: 'absolute',

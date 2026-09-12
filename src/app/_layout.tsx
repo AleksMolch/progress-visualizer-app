@@ -52,7 +52,10 @@ export default function RootLayout() {
         <BiometricsGate>
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="project/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="project/[id]/index" options={{ title: 'Проект' }} />
+            <Stack.Screen name="project/[id]/viewer/[photoId]" options={{ title: 'Фото' }} />
+            <Stack.Screen name="project/[id]/compare/[photoId]" options={{ title: 'Сравнение' }} />
+            <Stack.Screen name="project/[id]/timelapse" options={{ title: 'Timelapse' }} />
             <Stack.Screen name="support" />
           </Stack>
         </BiometricsGate>
