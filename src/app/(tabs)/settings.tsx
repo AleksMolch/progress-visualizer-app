@@ -23,12 +23,16 @@ import { ReminderSettingsCard } from '@/features/settings/components/reminder-se
 import { isBiometricsAvailable } from '@/storage/biometrics';
 import { useSettingsStore } from '@/store/settingsStore';
 import { spacing } from '@/theme';
+import { FLOATING_TAB_BAR_INSET } from '@/theme/tab-bar';
 import { useAppTheme } from '@/theme/ThemeProvider';
 
 export default function SettingsScreen() {
-  const { colors } = useAppTheme();
+  const { colors, metrics } = useAppTheme();
   const requireBiometrics = useSettingsStore((s) => s.settings.requireBiometrics);
   const updateSettings = useSettingsStore((s) => s.updateSettings);
+
+  // Отступ под плавающую капсулу таббара (0 — стандартный таббар).
+  const floatingInset = metrics.tabBarRadius > 0 ? FLOATING_TAB_BAR_INSET : 0;
 
   // null — ещё не определили доступность биометрии.
   const [available, setAvailable] = useState<boolean | null>(null);
@@ -39,7 +43,7 @@ export default function SettingsScreen() {
 
   return (
     <AppScreen scroll>
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: floatingInset + spacing.lg }]}>
         <AppText variant="title">Настройки</AppText>
 
         <AppCard style={styles.card}>

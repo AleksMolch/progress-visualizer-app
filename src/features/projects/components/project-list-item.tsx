@@ -19,6 +19,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppText } from '@/components/ui/app-text';
+import { AdaptiveSurface } from '@/components/ui/adaptive-surface';
 import { spacing } from '@/theme';
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { formatDate } from '@/utils/dates';
@@ -97,14 +98,14 @@ function PhotoCard({
   onRename,
   onDelete,
 }: Omit<ProjectListItemProps, 'coverUri'> & { coverUri?: string }) {
-  const { colors, metrics } = useAppTheme();
+  const { colors, metrics, material } = useAppTheme();
 
   return (
-    <View
-      style={[
-        styles.photoCard,
-        { backgroundColor: colors.surface, borderRadius: metrics.cardRadius },
-      ]}>
+    <AdaptiveSurface
+      material={material.card}
+      backgroundColor={colors.surface}
+      borderRadius={metrics.cardRadius}
+      style={styles.photoCard}>
       <Pressable onPress={onOpen} accessibilityRole="button">
         {coverUri ? (
           <Image source={{ uri: coverUri }} style={styles.cover} contentFit="cover" />
@@ -125,7 +126,7 @@ function PhotoCard({
         <AppButton label="Переименовать" variant="secondary" onPress={onRename} />
         <AppButton label="Удалить" variant="danger" onPress={onDelete} />
       </View>
-    </View>
+    </AdaptiveSurface>
   );
 }
 

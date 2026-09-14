@@ -34,6 +34,8 @@ import { useAppStore } from '@/store/appStore';
 import { useProjectStore } from '@/store/projectStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { radii, spacing } from '@/theme';
+import { FLOATING_TAB_BAR_INSET } from '@/theme/tab-bar';
+import { useAppTheme } from '@/theme/ThemeProvider';
 import { resolveGhostVisibility } from '@/utils/ghost';
 import { getLatestPhoto } from '@/utils/photos';
 
@@ -41,6 +43,7 @@ import { getLatestPhoto } from '@/utils/photos';
 const CONTROLS_BOTTOM_INSET = 24;
 
 export default function CameraScreen() {
+  const { metrics } = useAppTheme();
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -57,6 +60,9 @@ export default function CameraScreen() {
   const setActiveProjectId = useAppStore((s) => s.setActiveProjectId);
   const saveCapturedPhoto = useProjectStore((s) => s.saveCapturedPhoto);
   const settings = useSettingsStore((s) => s.settings);
+
+  // Отступ под плавающую капсулу таббара (0 — стандартный таббар).
+  const floatingInset = metrics.tabBarRadius > 0 ? FLOATING_TAB_BAR_INSET : 0;
 
   // Эффективный активный проект: выбранный или первый из списка.
   const activeProject = projects.find((p) => p.id === activeProjectId) ?? projects[0] ?? null;
@@ -208,7 +214,7 @@ export default function CameraScreen() {
         </View>
       ) : null}
 
-      <View style={styles.controlsWrap}>
+      <View style={[styles.controlsWrap, { bottom: 120 + floatingInset }]}>
         <OverlayControls
           hasPhoto={latestPhoto !== null}
           isPeekActive={isPeekActive}
@@ -216,7 +222,11 @@ export default function CameraScreen() {
         />
       </View>
 
-      <ShutterButton isCapturing={isCapturing} onPress={handleCapture} />
+      <ShutterButton
+        isCapturing={isCapturing}
+        onPress={handleCapture}
+        floatingInset={floatingInset}
+      />
     </View>
   );
 }
@@ -283,16 +293,18 @@ function ProjectSelector({
 function ShutterButton({
   isCapturing,
   onPress,
+  floatingInset,
 }: {
   isCapturing: boolean;
   onPress: () => void;
+  floatingInset: number;
 }) {
   const insets = useSafeAreaInsets();
   return (
     <View
       style={[
         styles.shutterWrap,
-        { paddingBottom: insets.bottom + CONTROLS_BOTTOM_INSET },
+        { paddingBottom: insets.bottom + CONTROLS_BOTTOM_INSET + floatingInset },
       ]}>
       <Pressable
         onPress={onPress}

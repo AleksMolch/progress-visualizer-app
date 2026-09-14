@@ -23,14 +23,20 @@ import { ProjectFormModal } from '@/features/projects/components/project-form-mo
 import { ProjectListItem } from '@/features/projects/components/project-list-item';
 import { useProjectStore } from '@/store/projectStore';
 import { spacing } from '@/theme';
+import { FLOATING_TAB_BAR_INSET } from '@/theme/tab-bar';
+import { useAppTheme } from '@/theme/ThemeProvider';
 import { getLatestPhoto } from '@/utils/photos';
 
 export default function ProjectsScreen() {
+  const { metrics } = useAppTheme();
   const projects = useProjectStore((s) => s.projects);
   const photos = useProjectStore((s) => s.photos);
   const createProject = useProjectStore((s) => s.createProject);
   const updateProject = useProjectStore((s) => s.updateProject);
   const deleteProject = useProjectStore((s) => s.deleteProject);
+
+  // Отступ под плавающую капсулу таббара (0 — стандартный таббар).
+  const floatingInset = metrics.tabBarRadius > 0 ? FLOATING_TAB_BAR_INSET : 0;
 
   // Состояние модального окна: открыто ли, и какой проект редактируется (null — создание).
   const [modalVisible, setModalVisible] = useState(false);
@@ -93,7 +99,7 @@ export default function ProjectsScreen() {
         <FlatList
           data={projects}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[styles.list, { paddingBottom: floatingInset + spacing.lg }]}
           ListHeaderComponent={
             <View style={styles.header}>
               <AppText variant="title">Проекты</AppText>
