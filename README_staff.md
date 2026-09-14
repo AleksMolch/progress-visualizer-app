@@ -66,7 +66,7 @@ ProgressPrivate — privacy-first мобильное приложение для
 
 - `Project`: id, name, createdAt, updatedAt.
 - `PhotoMetadata`: id, projectId, uri (локальный путь), takenAt, width?, height?.
-- `AppSettings`: themeMode, ghostEnabled, ghostOpacity, gridEnabled,
+- `AppSettings`: designTheme, themeMode, ghostEnabled, ghostOpacity, gridEnabled,
   requireBiometrics, remindersEnabled, reminderTime.
 
 Метаданные — в MMKV (зашифровано). Файлы фото — в sandbox приложения
@@ -166,7 +166,51 @@ npx expo-doctor
 
 ---
 
-## 10. Что нельзя делать при поддержке
+## 10. Оформления, материал и быстрый призрак
+
+### 10.1. Два независимых выбора
+
+- `designTheme`: `minimalism` | `liquid-glass` | `gallery` (default `minimalism`).
+- `themeMode`: `system` | `light` | `dark` — независимый цветовой режим.
+
+Определения тем, палитры, радиусы и материалы — в `src/theme/design-themes.ts`.
+Провайдер (`src/theme/ThemeProvider.tsx`) резолвит пару
+`(designTheme, scheme)` и отдаёт через `useAppTheme()`: `colors`, `scheme`,
+`designTheme`, `metrics`, `material`.
+
+### 10.2. Гидратация и совместимость
+
+- `normalizeSettings()` в `src/store/settingsStore.ts` объединяет сохранённые
+  настройки с `DEFAULT_SETTINGS`; отсутствующий/неизвестный `designTheme` → `minimalism`.
+- persist использует кастомный `merge`; `skipHydration: true` и порядок
+  `initializeStorage → rehydrateStores` не менялись.
+
+### 10.3. Материал (Liquid Glass)
+
+- `src/components/ui/adaptive-surface.tsx` + `.ios.tsx`: на iOS native-glass →
+  `GlassView`, иначе `BlurView`, иначе solid `View`. Reduce Transparency → solid.
+- Вне iOS материал всегда сводится к solid (без импорта iOS-only модулей).
+- Плавающая капсула таббара — в `src/app/(tabs)/_layout.tsx` через `tabBarStyle`
+  (`position: absolute`) + `tabBarBackground`. Размеры — `src/theme/tab-bar.ts`.
+
+### 10.4. Быстрый призрак (hold-to-peek)
+
+- Чистая логика — `src/utils/ghost.ts` (`resolveGhostVisibility`, `PEEK_OPACITY = 0.9`).
+- Жест — `Gesture.Tap` c `onTouchesDown/onTouchesUp` на слое под контролами
+  (`src/app/(tabs)/camera.tsx`). Временное состояние `isPeekActive` НЕ персистится.
+- Доступная альтернатива — кнопка «Призрак 90%» в `overlay-controls.tsx` (toggle).
+- Сбросы: на capture, смену проекта, изменение ползунка, blur-навигацию
+  (`useFocusEffect`), фон (`AppState`).
+
+### 10.5. Отступы под плавающую капсулу
+
+Плавающий таббар перекрывает контент. Списки/настройки добавляют
+`FLOATING_TAB_BAR_INSET`; камера смещает затвор и панель. Один источник
+констант — `src/theme/tab-bar.ts`.
+
+---
+
+## 11. Что нельзя делать при поддержке
 
 - Добавлять сетевые запросы с фото или метаданными.
 - Добавлять рекламные или аналитические SDK.
@@ -178,7 +222,7 @@ npx expo-doctor
 
 ---
 
-## 11. Связанные документы
+## 12. Связанные документы
 
 - CONSTITUTION.md — неизменяемые правила
 - ARCHITECTURE.md — границы слоёв

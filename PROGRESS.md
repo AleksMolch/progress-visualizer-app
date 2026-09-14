@@ -813,6 +813,42 @@
 
 ---
 
+### 2026-09-14 — Оформления, материал и быстрый призрак (по DESIGN_THEMES_AND_GHOST_TASK.md)
+
+- Что сделано: (1) три визуальных оформления (`minimalism`/`liquid-glass`/`gallery`)
+  через токены + независимый цветовой режим (`themeMode` подключён к провайдеру);
+  выбор — секция «Оформление» в Настройках с искусственными превью. (2) Галерея:
+  cover-превью в ProjectListItem, бирюзовый акцент, крупные радиусы. (3) Liquid
+  Glass: `AdaptiveSurface` (GlassView → BlurView → solid, Reduce Transparency →
+  solid), плавающий glass-таббар, frosted-карточки; отступы контента под капсулу.
+  (4) Быстрый призрак hold-to-peek: удержание на свободной зоне превью → 90%
+  (opacity 0.9), отпускание → обычный режим; доступная кнопка «Призрак 90%»;
+  слайдер переименован в «Видимость призрака». Сбросы на capture/смену проекта/
+  ползунок/blur/фон. (5) Безопасная миграция старых настроек (normalizeSettings).
+- Какие файлы созданы или изменены: см. `docs/design-integration-report.md`
+  (полная карта). Ключевые новые: `src/theme/design-themes.ts`, `material.ts`,
+  `tab-bar.ts`, `src/components/ui/adaptive-surface.tsx(+.ios)`,
+  `src/features/settings/components/appearance-settings-card.tsx`,
+  `src/utils/ghost.ts`. Зависимости: `@expo/vector-icons`, `expo-glass-effect`,
+  `expo-blur`.
+- Какие команды запускались:
+  - `npx expo install @expo/vector-icons expo-glass-effect expo-blur`
+  - `npm run typecheck`, `npm run lint`, `npm test`, `npx expo-doctor`
+  - `npx expo prebuild --platform ios` + `npx expo run:ios` (Build Succeeded)
+- Результат проверок:
+  - typecheck/lint: чисто; тесты: 88/88 (было 59); expo-doctor: 21/21
+  - сборка iOS: 0 errors / 0 warnings; запуск без redbox, экран отрисовывается
+- Известные проблемы / BLOCKED:
+  - Визуальная проверка тем — ручная (модель не читает скриншоты).
+  - Нативное Liquid Glass — требует iOS 26+ устройства (на симуляторе возможно
+    fallback). Жест hold-to-peek — на устройстве. Android — нет эмулятора. Web — не проверялся.
+  - readiness эталонного изображения (onLoad/onError, гонка смены проекта)
+    реализовано частично (`referenceReady = latestPhoto !== null`) — улучшение в будущем.
+- Следующий шаг: визуальный ревью владельцем (скриншоты), проверка на устройстве
+  (Liquid Glass + жест), затем — bundleIdentifier и публикация.
+
+---
+
 ### Как передать скриншоты для работы над дизайном (для будущих сессий)
 
 - Положи файлы в папку проекта (например, `screenshots/`) или укажи пути.
