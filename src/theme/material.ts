@@ -1,5 +1,5 @@
 /**
- * Назначение: политика выбора материала поверхности (стекло/blur/solid).
+ * Назначение: политика выбора материала поверхности (стекло/blur/solid/elevated/neumorphic).
  *
  * Функции:
  * - resolveMaterial(): по запрошенному материалу и возможностям платформы
@@ -9,11 +9,18 @@
  * Ограничение: это намерение оформления; рендер выполняет AdaptiveSurface.
  */
 
-/** Запрошенный материал поверхности. */
-export type RequestedMaterial = 'solid' | 'frosted' | 'native-glass';
+/** Вид поверхности, который может запросить оформление. */
+export type SurfaceKind =
+  | 'solid'
+  | 'frosted'
+  | 'native-glass'
+  | 'elevated'
+  | 'neumorphic';
 
+/** Запрошенный материал поверхности. */
+export type RequestedMaterial = SurfaceKind;
 /** Фактический материал после учёта платформы и accessibility. */
-export type ResolvedMaterial = RequestedMaterial;
+export type ResolvedMaterial = SurfaceKind;
 
 /** Возможности текущей платформы для выбора материала. */
 export interface MaterialCapabilities {
@@ -31,27 +38,40 @@ export interface MaterialCapabilities {
  * Определяет фактический материал с учётом платформы и accessibility.
  *
  * Правила:
- * - solid → solid всегда;
- * - Reduce Transparency → solid (непрозрачная поверхность, оформление сохраняется);
- * - frosted → BlurView только на iOS, на остальных платформах solid;
+ * - solid / elevated / neumorphic — чистые RN-поверхности, без нативного
+ *   fallback (возвращаются как есть);
+ * - frosted → BlurView только на iOS, иначе solid;
  * - native-glass → GlassView только на iOS при доступном Liquid Glass;
- *   иначе на iOS frosted, на остальных solid.
+ *   иначе на iOS frosted, на остальных solid;
+ * - Reduce Transparency → solid для прозрачных материалов (frosted/native-glass),
+ *   но НЕ для уже непрозрачных elevated/neumorphic.
  */
 export function resolveMaterial(
   requested: RequestedMaterial,
   capabilities: MaterialCapabilities,
 ): ResolvedMaterial {
-  if (requested === 'solid' || capabilities.reduceTransparency) {
-    return 'solid';
+  switch (requested) {
+    case 'solid':
+      return 'solid';
+    case 'elevated':
+    case 'neumorphic':
+      return requested;
+    case 'frosted':
+      if (capabilities.reduceTransparency || !capabilities.isIos) {
+        return 'solid';
+      }
+      return 'frosted';
+    case 'native-glass':
+      if (capabilities.reduceTransparency) {
+        return 'solid';
+      }
+      if (
+        capabilities.isIos &&
+        capabilities.glassApiAvailable &&
+        capabilities.liquidGlassAvailable
+      ) {
+        return 'native-glass';
+      }
+      return capabilities.isIos ? 'frosted' : 'solid';
   }
-
-  if (requested === 'frosted') {
-    return capabilities.isIos ? 'frosted' : 'solid';
-  }
-
-  // native-glass
-  if (capabilities.isIos && capabilities.glassApiAvailable && capabilities.liquidGlassAvailable) {
-    return 'native-glass';
-  }
-  return capabilities.isIos ? 'frosted' : 'solid';
 }

@@ -44,4 +44,16 @@ describe('resolveMaterial', () => {
   it('native-glass на Android/web даёт solid', () => {
     expect(resolveMaterial('native-glass', { ...iosGlass, isIos: false })).toBe('solid');
   });
+
+  it('elevated остаётся elevated (чистый RN, без fallback)', () => {
+    expect(resolveMaterial('elevated', iosGlass)).toBe('elevated');
+    expect(resolveMaterial('elevated', { ...iosGlass, reduceTransparency: true })).toBe('elevated');
+    expect(resolveMaterial('elevated', { ...iosGlass, isIos: false })).toBe('elevated');
+  });
+
+  it('neumorphic остаётся neumorphic (чистый RN, без fallback)', () => {
+    expect(resolveMaterial('neumorphic', iosGlass)).toBe('neumorphic');
+    expect(resolveMaterial('neumorphic', { ...iosGlass, reduceTransparency: true })).toBe('neumorphic');
+    expect(resolveMaterial('neumorphic', { ...iosGlass, isIos: false })).toBe('neumorphic');
+  });
 });

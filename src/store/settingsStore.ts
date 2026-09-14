@@ -10,15 +10,19 @@
 
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import { Platform } from 'react-native';
 
 import { type AppSettings } from '@/models/settings';
 import { mmkvStorage } from '@/storage/mmkv';
-import { isDesignThemeId } from '@/theme/design-themes';
+import { getDefaultDesignThemeId, isDesignThemeId } from '@/theme/design-themes';
 
 // Значения настроек по умолчанию (до первого изменения пользователем).
+// Примечание: designTheme здесь — переходное значение до гидратации;
+// реальный default для новых установок определяется платформой в normalizeSettings.
 export const DEFAULT_SETTINGS: AppSettings = {
   designTheme: 'minimalism',
   themeMode: 'system',
+  hapticsEnabled: true,
   ghostEnabled: true,
   ghostOpacity: 0.5,
   gridEnabled: true,
@@ -31,18 +35,20 @@ export const DEFAULT_SETTINGS: AppSettings = {
  * Нормализует сохранённые настройки, объединяя их с DEFAULT_SETTINGS.
  *
  * Гарантии (для совместимости со старыми установками):
- * - отсутствующее поле получает значение по умолчанию (например, designTheme);
- * - неизвестный или неверного типа designTheme заменяется на 'minimalism';
+ * - отсутствующий или неизвестный designTheme заменяется на платформенный default
+ *   (iOS → liquid-glass, Android → material, остальные → minimalism);
+ * - явно сохранённый валидный designTheme сохраняется;
  * - неизвестный themeMode заменяется на 'system';
- * - прежние значения остальных полей сохраняются.
+ * - прежние значения остальных полей (ghost, биометрия, напоминания и т.д.) сохраняются.
  */
-export function normalizeSettings(raw: unknown): AppSettings {
+export function normalizeSettings(raw: unknown, platform: string): AppSettings {
   const partial = (typeof raw === 'object' && raw !== null ? raw : {}) as Partial<AppSettings>;
 
   const settings: AppSettings = { ...DEFAULT_SETTINGS, ...partial };
 
-  if (!isDesignThemeId(settings.designTheme)) {
-    settings.designTheme = 'minimalism';
+  // Проверяем ИСХОДНОЕ значение designTheme: отсутствует/неизвестно → platform default.
+  if (!isDesignThemeId(partial.designTheme)) {
+    settings.designTheme = getDefaultDesignThemeId(platform);
   }
   if (settings.themeMode !== 'system' && settings.themeMode !== 'light' && settings.themeMode !== 'dark') {
     settings.themeMode = 'system';
@@ -78,6 +84,7 @@ export const useSettingsStore = create<SettingsState>()(
         ...currentState,
         settings: normalizeSettings(
           (persistedState as { settings?: unknown } | null | undefined)?.settings,
+          Platform.OS,
         ),
       }),
     },

@@ -1,8 +1,11 @@
 // Тесты хранилища настроек.
-// Проверяем частичное обновление настроек, значения по умолчанию,
-// нормализацию сохранённых настроек и гидратацию старой записи без designTheme.
+// Проверяем частичное обновление, значения по умолчанию, нормализацию с
+// платформенным дефолтом оформления и гидратацию старой записи.
+
+import { Platform } from 'react-native';
 
 import { initMmkv, mmkvStorage } from '@/storage/mmkv';
+import { getDefaultDesignThemeId } from '@/theme/design-themes';
 import { DEFAULT_SETTINGS, normalizeSettings, useSettingsStore } from './settingsStore';
 
 // Тестовый ключ шифрования (32 символа — как AES-256).
@@ -44,7 +47,6 @@ describe('settingsStore', () => {
 
     const { settings } = useSettingsStore.getState();
     expect(settings.ghostEnabled).toBe(false);
-    // Прозрачность сохраняется и не сбрасывается при выключении overlay.
     expect(settings.ghostOpacity).toBe(DEFAULT_SETTINGS.ghostOpacity);
   });
 
@@ -55,40 +57,58 @@ describe('settingsStore', () => {
     expect(settings.designTheme).toBe('gallery');
     expect(settings.ghostEnabled).toBe(DEFAULT_SETTINGS.ghostEnabled);
   });
+
+  it('hapticsEnabled по умолчанию включён', () => {
+    expect(DEFAULT_SETTINGS.hapticsEnabled).toBe(true);
+  });
 });
 
-describe('normalizeSettings', () => {
-  it('добавляет designTheme=minimalism для старой записи без поля', () => {
-    const settings = normalizeSettings({ ghostEnabled: true, themeMode: 'dark' });
-    expect(settings.designTheme).toBe('minimalism');
+describe('normalizeSettings (platform default)', () => {
+  it('iOS: старая запись без designTheme → liquid-glass', () => {
+    const settings = normalizeSettings({ ghostEnabled: true, themeMode: 'dark' }, 'ios');
+    expect(settings.designTheme).toBe('liquid-glass');
     expect(settings.ghostEnabled).toBe(true);
     expect(settings.themeMode).toBe('dark');
   });
 
-  it('неизвестный designTheme заменяется на minimalism', () => {
-    const settings = normalizeSettings({ designTheme: 'future-theme' });
-    expect(settings.designTheme).toBe('minimalism');
+  it('Android: старая запись без designTheme → material', () => {
+    expect(normalizeSettings({}, 'android').designTheme).toBe('material');
   });
 
-  it('сохраняет валидный designTheme', () => {
-    const settings = normalizeSettings({ designTheme: 'gallery' });
-    expect(settings.designTheme).toBe('gallery');
+  it('web/прочее: без designTheme → minimalism', () => {
+    expect(normalizeSettings({}, 'web').designTheme).toBe('minimalism');
+  });
+
+  it('неизвестный designTheme заменяется на platform default', () => {
+    expect(normalizeSettings({ designTheme: 'future-theme' }, 'ios').designTheme).toBe('liquid-glass');
+    expect(normalizeSettings({ designTheme: 42 }, 'android').designTheme).toBe('material');
+  });
+
+  it('явный валидный designTheme сохраняется, не заменяется default', () => {
+    expect(normalizeSettings({ designTheme: 'minimalism' }, 'ios').designTheme).toBe('minimalism');
+    expect(normalizeSettings({ designTheme: 'gallery' }, 'android').designTheme).toBe('gallery');
+    expect(normalizeSettings({ designTheme: 'neumorphism' }, 'web').designTheme).toBe('neumorphism');
   });
 
   it('неизвестный themeMode заменяется на system', () => {
-    const settings = normalizeSettings({ themeMode: 'sepia' });
+    const settings = normalizeSettings({ themeMode: 'sepia' }, 'ios');
     expect(settings.themeMode).toBe('system');
   });
 
+  it('сохраняет hapticsEnabled из старой записи', () => {
+    expect(normalizeSettings({ hapticsEnabled: false }, 'ios').hapticsEnabled).toBe(false);
+    expect(normalizeSettings({}, 'ios').hapticsEnabled).toBe(true);
+  });
+
   it('обрабатывает null/undefined как значения по умолчанию', () => {
-    expect(normalizeSettings(undefined).designTheme).toBe('minimalism');
-    expect(normalizeSettings(null).themeMode).toBe('system');
-    expect(normalizeSettings('not-an-object').ghostEnabled).toBe(DEFAULT_SETTINGS.ghostEnabled);
+    expect(normalizeSettings(undefined, 'ios').designTheme).toBe('liquid-glass');
+    expect(normalizeSettings(null, 'android').themeMode).toBe('system');
+    expect(normalizeSettings('not-an-object', 'web').ghostEnabled).toBe(DEFAULT_SETTINGS.ghostEnabled);
   });
 });
 
 describe('settingsStore: гидратация старой записи', () => {
-  it('старая запись без designTheme → minimalism, прежние поля сохранены', async () => {
+  it('старая запись без designTheme → platform default, прежние поля сохранены', async () => {
     // Имитируем сохранённую старым приложением запись (без designTheme).
     mmkvStorage.setItem(
       'settings',
@@ -101,7 +121,7 @@ describe('settingsStore: гидратация старой записи', () => 
     await useSettingsStore.persist.rehydrate();
 
     const { settings } = useSettingsStore.getState();
-    expect(settings.designTheme).toBe('minimalism');
+    expect(settings.designTheme).toBe(getDefaultDesignThemeId(Platform.OS));
     expect(settings.ghostEnabled).toBe(true);
     expect(settings.ghostOpacity).toBe(0.8);
     expect(settings.requireBiometrics).toBe(true);

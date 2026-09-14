@@ -18,6 +18,7 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { type ColorScheme, type ThemeColors } from './index';
 import {
   resolveDesignTheme,
+  type NeumorphismTokens,
   type ThemeMaterial,
   type ThemeMetrics,
 } from './design-themes';
@@ -28,6 +29,7 @@ interface ThemeContextValue {
   designTheme: DesignThemeId;
   metrics: ThemeMetrics;
   material: ThemeMaterial;
+  neu?: NeumorphismTokens;
 }
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
@@ -63,8 +65,9 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       designTheme,
       metrics: resolved.metrics,
       material: resolved.material,
+      neu: resolved.neu,
     }),
-    [resolved.colors, resolved.metrics, resolved.material, scheme, designTheme],
+    [resolved.colors, resolved.metrics, resolved.material, resolved.neu, scheme, designTheme],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

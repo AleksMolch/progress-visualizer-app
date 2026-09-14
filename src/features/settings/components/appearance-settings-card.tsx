@@ -2,25 +2,26 @@
  * Назначение: секция настроек «Оформление» и «Цветовой режим».
  *
  * Функции:
- * - выбор визуального оформления из трёх вариантов (с искусственным превью);
+ * - выбор визуального оформления из доступных на платформе вариантов
+ *   (с искусственным превью);
  * - выбор цветового режима: системный / светлый / тёмный;
  * - выбор применяется сразу через settingsStore и персистится.
  *
  * Слой: UI (/src/features/settings/components). Палитру оформлений берёт из
- * DESIGN_THEMES; состояние — из useSettingsStore. Не монтирует настоящий
+ * DESIGN_THEMES; список платформы — getPlatformThemeIds. Не монтирует настоящий
  * навигатор/камеру внутри превью.
  */
 
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/app-text';
 import { type DesignThemeId, type ThemeMode } from '@/models/settings';
 import { useSettingsStore } from '@/store/settingsStore';
 import { radii, spacing } from '@/theme';
 import {
-  DESIGN_THEME_IDS,
   DESIGN_THEMES,
+  getPlatformThemeIds,
   type DesignThemeDefinition,
 } from '@/theme/design-themes';
 import { useAppTheme } from '@/theme/ThemeProvider';
@@ -30,6 +31,8 @@ const THEME_DESCRIPTIONS: Record<DesignThemeId, string> = {
   minimalism: 'Простой и лёгкий интерфейс',
   'liquid-glass': 'Стеклянные поверхности и плавающее меню',
   gallery: 'Крупные фото и выразительная типографика',
+  material: 'Материальный дизайн с мягкими elevation',
+  neumorphism: 'Мягкие вдавленные поверхности',
 };
 
 // Варианты цветового режима с подписями.
@@ -45,12 +48,15 @@ export function AppearanceSettingsCard() {
   const themeMode = useSettingsStore((s) => s.settings.themeMode);
   const updateSettings = useSettingsStore((s) => s.updateSettings);
 
+  // Доступные на этой платформе оформления (дефолт первым).
+  const platformThemeIds = getPlatformThemeIds(Platform.OS);
+
   return (
     <View style={styles.block}>
       <AppText variant="subtitle">Оформление</AppText>
 
       <View style={styles.themeList}>
-        {DESIGN_THEME_IDS.map((id) => {
+        {platformThemeIds.map((id) => {
           const def = DESIGN_THEMES[id];
           const selected = designTheme === id;
           return (
