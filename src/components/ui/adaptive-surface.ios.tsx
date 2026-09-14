@@ -90,7 +90,7 @@ export function AdaptiveSurface({
   if (resolved === 'frosted') {
     return (
       <BlurView
-        intensity={60}
+        intensity={scheme === 'dark' ? 30 : 40}
         tint={scheme === 'dark' ? 'systemMaterialDark' : 'systemMaterialLight'}
         style={[styles.base, { borderRadius }, style]}
         {...rest}>

@@ -16,12 +16,21 @@ import { useAppTheme } from '@/theme/ThemeProvider';
 import { AdaptiveSurface } from './adaptive-surface';
 
 export function AppCard({ style, children, ...rest }: ViewProps) {
-  const { colors, metrics, material } = useAppTheme();
+  const { colors, metrics, material, scheme } = useAppTheme();
+
+  // Для frosted-карточек (Liquid Glass) — полупрозрачная заливка вместо
+  // сплошного surface, чтобы fallback тоже выглядел «стеклянным».
+  const surfaceBackground =
+    material.card === 'frosted'
+      ? scheme === 'dark'
+        ? 'rgba(255,255,255,0.06)'
+        : 'rgba(255,255,255,0.46)'
+      : colors.surface;
 
   return (
     <AdaptiveSurface
       material={material.card}
-      backgroundColor={colors.surface}
+      backgroundColor={surfaceBackground}
       borderRadius={metrics.cardRadius}
       style={[styles.card, style]}
       {...rest}>

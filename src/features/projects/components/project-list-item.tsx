@@ -99,12 +99,20 @@ function PhotoCard({
   onRename,
   onDelete,
 }: Omit<ProjectListItemProps, 'coverUri'> & { coverUri?: string }) {
-  const { colors, metrics, material } = useAppTheme();
+  const { colors, metrics, material, scheme } = useAppTheme();
+
+  // Полупрозрачная заливка для frosted-карточек (Liquid Glass).
+  const surfaceBackground =
+    material.card === 'frosted'
+      ? scheme === 'dark'
+        ? 'rgba(255,255,255,0.06)'
+        : 'rgba(255,255,255,0.46)'
+      : colors.surface;
 
   return (
     <AdaptiveSurface
       material={material.card}
-      backgroundColor={colors.surface}
+      backgroundColor={surfaceBackground}
       borderRadius={metrics.cardRadius}
       style={styles.photoCard}>
       <Pressable onPress={onOpen} accessibilityRole="button">

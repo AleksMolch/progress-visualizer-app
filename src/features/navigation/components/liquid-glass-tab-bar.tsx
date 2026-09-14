@@ -3,9 +3,10 @@
  *
  * Функции:
  * - центрированная капсула (64% ширины, maxWidth 340), стеклянный материал
- *   + тонкая граница + мягкая тень;
- * - активная вкладка — отдельная внутренняя пилюля (absolute-fill под иконкой);
- * - активная: иконка + подпись акцентным цветом; неактивная: только иконка;
+ *   (полупрозрачный тинт, НЕ сплошной surface);
+ * - 4 слоя: прозрачный wrapper → material (GlassView/BlurView/fallback) →
+ *   edge/specular highlight → контент (вкладки + активная пилюля);
+ * - активная вкладка — полупрозрачная пилюля с border + лёгкой тенью;
  * - использует navigation state/descriptors, не плодит историю переходов.
  *
  * Слой: UI (/src/features/navigation/components). Использует AdaptiveSurface
@@ -34,13 +35,17 @@ const SHORT_LABELS: Record<string, string> = {
 export function LiquidGlassTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { colors, scheme } = useAppTheme();
   const insets = useSafeAreaInsets();
-
-  // Цвета, зависящие от схемы (light/dark).
   const isDark = scheme === 'dark';
-  const activePillBackground = isDark ? 'rgba(70,70,74,0.62)' : 'rgba(255,255,255,0.68)';
-  const activePillBorder = isDark ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.75)';
-  const inactiveColor = isDark ? 'rgba(255,255,255,0.72)' : 'rgba(80,80,86,0.74)';
-  const capsuleBorder = isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.55)';
+
+  // Полупрозрачный стеклянный тинт: НЕ сплошной surface, чтобы сохранить
+  // ощущение стекла на светлом и тёмном фоне.
+  const glassTint = isDark ? 'rgba(18,20,24,0.26)' : 'rgba(255,255,255,0.20)';
+  const capsuleBorder = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.45)';
+
+  // Полупрозрачная активная пилюля (не полностью белая/чёрная).
+  const activePillBackground = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.28)';
+  const activePillBorder = isDark ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.55)';
+  const inactiveColor = isDark ? 'rgba(255,255,255,0.62)' : 'rgba(65,70,80,0.70)';
 
   return (
     <View
@@ -48,19 +53,22 @@ export function LiquidGlassTabBar({ state, descriptors, navigation }: BottomTabB
       style={[styles.overlay, { bottom: insets.bottom + FLOATING_TAB_BAR_GAP }]}>
       <AdaptiveSurface
         material="native-glass"
-        backgroundColor={colors.surface}
+        backgroundColor={glassTint}
         borderRadius={FLOATING_TAB_BAR_HEIGHT / 2}
         isInteractive
         style={[styles.capsule, { borderColor: capsuleBorder }]}>
+        {/* Edge highlight: тонкие разноцветные границы создают толщину стекла. */}
+        <View pointerEvents="none" style={isDark ? styles.edgeDark : styles.edgeLight} />
+        {/* Верхний спекулярный блик. */}
+        <View pointerEvents="none" style={styles.topSpecular} />
+
         <View style={styles.row}>
           {state.routes.map((route, index) => {
             const focused = state.index === index;
             const { options } = descriptors[route.key];
-            // Полное имя — для доступности; короткое — для компактной капсулы.
             const fullLabel = options.title ?? route.name;
             const label = SHORT_LABELS[fullLabel] ?? fullLabel;
 
-            // Стандартный обработчик таба: не плодим историю переходов.
             const onPress = () => {
               const event = navigation.emit({
                 type: 'tabPress',
@@ -84,7 +92,6 @@ export function LiquidGlassTabBar({ state, descriptors, navigation }: BottomTabB
                 accessibilityState={{ selected: focused }}
                 accessibilityLabel={fullLabel}
                 style={styles.tab}>
-                {/* Внутренняя активная пилюля — слой под иконкой/подписью. */}
                 {focused ? (
                   <View
                     style={[
@@ -160,5 +167,50 @@ const styles = StyleSheet.create({
     right: 0,
     borderRadius: 999,
     borderWidth: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  edgeLight: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderRadius: 999,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 0.6,
+    borderBottomWidth: 0.4,
+    borderTopColor: 'rgba(255,255,255,0.70)',
+    borderLeftColor: 'rgba(255,255,255,0.45)',
+    borderRightColor: 'rgba(255,255,255,0.18)',
+    borderBottomColor: 'rgba(0,0,0,0.10)',
+  },
+  edgeDark: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderRadius: 999,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 0.6,
+    borderBottomWidth: 0.4,
+    borderTopColor: 'rgba(255,255,255,0.20)',
+    borderLeftColor: 'rgba(255,255,255,0.14)',
+    borderRightColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: 'rgba(0,0,0,0.35)',
+  },
+  topSpecular: {
+    position: 'absolute',
+    top: 2,
+    left: 18,
+    right: 18,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.55)',
+    borderRadius: 999,
   },
 });
