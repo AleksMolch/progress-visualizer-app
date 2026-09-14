@@ -127,7 +127,7 @@ function PhotoCard({
 }
 
 /**
- * Обложка проекта: фото или нейтральная заглушка.
+ * Обложка проекта: фото или мягкая нейтральная заглушка.
  * При ошибке загрузки URI показывает заглушку вместо «чёрного» блока.
  */
 function ProjectCover({ uri }: { uri?: string }) {
@@ -137,7 +137,10 @@ function ProjectCover({ uri }: { uri?: string }) {
   if (!uri || failed) {
     return (
       <View style={[styles.coverPlaceholder, { backgroundColor: colors.surface }]}>
-        <Ionicons name="images-outline" size={32} color={colors.textSecondary} />
+        <Ionicons name="images-outline" size={36} color="rgba(32,138,239,0.45)" />
+        <AppText variant="caption" color="textSecondary">
+          Нет фото
+        </AppText>
       </View>
     );
   }
@@ -168,6 +171,7 @@ const styles = StyleSheet.create({
     height: 96,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing.xs,
   },
   photoBody: {
     padding: spacing.md,

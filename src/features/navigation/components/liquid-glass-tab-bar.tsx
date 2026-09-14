@@ -2,9 +2,10 @@
  * Назначение: кастомный таббар в стиле Liquid Glass (компактная плавающая капсула).
  *
  * Функции:
- * - центрированная капсула (не full-width), стеклянный материал + border + тень;
- * - активная вкладка — отдельная внутренняя пилюля с иконкой и подписью;
- * - неактивные — только иконка;
+ * - центрированная капсула (64% ширины, maxWidth 340), стеклянный материал
+ *   + тонкая граница + мягкая тень;
+ * - активная вкладка — отдельная внутренняя пилюля (absolute-fill под иконкой);
+ * - активная: иконка + подпись акцентным цветом; неактивная: только иконка;
  * - использует navigation state/descriptors, не плодит историю переходов.
  *
  * Слой: UI (/src/features/navigation/components). Использует AdaptiveSurface
@@ -17,34 +18,35 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AdaptiveSurface } from '@/components/ui/adaptive-surface';
 import { AppText } from '@/components/ui/app-text';
-import { FLOATING_TAB_BAR_GAP } from '@/theme/tab-bar';
+import { FLOATING_TAB_BAR_GAP, FLOATING_TAB_BAR_HEIGHT } from '@/theme/tab-bar';
 import { useAppTheme } from '@/theme/ThemeProvider';
 
-// Радиус капсулы (пилюля).
-const CAPSULE_RADIUS = 32;
-// Максимальная ширина капсулы.
-const MAX_WIDTH = 360;
-// Доля ширины экрана, занимаемая капсулой.
-const WIDTH_RATIO = '68%';
+// Геометрия капсулы.
+const WIDTH_RATIO = '64%';
+const MAX_WIDTH = 340;
+const MIN_WIDTH = 250;
 
 export function LiquidGlassTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { colors, scheme } = useAppTheme();
   const insets = useSafeAreaInsets();
 
-  // Фон активной пилюли (полупрозрачный, зависит от схемы).
-  const activePillBackground =
-    scheme === 'dark' ? 'rgba(60,60,64,0.55)' : 'rgba(255,255,255,0.6)';
-  // Цвет неактивных иконок — серый (светлая) / светло-серый (тёмная).
-  const inactiveColor = colors.textSecondary;
+  // Цвета, зависящие от схемы (light/dark).
+  const isDark = scheme === 'dark';
+  const activePillBackground = isDark ? 'rgba(70,70,74,0.62)' : 'rgba(255,255,255,0.68)';
+  const activePillBorder = isDark ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.75)';
+  const inactiveColor = isDark ? 'rgba(255,255,255,0.72)' : 'rgba(80,80,86,0.74)';
+  const capsuleBorder = isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.55)';
 
   return (
-    <View style={[styles.wrap, { bottom: insets.bottom + FLOATING_TAB_BAR_GAP }]}>
+    <View
+      pointerEvents="box-none"
+      style={[styles.overlay, { bottom: insets.bottom + FLOATING_TAB_BAR_GAP }]}>
       <AdaptiveSurface
         material="native-glass"
         backgroundColor={colors.surface}
-        borderRadius={CAPSULE_RADIUS}
+        borderRadius={FLOATING_TAB_BAR_HEIGHT / 2}
         isInteractive
-        style={styles.glass}>
+        style={[styles.capsule, { borderColor: capsuleBorder }]}>
         <View style={styles.row}>
           {state.routes.map((route, index) => {
             const focused = state.index === index;
@@ -74,7 +76,16 @@ export function LiquidGlassTabBar({ state, descriptors, navigation }: BottomTabB
                 accessibilityRole="button"
                 accessibilityState={{ selected: focused }}
                 accessibilityLabel={label}
-                style={[styles.tab, focused && { backgroundColor: activePillBackground }]}>
+                style={styles.tab}>
+                {/* Внутренняя активная пилюля — слой под иконкой/подписью. */}
+                {focused ? (
+                  <View
+                    style={[
+                      styles.activePill,
+                      { backgroundColor: activePillBackground, borderColor: activePillBorder },
+                    ]}
+                  />
+                ) : null}
                 {options.tabBarIcon
                   ? options.tabBarIcon({
                       focused,
@@ -97,31 +108,45 @@ export function LiquidGlassTabBar({ state, descriptors, navigation }: BottomTabB
 }
 
 const styles = StyleSheet.create({
-  wrap: {
+  overlay: {
     position: 'absolute',
     left: 0,
     right: 0,
     alignItems: 'center',
   },
-  glass: {
+  capsule: {
     width: WIDTH_RATIO,
     maxWidth: MAX_WIDTH,
+    minWidth: MIN_WIDTH,
+    height: FLOATING_TAB_BAR_HEIGHT,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
-    boxShadow: [{ offsetX: 0, offsetY: 8, color: 'rgba(0,0,0,0.18)', blurRadius: 24 }],
+    boxShadow: [{ offsetX: 0, offsetY: 8, color: 'rgba(0,0,0,0.18)', blurRadius: 18 }],
+    elevation: 8,
   },
   row: {
+    flex: 1,
     flexDirection: 'row',
-    padding: 6,
-    gap: 4,
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingHorizontal: 8,
+    paddingVertical: 7,
   },
   tab: {
+    height: 50,
+    minWidth: 50,
     flex: 1,
-    minHeight: 52,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: CAPSULE_RADIUS,
     paddingHorizontal: 10,
     gap: 2,
+  },
+  activePill: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderRadius: 999,
+    borderWidth: 1,
   },
 });

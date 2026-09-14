@@ -17,20 +17,27 @@ import { Tabs, type BottomTabBarProps } from 'expo-router/js-tabs';
 import { LiquidGlassTabBar } from '@/features/navigation/components/liquid-glass-tab-bar';
 import { useAppTheme } from '@/theme/ThemeProvider';
 
+// Оборачивает кастомную капсулу в сигнатуру таббара (как прямой prop `tabBar`).
+function renderLiquidGlassTabBar(props: BottomTabBarProps) {
+  return <LiquidGlassTabBar {...props} />;
+}
+
 export default function TabLayout() {
   const { colors, designTheme } = useAppTheme();
 
-  // Кастомная капсула — только для Liquid Glass.
+  // Кастомная капсула — только для Liquid Glass. Важно: `tabBar` передаётся
+  // как ПРЯМОЙ prop навигатора (BottomTabNavigationConfig), а не в screenOptions.
   const isGlass = designTheme === 'liquid-glass';
 
   return (
     <Tabs
+      tabBar={isGlass ? renderLiquidGlassTabBar : undefined}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
         ...(isGlass
-          ? { tabBar: (props: BottomTabBarProps) => <LiquidGlassTabBar {...props} /> }
+          ? {}
           : { tabBarStyle: { backgroundColor: colors.background, borderTopColor: colors.border } }),
       }}>
       <Tabs.Screen
