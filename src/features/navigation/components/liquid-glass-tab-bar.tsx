@@ -26,6 +26,11 @@ const WIDTH_RATIO = '64%';
 const MAX_WIDTH = 340;
 const MIN_WIDTH = 250;
 
+// Короткие подписи для узкой капсулы (полное имя остаётся в accessibilityLabel).
+const SHORT_LABELS: Record<string, string> = {
+  'Настройки': 'Опции',
+};
+
 export function LiquidGlassTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { colors, scheme } = useAppTheme();
   const insets = useSafeAreaInsets();
@@ -51,7 +56,9 @@ export function LiquidGlassTabBar({ state, descriptors, navigation }: BottomTabB
           {state.routes.map((route, index) => {
             const focused = state.index === index;
             const { options } = descriptors[route.key];
-            const label = options.title ?? route.name;
+            // Полное имя — для доступности; короткое — для компактной капсулы.
+            const fullLabel = options.title ?? route.name;
+            const label = SHORT_LABELS[fullLabel] ?? fullLabel;
 
             // Стандартный обработчик таба: не плодим историю переходов.
             const onPress = () => {
@@ -75,7 +82,7 @@ export function LiquidGlassTabBar({ state, descriptors, navigation }: BottomTabB
                 onLongPress={onLongPress}
                 accessibilityRole="button"
                 accessibilityState={{ selected: focused }}
-                accessibilityLabel={label}
+                accessibilityLabel={fullLabel}
                 style={styles.tab}>
                 {/* Внутренняя активная пилюля — слой под иконкой/подписью. */}
                 {focused ? (
@@ -94,7 +101,12 @@ export function LiquidGlassTabBar({ state, descriptors, navigation }: BottomTabB
                     })
                   : null}
                 {focused ? (
-                  <AppText variant="caption" style={{ color: colors.primary }}>
+                  <AppText
+                    variant="caption"
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.7}
+                    style={{ color: colors.primary }}>
                     {label}
                   </AppText>
                 ) : null}
