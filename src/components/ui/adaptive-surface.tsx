@@ -1,9 +1,10 @@
 /**
- * Назначение: адаптивная поверхность (solid) для платформ без нативного blur.
+ * Назначение: адаптивная поверхность для платформ без нативного blur/glass.
  *
  * Функции:
- * - на Android/web материал всегда сводится к solid (см. theme/material.ts),
- *   поэтому здесь просто рендерится View с фоном и скруглением.
+ * - на Android/web материалы frosted/native-glass сводятся к solid
+ *   (см. theme/material.ts); elevated → View с тенью; neumorphic → NeuSurface;
+ *   solid → обычный View.
  *
  * Слой: UI (/src/components/ui). iOS-вариант — в adaptive-surface.ios.tsx.
  * Разделение нужно, чтобы не импортировать iOS-only модули (expo-glass-effect,
@@ -12,10 +13,13 @@
 
 import { StyleSheet, View, type ViewProps } from 'react-native';
 
-import type { RequestedMaterial } from '@/theme/material';
+import { type RequestedMaterial } from '@/theme/material';
+import { resolveMaterial } from '@/theme/material';
+
+import { NeuSurface } from './neu-surface';
 
 export interface AdaptiveSurfaceProps extends ViewProps {
-  /** Запрошенный материал (на этих платформах всегда solid). */
+  /** Запрошенный материал. */
   material: RequestedMaterial;
   /** Фоновый цвет поверхности. */
   backgroundColor?: string;
@@ -26,7 +30,7 @@ export interface AdaptiveSurfaceProps extends ViewProps {
 }
 
 export function AdaptiveSurface({
-  material: _material,
+  material,
   backgroundColor,
   borderRadius,
   isInteractive: _isInteractive,
@@ -34,10 +38,31 @@ export function AdaptiveSurface({
   children,
   ...rest
 }: AdaptiveSurfaceProps) {
+  const resolved = resolveMaterial(material, {
+    isIos: false,
+    glassApiAvailable: false,
+    liquidGlassAvailable: false,
+    reduceTransparency: false,
+  });
+
+  if (resolved === 'neumorphic') {
+    return (
+      <NeuSurface radius={borderRadius} style={style} {...rest}>
+        {children}
+      </NeuSurface>
+    );
+  }
+
+  if (resolved === 'elevated') {
+    return (
+      <View style={[styles.base, styles.elevated, { backgroundColor, borderRadius }, style]} {...rest}>
+        {children}
+      </View>
+    );
+  }
+
   return (
-    <View
-      style={[styles.base, { backgroundColor, borderRadius }, style]}
-      {...rest}>
+    <View style={[styles.base, { backgroundColor, borderRadius }, style]} {...rest}>
       {children}
     </View>
   );
@@ -46,5 +71,8 @@ export function AdaptiveSurface({
 const styles = StyleSheet.create({
   base: {
     overflow: 'hidden',
+  },
+  elevated: {
+    boxShadow: [{ offsetX: 0, offsetY: 2, color: 'rgba(0,0,0,0.15)', blurRadius: 6 }],
   },
 });

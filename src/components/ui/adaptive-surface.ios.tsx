@@ -1,9 +1,11 @@
 /**
- * Назначение: адаптивная поверхность (iOS) с native glass / blur / solid fallback.
+ * Назначение: адаптивная поверхность (iOS) с native glass / blur / elevation / neu / solid.
  *
  * Функции:
  * - native-glass → GlassView (expo-glass-effect) при доступном Liquid Glass;
  * - frosted → BlurView (expo-blur);
+ * - elevated → View с мягкой тенью (Material);
+ * - neumorphic → NeuSurface;
  * - solid / Reduce Transparency → обычный View.
  *
  * Слой: UI (/src/components/ui). Используется на iOS (файл .ios.tsx).
@@ -23,6 +25,7 @@ import { resolveMaterial } from '@/theme/material';
 import { useAppTheme } from '@/theme/ThemeProvider';
 
 import type { AdaptiveSurfaceProps } from './adaptive-surface';
+import { NeuSurface } from './neu-surface';
 
 /**
  * Отслеживает системную настройку Reduce Transparency.
@@ -96,6 +99,22 @@ export function AdaptiveSurface({
     );
   }
 
+  if (resolved === 'neumorphic') {
+    return (
+      <NeuSurface radius={borderRadius} style={style} {...rest}>
+        {children}
+      </NeuSurface>
+    );
+  }
+
+  if (resolved === 'elevated') {
+    return (
+      <View style={[styles.base, styles.elevated, { backgroundColor, borderRadius }, style]} {...rest}>
+        {children}
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.base, { backgroundColor, borderRadius }, style]} {...rest}>
       {children}
@@ -106,5 +125,8 @@ export function AdaptiveSurface({
 const styles = StyleSheet.create({
   base: {
     overflow: 'hidden',
+  },
+  elevated: {
+    boxShadow: [{ offsetX: 0, offsetY: 2, color: 'rgba(0,0,0,0.15)', blurRadius: 6 }],
   },
 });
