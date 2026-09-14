@@ -2,21 +2,24 @@
  * Назначение: базовый компонент карточки (поверхности).
  *
  * Функции:
- * - рендерит контейнер с фоном поверхности, скруглением и внутренним отступом.
+ * - рендерит контейнер с фоном поверхности, скруглением и внутренним отступом;
+ * - радиус берётся из токенов текущего оформления (metrics.cardRadius).
  *
  * Слой: UI (/src/components/ui). Использует useAppTheme.
  */
 
 import { StyleSheet, View, type ViewProps } from 'react-native';
 
-import { radii, spacing } from '@/theme';
+import { spacing } from '@/theme';
 import { useAppTheme } from '@/theme/ThemeProvider';
 
 export function AppCard({ style, children, ...rest }: ViewProps) {
-  const { colors } = useAppTheme();
+  const { colors, metrics } = useAppTheme();
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface }, style]} {...rest}>
+    <View
+      style={[styles.card, { backgroundColor: colors.surface, borderRadius: metrics.cardRadius }, style]}
+      {...rest}>
       {children}
     </View>
   );
@@ -24,7 +27,6 @@ export function AppCard({ style, children, ...rest }: ViewProps) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: radii.lg,
     padding: spacing.md,
   },
 });

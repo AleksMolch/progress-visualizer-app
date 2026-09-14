@@ -18,6 +18,7 @@ import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppScreen } from '@/components/ui/app-screen';
 import { AppText } from '@/components/ui/app-text';
+import { AppearanceSettingsCard } from '@/features/settings/components/appearance-settings-card';
 import { ReminderSettingsCard } from '@/features/settings/components/reminder-settings-card';
 import { isBiometricsAvailable } from '@/storage/biometrics';
 import { useSettingsStore } from '@/store/settingsStore';
@@ -65,6 +66,8 @@ export default function SettingsScreen() {
         </AppCard>
 
         <ReminderSettingsCard />
+
+        <AppearanceSettingsCard />
 
         <AppButton
           label="Поддержать разработчика"

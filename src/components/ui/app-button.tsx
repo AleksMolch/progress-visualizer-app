@@ -10,7 +10,7 @@
 
 import { ActivityIndicator, Pressable, StyleSheet, Text, type ViewStyle } from 'react-native';
 
-import { radii, spacing, type ThemeColors } from '@/theme';
+import { spacing, type ThemeColors } from '@/theme';
 import { useAppTheme } from '@/theme/ThemeProvider';
 
 /** Варианты оформления кнопки. */
@@ -62,7 +62,7 @@ export function AppButton({
   disabled = false,
   loading = false,
 }: AppButtonProps) {
-  const { colors } = useAppTheme();
+  const { colors, metrics } = useAppTheme();
   const { container, textColor } = getButtonStyle(variant, colors);
   const inactive = disabled || loading;
 
@@ -73,6 +73,7 @@ export function AppButton({
       accessibilityRole="button"
       style={({ pressed }) => [
         styles.base,
+        { borderRadius: metrics.buttonRadius },
         container,
         inactive && styles.disabled,
         pressed && styles.pressed,
@@ -92,7 +93,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: radii.md,
   },
   label: {
     fontSize: 16,

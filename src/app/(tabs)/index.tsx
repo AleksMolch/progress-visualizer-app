@@ -23,6 +23,7 @@ import { ProjectFormModal } from '@/features/projects/components/project-form-mo
 import { ProjectListItem } from '@/features/projects/components/project-list-item';
 import { useProjectStore } from '@/store/projectStore';
 import { spacing } from '@/theme';
+import { getLatestPhoto } from '@/utils/photos';
 
 export default function ProjectsScreen() {
   const projects = useProjectStore((s) => s.projects);
@@ -104,6 +105,7 @@ export default function ProjectsScreen() {
               name={item.name}
               photoCount={photoCount(item.id)}
               updatedAt={item.updatedAt}
+              coverUri={getLatestPhoto(photos, item.id)?.uri}
               onOpen={() => router.push(`/project/${item.id}`)}
               onRename={() => openEditModal(item.id)}
               onDelete={() => handleDelete(item.id)}
