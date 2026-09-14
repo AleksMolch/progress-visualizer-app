@@ -84,10 +84,12 @@ export default function CameraScreen() {
     });
 
   // Жест быстрого показа: касание с удержанием пальца на свободной зоне превью
-  // включает 90%, отпускание возвращает обычный режим.
+  // включает 90%, отпускание возвращает обычный режим. runOnJS — чтобы setState
+  // выполнялся на JS-потоке, а не в worklet-рантайме.
   const peekGesture = useMemo(
     () =>
       Gesture.Tap()
+        .runOnJS(true)
         .onTouchesDown(() => setPeekActive(true))
         .onTouchesUp(() => setPeekActive(false)),
     [],

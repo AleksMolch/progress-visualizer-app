@@ -63,6 +63,7 @@
 - @expo/vector-icons: ^15.0.2 (иконки нижних вкладок, Ionicons — MIT; post-MVP)
 - expo-glass-effect: ~57.0.3 (native Liquid Glass, оформление «Liquid Glass»)
 - expo-blur: ~57.0.3 (frosted-fallback материала)
+- expo-haptics: ~57.0.3 (тактильный отклик, post-MVP)
 
 Примечание (Фаза 15): из прямых зависимостей удалены неиспользуемые пакеты
 шаблона — `expo-device`, `expo-web-browser` (удалены полностью), а `@expo/ui`,

@@ -107,36 +107,38 @@
 
 ### Добавление нового визуального оформления (без дублирования экранов)
 
-Приложение использует ОДНО дерево экранов и ТРИ визуальных варианта
-(`minimalism`/`liquid-glass`/`gallery`). Новое оформление добавляется так:
+Приложение использует ОДНО дерево экранов и несколько визуальных вариантов
+(`minimalism`/`liquid-glass`/`gallery`/`material`/`neumorphism`). Новое оформление:
 
 1. Добавить `DesignThemeId` в `src/models/settings.ts`.
-2. Добавить определение (палитры light/dark, `metrics`, `material`) в
-   `DESIGN_THEMES` (`src/theme/design-themes.ts`).
-3. Компоненты уже читают токены через `useAppTheme()` (`colors`, `metrics`,
-   `material`) — новых копий экранов создавать НЕ нужно.
-4. При необходимости доработать `AppCard`/`ProjectListItem`/таббар — они уже
-   управляются токенами.
+2. Добавить определение (палитры light/dark, `metrics`, `material`, при
+   необходимости `neu`) в `DESIGN_THEMES` (`src/theme/design-themes.ts`).
+3. При необходимости включить его в `getPlatformThemeIds()` и `getDefaultDesignThemeId()`.
+4. Компоненты уже читают токены через `useAppTheme()` — новых копий экранов НЕ нужно.
 
 Что НЕЛЬЗЯ делать:
 
-- Не менять тип навигатора по теме (JS Tabs → NativeTabs) — это сбрасывает
-  состояние и ломает сохранность маршрута.
-- Не добавлять `key={designTheme}` к Provider/Stack/Tabs/спискам — смена темы
-  не должна размонтировать приложение.
-- Не размножать native GlassView в каждой ячейке списка — используй frosted/solid
-  через `AdaptiveSurface`.
-- Не делать темы paywall'ом и не связывать с IAP без отдельного решения.
-- Material-фолбэк (native-glass → blur → solid, Reduce Transparency) — в
-  `src/theme/material.ts`; не дублировать логику в компонентах.
+- Не менять тип навигатора по теме (JS Tabs → NativeTabs).
+- Не добавлять `key={designTheme}` к Provider/Stack/Tabs/спискам.
+- Не размножать native GlassView в каждой ячейке списка.
+- Не делать темы paywall'ом.
+- **Не ломать platform defaults**: iOS → liquid-glass, Android → material;
+  явный пользовательский выбор всегда важнее дефолта.
 
-### Быстрый призрак (hold-to-peek) — почему временный и не в persist
+### Жесты камеры и свайп вкладок
 
-- `isPeekActive` — локальное состояние экрана камеры, НЕ пишется в MMKV.
-- Это «мигающее» состояние позиционирования, а не настройка: постоянная
-  настройка призрака — это `ghostEnabled`/`ghostOpacity`.
-- Screenshot не заменяет `takePictureAsync()`: призрак/сетка/стекло не должны
-  попадать в сохранённый кадр.
+- Свайп вкладок (`main-tab-swipe-gesture.tsx`) намеренно НЕ применён к Камере:
+  там горизонтальный селектор проектов, слайдер и hold-to-peek. Жестовые
+  колбэки, вызывающие setState/router/haptic, должны идти с `runOnJS(true)`.
+- Tap (призрак 90%) и horizontal pan (свайп) — разные recognizers с разными
+  порогами; не объединять их и не использовать устаревший PanGestureHandler.
+
+### Тактильный отклик
+
+- Единственное место импорта `expo-haptics` — `src/utils/haptics.ts`
+  (`triggerHaptic(type, enabled)`). Не импортировать `Haptics` в экранах.
+- Проверка: при `hapticsEnabled=false` вызовы no-op; на web/unsupported — no-op
+  без падения (try/catch).
 
 ---
 

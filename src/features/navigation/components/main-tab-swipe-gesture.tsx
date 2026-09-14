@@ -38,12 +38,14 @@ export function MainTabSwipeGesture({ tabIndex, children }: MainTabSwipeGestureP
   const hapticsEnabled = useSettingsStore((s) => s.settings.hapticsEnabled);
 
   // Горизонтальный pan: активируется только при явном горизонтальном движении
-  // и не мешает вертикальной прокрутке списков.
+  // и не мешает вертикальной прокрутке списков. runOnJS — чтобы onEnd
+  // вызывал router/haptic на JS-потоке, а не в worklet-рантайме.
   const gesture = useMemo(
     () =>
       Gesture.Pan()
         .activeOffsetX([-ACTIVE_OFFSET_X, ACTIVE_OFFSET_X])
         .failOffsetY([-FAIL_OFFSET_Y, FAIL_OFFSET_Y])
+        .runOnJS(true)
         .onEnd((event) => {
           let target = tabIndex;
           if (event.translationX < -SWIPE_THRESHOLD) {

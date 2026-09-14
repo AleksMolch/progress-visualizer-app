@@ -166,43 +166,64 @@ npx expo-doctor
 
 ---
 
-## 10. Оформления, материал и быстрый призрак
+## 10. Оформления, материал, навигация и быстрый призрак
 
 ### 10.1. Два независимых выбора
 
-- `designTheme`: `minimalism` | `liquid-glass` | `gallery` (default `minimalism`).
+- `designTheme`: `minimalism` | `liquid-glass` | `gallery` | `material` | `neumorphism`.
 - `themeMode`: `system` | `light` | `dark` — независимый цветовой режим.
 
 Определения тем, палитры, радиусы и материалы — в `src/theme/design-themes.ts`.
 Провайдер (`src/theme/ThemeProvider.tsx`) резолвит пару
 `(designTheme, scheme)` и отдаёт через `useAppTheme()`: `colors`, `scheme`,
-`designTheme`, `metrics`, `material`.
+`designTheme`, `metrics`, `material`, `neu` (неоморфные токены, только для neumorphism).
 
-### 10.2. Гидратация и совместимость
+### 10.2. Platform default и миграция
 
-- `normalizeSettings()` в `src/store/settingsStore.ts` объединяет сохранённые
-  настройки с `DEFAULT_SETTINGS`; отсутствующий/неизвестный `designTheme` → `minimalism`.
-- persist использует кастомный `merge`; `skipHydration: true` и порядок
-  `initializeStorage → rehydrateStores` не менялись.
+- `getDefaultDesignThemeId(platform)`: iOS → `liquid-glass`, Android → `material`,
+  прочее → `minimalism`.
+- `getPlatformThemeIds(platform)` — список для UI выбора (порядок: дефолт первым).
+- `normalizeSettings(raw, platform)` в `src/store/settingsStore.ts`: отсутствующий
+  ИЛИ неизвестный `designTheme` → platform default; явный валидный выбор сохраняется.
+- persist использует кастомный `merge` (передаёт `Platform.OS`); `skipHydration: true`
+  и порядок `initializeStorage → rehydrateStores` не менялись.
 
-### 10.3. Материал (Liquid Glass)
+### 10.3. Материал поверхностей
 
-- `src/components/ui/adaptive-surface.tsx` + `.ios.tsx`: на iOS native-glass →
-  `GlassView`, иначе `BlurView`, иначе solid `View`. Reduce Transparency → solid.
-- Вне iOS материал всегда сводится к solid (без импорта iOS-only модулей).
-- Плавающая капсула таббара — в `src/app/(tabs)/_layout.tsx` через `tabBarStyle`
-  (`position: absolute`) + `tabBarBackground`. Размеры — `src/theme/tab-bar.ts`.
+- `src/components/ui/adaptive-surface.tsx` + `.ios.tsx` + `src/theme/material.ts`:
+  `solid`/`elevated`/`neumorphic`/`frosted`/`native-glass`. На iOS native-glass →
+  `GlassView`, frosted → `BlurView`; вне iOS — solid. Reduce Transparency → solid
+  для прозрачных материалов. Neumorphic → `NeuSurface` (`boxShadow`), elevated →
+  View + тень.
+- Капсула Liquid Glass — `src/features/navigation/components/liquid-glass-tab-bar.tsx`
+  (кастомный `tabBar` только для liquid-glass); размеры — `src/theme/tab-bar.ts`.
 
 ### 10.4. Быстрый призрак (hold-to-peek)
 
 - Чистая логика — `src/utils/ghost.ts` (`resolveGhostVisibility`, `PEEK_OPACITY = 0.9`).
-- Жест — `Gesture.Tap` c `onTouchesDown/onTouchesUp` на слое под контролами
-  (`src/app/(tabs)/camera.tsx`). Временное состояние `isPeekActive` НЕ персистится.
+- Жест — `Gesture.Tap` c `onTouchesDown/onTouchesUp` (+`runOnJS(true)`) на слое под
+  контролами (`src/app/(tabs)/camera.tsx`). Временное состояние `isPeekActive` НЕ персистится.
 - Доступная альтернатива — кнопка «Призрак 90%» в `overlay-controls.tsx` (toggle).
 - Сбросы: на capture, смену проекта, изменение ползунка, blur-навигацию
   (`useFocusEffect`), фон (`AppState`).
 
-### 10.5. Отступы под плавающую капсулу
+### 10.5. Свайп между вкладками
+
+- `src/features/navigation/components/main-tab-swipe-gesture.tsx` — `Gesture.Pan`
+  (`activeOffsetX ±60`, `failOffsetY ±20`, `runOnJS(true)`), переключает
+  Проекты ↔ Камера ↔ Настройки через `router.replace`.
+- Применён к экранам Проекты (tabIndex 0) и Настройки (tabIndex 2).
+- НЕ применён к Камере (tabIndex 1): там уже есть горизонтальный селектор
+  проектов, слайдер и hold-to-peek. Чтобы добавить новую вкладку — дополнить
+  `TAB_HREFS` в компоненте.
+
+### 10.6. Тактильный отклик
+
+- `src/utils/haptics.ts` — `triggerHaptic(type, enabled)`; `hapticsEnabled` в настройках.
+- Точки вызова: съёмка (impact Medium), выбор оформления (selection), свайп (selection),
+  FAB (impact). Единственное место импорта `expo-haptics` — `src/utils/haptics.ts`.
+
+### 10.7. Отступы под плавающую капсулу
 
 Плавающий таббар перекрывает контент. Списки/настройки добавляют
 `FLOATING_TAB_BAR_INSET`; камера смещает затвор и панель. Один источник

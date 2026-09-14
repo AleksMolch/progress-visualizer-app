@@ -849,6 +849,37 @@
 
 ---
 
+### 2026-09-14 — Доработка тем: platform defaults, Material, Neumorphism, свайпы, FAB, haptics
+
+- Что сделано: (1) расширены оформления до пяти (`material`, `neumorphism`
+  добавлены); platform defaults (iOS → liquid-glass, Android → material);
+  список тем в настройках фильтруется по платформе. (2) Neumorphism через
+  `NeuSurface` (boxShadow), Material через MD3-токены + elevated. (3) Liquid Glass
+  переделан в компактную капсулу с активной пилюлей (кастомный `tabBar`).
+  (4) Свайп между Проекты↔Настройки (камера исключена из-за жестов). (5) FAB «+»
+  в проекте (выбор проекта + переход в камеру). (6) Haptics: expo-haptics +
+  `hapticsEnabled` + `triggerHaptic`. (7) Заглушки обложек вместо чёрных блоков.
+- Какие файлы созданы/изменены: `design-themes.ts` (5 тем + platform defaults),
+  `material.ts` (+elevated/neumorphic), `neu-surface.tsx`, `liquid-glass-tab-bar.tsx`,
+  `main-tab-swipe-gesture.tsx`, `haptics.ts`, `appearance-settings-card.tsx`,
+  `settings.tsx` (haptics toggle), `camera.tsx`/`project/[id]/index.tsx`/`index.tsx`
+  (haptics/FAB/swipe), `project-list-item.tsx` (placeholder). Зависимость: expo-haptics.
+- Какие команды запускались:
+  - `npx expo install expo-haptics`
+  - `npm run typecheck`, `npm run lint`, `npm test`, `npx expo-doctor`
+  - `npx expo run:ios` (Build Succeeded, 0 errors)
+- Результат проверок:
+  - typecheck/lint: чисто; тесты: 108/108 (было 88); expo-doctor: 21/21
+  - сборка iOS: успешно, запуск без redbox (после `--clear`)
+- Известные проблемы / BLOCKED:
+  - Визуальная проверка всех тем — ручная (модель не читает скриншоты).
+  - Свайп и hold-to-peek — проверка на устройстве; камера намеренно без свайпа.
+  - Neumorphism/Material на Android — нет эмулятора.
+- Следующий шаг: ручной ревью владельцем, проверка на устройствах (iOS/Android),
+  затем bundleIdentifier и публикация.
+
+---
+
 ### Как передать скриншоты для работы над дизайном (для будущих сессий)
 
 - Положи файлы в папку проекта (например, `screenshots/`) или укажи пути.

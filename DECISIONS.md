@@ -490,3 +490,49 @@ sandbox-модели хранения, разрешённое CONSTITUTION.md т
 Статус:
 
 Принято (реализовано, см. docs/design-integration-report.md).
+
+---
+
+### 2026-09-14 — Доработка тем: platform defaults, Material, Neumorphism, свайпы, haptics
+
+Контекст:
+
+Задание `DESIGN_REFINEMENT_PLATFORM_THEMES_TASK.md` + `LIQUID_GLASS_REFERENCE_ADDENDUM.md`:
+расширить темы, добавить платформенные defaults, свайпы между вкладками, FAB
+и тактильный отклик.
+
+Решение:
+
+1. **Platform defaults.** iOS → `liquid-glass`, Android → `material`, прочее →
+   `minimalism`. `getDefaultDesignThemeId()` + `getPlatformThemeIds()` в
+   `design-themes.ts`; `normalizeSettings(raw, platform)` подставляет platform
+   default только для отсутствующего/неизвестного `designTheme`, явный выбор
+   пользователя не перезаписывается.
+2. **Material Design реализуется на текущей UI-системе** (токены MD3 + elevated
+   поверхности), БЕЗ внедрения React Native Paper.
+3. **Neumorphism — общий стиль, но не доминирует над фото/камерой.** Через
+   `NeuSurface` (кросс-платформенный `boxShadow`), без Skia (облегчённый P0);
+   Skia — отдельное решение, если качество Android окажется неприемлемым.
+4. **Haptics — opt-out.** `expo-haptics` + `hapticsEnabled` (default true) +
+   `src/utils/haptics.ts` (единственная точка импорта). No-op на web/unsupported.
+5. **Свайп между вкладками** через `Gesture.Pan` (`main-tab-swipe-gesture.tsx`) с
+   `router.replace`; НЕ применён к Камере (конфликт с горизонтальным селектором,
+   слайдером и hold-to-peek). Жестовые колбэки с `runOnJS(true)`.
+
+Альтернативы:
+
+- Внедрить React Native Paper целиком — отклонено (лишняя зависимость, риск
+  переписывания приложения).
+- Skia для Neumorphism — отложено (P0 на RN-тенях, Skia по решению владельца).
+- Свайп на всех трёх вкладках — отклонено для камеры из-за конфликтов жестов.
+
+Риски:
+
+- Neumorphism на Android (inset-тени) может выглядеть слабее — boxShadow
+  частично поддерживается; проверка на устройстве.
+- Свайп и hold-to-peek требуют проверки на реальном устройстве (симулятор
+  не даёт полной картины gesture hit-testing).
+
+Статус:
+
+Принято (реализовано, см. README_staff.md раздел 10).
