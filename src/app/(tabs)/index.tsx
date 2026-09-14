@@ -21,6 +21,7 @@ import { AppScreen } from '@/components/ui/app-screen';
 import { AppText } from '@/components/ui/app-text';
 import { ProjectFormModal } from '@/features/projects/components/project-form-modal';
 import { ProjectListItem } from '@/features/projects/components/project-list-item';
+import { MainTabSwipeGesture } from '@/features/navigation/components/main-tab-swipe-gesture';
 import { useProjectStore } from '@/store/projectStore';
 import { spacing } from '@/theme';
 import { FLOATING_TAB_BAR_INSET } from '@/theme/tab-bar';
@@ -86,7 +87,8 @@ export default function ProjectsScreen() {
   };
 
   return (
-    <AppScreen>
+    <MainTabSwipeGesture tabIndex={0}>
+      <AppScreen>
       {projects.length === 0 ? (
         <View style={styles.empty}>
           <AppText variant="title">Пока нет проектов</AppText>
@@ -128,7 +130,8 @@ export default function ProjectsScreen() {
           onCancel={() => setModalVisible(false)}
         />
       ) : null}
-    </AppScreen>
+      </AppScreen>
+    </MainTabSwipeGesture>
   );
 }
 

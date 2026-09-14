@@ -12,6 +12,7 @@
  * не трогает напрямую — удаление идёт через useProjectStore.deletePhoto.
  */
 
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, FlatList, Pressable, StyleSheet, View } from 'react-native';
@@ -19,17 +20,23 @@ import { Alert, FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { AppButton } from '@/components/ui/app-button';
 import { AppScreen } from '@/components/ui/app-screen';
 import { AppText } from '@/components/ui/app-text';
+import { useAppStore } from '@/store/appStore';
 import { useProjectStore } from '@/store/projectStore';
+import { useSettingsStore } from '@/store/settingsStore';
 import { radii, spacing } from '@/theme';
 import { useAppTheme } from '@/theme/ThemeProvider';
+import { triggerHaptic } from '@/utils/haptics';
 
 export default function ProjectScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { colors } = useAppTheme();
 
   const project = useProjectStore((s) => s.projects.find((p) => p.id === id));
   const photos = useProjectStore((s) => s.photos);
   const deletePhoto = useProjectStore((s) => s.deletePhoto);
+  const setActiveProjectId = useAppStore((s) => s.setActiveProjectId);
+  const hapticsEnabled = useSettingsStore((s) => s.settings.hapticsEnabled);
 
   // Фото текущего проекта, отсортированные по времени съёмки (свежие сверху).
   const projectPhotos = photos
@@ -42,6 +49,16 @@ export default function ProjectScreen() {
       { text: 'Отмена', style: 'cancel' },
       { text: 'Удалить', style: 'destructive', onPress: () => deletePhoto(photoId) },
     ]);
+  };
+
+  // Открыть камеру с выбранным текущим проектом (FAB «+»).
+  const handleAddPhoto = () => {
+    if (!project) {
+      return;
+    }
+    setActiveProjectId(project.id);
+    void triggerHaptic('impact', hapticsEnabled);
+    router.navigate('/camera');
   };
 
   // Проект не найден (например, после удаления или неверная ссылка).
@@ -94,6 +111,15 @@ export default function ProjectScreen() {
           )}
         />
       )}
+
+      <Pressable
+        onPress={handleAddPhoto}
+        accessibilityRole="button"
+        accessibilityLabel="Сделать новый снимок в этом проекте"
+        accessibilityHint="Откроет камеру и выберет текущий проект"
+        style={[styles.fab, { backgroundColor: colors.primary }]}>
+        <Ionicons name="add" size={28} color={colors.primaryText} />
+      </Pressable>
     </AppScreen>
   );
 }
@@ -172,5 +198,16 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     textAlign: 'center',
+  },
+  fab: {
+    position: 'absolute',
+    right: spacing.lg,
+    bottom: spacing.lg,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: [{ offsetX: 0, offsetY: 3, color: 'rgba(0,0,0,0.3)', blurRadius: 8 }],
   },
 });

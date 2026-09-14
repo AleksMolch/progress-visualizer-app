@@ -20,6 +20,7 @@ import { AppScreen } from '@/components/ui/app-screen';
 import { AppText } from '@/components/ui/app-text';
 import { AppearanceSettingsCard } from '@/features/settings/components/appearance-settings-card';
 import { ReminderSettingsCard } from '@/features/settings/components/reminder-settings-card';
+import { MainTabSwipeGesture } from '@/features/navigation/components/main-tab-swipe-gesture';
 import { isBiometricsAvailable } from '@/storage/biometrics';
 import { useSettingsStore } from '@/store/settingsStore';
 import { spacing } from '@/theme';
@@ -43,9 +44,10 @@ export default function SettingsScreen() {
   }, []);
 
   return (
-    <AppScreen scroll>
-      <View style={[styles.container, { paddingBottom: floatingInset + spacing.lg }]}>
-        <AppText variant="title">Настройки</AppText>
+    <MainTabSwipeGesture tabIndex={2}>
+      <AppScreen scroll>
+        <View style={[styles.container, { paddingBottom: floatingInset + spacing.lg }]}>
+          <AppText variant="title">Настройки</AppText>
 
         <AppCard style={styles.card}>
           <View style={styles.row}>
@@ -96,7 +98,8 @@ export default function SettingsScreen() {
           onPress={() => router.push('/support')}
         />
       </View>
-    </AppScreen>
+      </AppScreen>
+    </MainTabSwipeGesture>
   );
 }
 

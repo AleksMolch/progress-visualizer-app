@@ -14,6 +14,7 @@
 
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/app-button';
@@ -107,13 +108,8 @@ function PhotoCard({
       borderRadius={metrics.cardRadius}
       style={styles.photoCard}>
       <Pressable onPress={onOpen} accessibilityRole="button">
-        {coverUri ? (
-          <Image source={{ uri: coverUri }} style={styles.cover} contentFit="cover" />
-        ) : (
-          <View style={[styles.coverPlaceholder, { backgroundColor: colors.surface }]}>
-            <Ionicons name="images-outline" size={32} color={colors.textSecondary} />
-          </View>
-        )}
+        {/* key перемонтирует обложку при смене URI, сбрасывая состояние ошибки. */}
+        <ProjectCover key={coverUri} uri={coverUri} />
         <View style={styles.photoBody}>
           <AppText variant="subtitle">{name}</AppText>
           <AppText color="textSecondary" variant="caption">
@@ -127,6 +123,32 @@ function PhotoCard({
         <AppButton label="Удалить" variant="danger" onPress={onDelete} />
       </View>
     </AdaptiveSurface>
+  );
+}
+
+/**
+ * Обложка проекта: фото или нейтральная заглушка.
+ * При ошибке загрузки URI показывает заглушку вместо «чёрного» блока.
+ */
+function ProjectCover({ uri }: { uri?: string }) {
+  const { colors } = useAppTheme();
+  const [failed, setFailed] = useState(false);
+
+  if (!uri || failed) {
+    return (
+      <View style={[styles.coverPlaceholder, { backgroundColor: colors.surface }]}>
+        <Ionicons name="images-outline" size={32} color={colors.textSecondary} />
+      </View>
+    );
+  }
+
+  return (
+    <Image
+      source={{ uri }}
+      style={styles.cover}
+      contentFit="cover"
+      onError={() => setFailed(true)}
+    />
   );
 }
 
