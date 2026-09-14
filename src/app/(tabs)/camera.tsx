@@ -12,14 +12,17 @@
  */
 
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useRef, useState, type ReactNode } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
+  AppState,
   Pressable,
   ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/ui/app-button';
@@ -31,6 +34,7 @@ import { useAppStore } from '@/store/appStore';
 import { useProjectStore } from '@/store/projectStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { radii, spacing } from '@/theme';
+import { resolveGhostVisibility } from '@/utils/ghost';
 import { getLatestPhoto } from '@/utils/photos';
 
 /** Мин. нижний отступ контролов от края экрана. */
@@ -41,6 +45,10 @@ export default function CameraScreen() {
   const cameraRef = useRef<CameraView>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [captureError, setCaptureError] = useState<string | null>(null);
+
+  // Временный режим быстрого показа призрака (hold-to-peek / доступная кнопка).
+  // Это локальное состояние экрана — в persist/MMKV не записывается.
+  const [isPeekActive, setPeekActive] = useState(false);
 
   // Активный проект берём из appStore, список — из projectStore.
   const projects = useProjectStore((s) => s.projects);
@@ -56,11 +64,52 @@ export default function CameraScreen() {
   // Последнее фото активного проекта для ghost overlay (null — фото ещё нет).
   const latestPhoto = activeProject ? getLatestPhoto(photos, activeProject.id) : null;
 
+  // Эталон доступен, если у активного проекта есть фото.
+  const referenceReady = latestPhoto !== null;
+
+  // Итоговая видимость и непрозрачность призрака (обычный + быстрый показ).
+  const { visible: ghostVisible, effectiveOpacity: ghostEffectiveOpacity } =
+    resolveGhostVisibility({
+      ghostEnabled: settings.ghostEnabled,
+      referenceReady,
+      isPeekActive,
+      ghostOpacity: settings.ghostOpacity,
+    });
+
+  // Жест быстрого показа: касание с удержанием пальца на свободной зоне превью
+  // включает 90%, отпускание возвращает обычный режим.
+  const peekGesture = useMemo(
+    () =>
+      Gesture.Tap()
+        .onTouchesDown(() => setPeekActive(true))
+        .onTouchesUp(() => setPeekActive(false)),
+    [],
+  );
+
+  // Сброс быстрого показа при уходе с экрана (переключение вкладки/навигация).
+  useFocusEffect(
+    useCallback(() => {
+      return () => setPeekActive(false);
+    }, []),
+  );
+
+  // Сброс быстрого показа при уходе приложения в фон.
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') {
+        setPeekActive(false);
+      }
+    });
+    return () => subscription.remove();
+  }, []);
+
   // Захват кадра и сохранение в sandbox через store.
   const handleCapture = async () => {
     if (!activeProject || isCapturing) {
       return;
     }
+    // Съёмка выходит из быстрого показа.
+    setPeekActive(false);
     setIsCapturing(true);
     setCaptureError(null);
     try {
@@ -130,16 +179,25 @@ export default function CameraScreen() {
 
       <GhostOverlay
         uri={latestPhoto?.uri ?? null}
-        opacity={settings.ghostOpacity}
-        enabled={settings.ghostEnabled}
+        opacity={ghostEffectiveOpacity}
+        enabled={ghostVisible}
       />
 
       <GridOverlay enabled={settings.gridEnabled} />
 
+      {/* Слой распознавания hold-to-peek: под контролами, поверх превью. */}
+      <GestureDetector gesture={peekGesture}>
+        <View style={StyleSheet.absoluteFill} />
+      </GestureDetector>
+
       <ProjectSelector
         projects={projects}
         activeId={activeProject?.id ?? null}
-        onSelect={setActiveProjectId}
+        onSelect={(id) => {
+          // Смена проекта сбрасывает быстрый показ.
+          setPeekActive(false);
+          setActiveProjectId(id);
+        }}
       />
 
       {captureError ? (
@@ -151,7 +209,11 @@ export default function CameraScreen() {
       ) : null}
 
       <View style={styles.controlsWrap}>
-        <OverlayControls hasPhoto={latestPhoto !== null} />
+        <OverlayControls
+          hasPhoto={latestPhoto !== null}
+          isPeekActive={isPeekActive}
+          onSetPeek={setPeekActive}
+        />
       </View>
 
       <ShutterButton isCapturing={isCapturing} onPress={handleCapture} />

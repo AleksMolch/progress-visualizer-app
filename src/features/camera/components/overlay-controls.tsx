@@ -3,11 +3,13 @@
  *
  * Функции:
  * - переключатель ghost overlay (on/off);
- * - слайдер прозрачности overlay;
+ * - доступная кнопка «Призрак 90%» (временный быстрый показ, hold-to-peek аналог);
+ * - слайдер видимости overlay;
  * - переключатель сетки (on/off).
  *
  * Слой: UI (/src/features/camera/components). Состояние читает/меняет через
- * useSettingsStore (не работает с файлами или MMKV напрямую).
+ * useSettingsStore; временный режим быстрого показа управляется родителем
+ * (camera.tsx) через пропсы isPeekActive/onSetPeek.
  */
 
 import Slider from '@react-native-community/slider';
@@ -21,9 +23,13 @@ import { useAppTheme } from '@/theme/ThemeProvider';
 interface OverlayControlsProps {
   /** Есть ли фото для overlay (false — overlay недоступен). */
   hasPhoto: boolean;
+  /** Активен ли временный режим быстрого показа. */
+  isPeekActive: boolean;
+  /** Управляет временным режимом быстрого показа (родитель хранит состояние). */
+  onSetPeek: (active: boolean) => void;
 }
 
-export function OverlayControls({ hasPhoto }: OverlayControlsProps) {
+export function OverlayControls({ hasPhoto, isPeekActive, onSetPeek }: OverlayControlsProps) {
   const { colors } = useAppTheme();
   const settings = useSettingsStore((s) => s.settings);
   const updateSettings = useSettingsStore((s) => s.updateSettings);
@@ -41,6 +47,12 @@ export function OverlayControls({ hasPhoto }: OverlayControlsProps) {
           onPress={() => updateSettings({ ghostEnabled: !settings.ghostEnabled })}
         />
         <ToggleChip
+          label="Призрак 90%"
+          active={isPeekActive}
+          disabled={!hasPhoto}
+          onPress={() => onSetPeek(!isPeekActive)}
+        />
+        <ToggleChip
           label="Сетка"
           active={settings.gridEnabled}
           onPress={() => updateSettings({ gridEnabled: !settings.gridEnabled })}
@@ -49,7 +61,7 @@ export function OverlayControls({ hasPhoto }: OverlayControlsProps) {
 
       <View style={styles.sliderBlock}>
         <AppText variant="caption" color="textSecondary">
-          Прозрачность {Math.round(settings.ghostOpacity * 100)}%
+          Видимость призрака {Math.round(settings.ghostOpacity * 100)}%
         </AppText>
         <Slider
           style={styles.slider}
@@ -60,10 +72,20 @@ export function OverlayControls({ hasPhoto }: OverlayControlsProps) {
           minimumTrackTintColor={colors.primary}
           maximumTrackTintColor={colors.border}
           thumbTintColor={colors.primary}
-          onValueChange={(value) => updateSettings({ ghostOpacity: value })}
-          accessibilityLabel="Прозрачность ghost overlay"
+          onValueChange={(value) => {
+            // Начало изменения ползунка выходит из быстрого показа.
+            onSetPeek(false);
+            updateSettings({ ghostOpacity: value });
+          }}
+          accessibilityLabel="Видимость ghost overlay"
         />
       </View>
+
+      {isPeekActive ? (
+        <AppText variant="caption" color="textSecondary">
+          Действует временный режим 90% — отпустите или нажмите кнопку ещё раз.
+        </AppText>
+      ) : null}
     </View>
   );
 }
