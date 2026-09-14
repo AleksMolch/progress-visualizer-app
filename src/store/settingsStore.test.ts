@@ -1,8 +1,9 @@
 // Тесты хранилища настроек.
-// Проверяем частичное обновление настроек и значения по умолчанию.
+// Проверяем частичное обновление настроек, значения по умолчанию,
+// нормализацию сохранённых настроек и гидратацию старой записи без designTheme.
 
-import { initMmkv } from '@/storage/mmkv';
-import { DEFAULT_SETTINGS, useSettingsStore } from './settingsStore';
+import { initMmkv, mmkvStorage } from '@/storage/mmkv';
+import { DEFAULT_SETTINGS, normalizeSettings, useSettingsStore } from './settingsStore';
 
 // Тестовый ключ шифрования (32 символа — как AES-256).
 const TEST_KEY = 'test-encryption-key-0000000000';
@@ -45,5 +46,77 @@ describe('settingsStore', () => {
     expect(settings.ghostEnabled).toBe(false);
     // Прозрачность сохраняется и не сбрасывается при выключении overlay.
     expect(settings.ghostOpacity).toBe(DEFAULT_SETTINGS.ghostOpacity);
+  });
+
+  it('переключает оформление, сохраняя остальные настройки', () => {
+    useSettingsStore.getState().updateSettings({ designTheme: 'gallery' });
+
+    const { settings } = useSettingsStore.getState();
+    expect(settings.designTheme).toBe('gallery');
+    expect(settings.ghostEnabled).toBe(DEFAULT_SETTINGS.ghostEnabled);
+  });
+});
+
+describe('normalizeSettings', () => {
+  it('добавляет designTheme=minimalism для старой записи без поля', () => {
+    const settings = normalizeSettings({ ghostEnabled: true, themeMode: 'dark' });
+    expect(settings.designTheme).toBe('minimalism');
+    expect(settings.ghostEnabled).toBe(true);
+    expect(settings.themeMode).toBe('dark');
+  });
+
+  it('неизвестный designTheme заменяется на minimalism', () => {
+    const settings = normalizeSettings({ designTheme: 'future-theme' });
+    expect(settings.designTheme).toBe('minimalism');
+  });
+
+  it('сохраняет валидный designTheme', () => {
+    const settings = normalizeSettings({ designTheme: 'gallery' });
+    expect(settings.designTheme).toBe('gallery');
+  });
+
+  it('неизвестный themeMode заменяется на system', () => {
+    const settings = normalizeSettings({ themeMode: 'sepia' });
+    expect(settings.themeMode).toBe('system');
+  });
+
+  it('обрабатывает null/undefined как значения по умолчанию', () => {
+    expect(normalizeSettings(undefined).designTheme).toBe('minimalism');
+    expect(normalizeSettings(null).themeMode).toBe('system');
+    expect(normalizeSettings('not-an-object').ghostEnabled).toBe(DEFAULT_SETTINGS.ghostEnabled);
+  });
+});
+
+describe('settingsStore: гидратация старой записи', () => {
+  it('старая запись без designTheme → minimalism, прежние поля сохранены', async () => {
+    // Имитируем сохранённую старым приложением запись (без designTheme).
+    mmkvStorage.setItem(
+      'settings',
+      JSON.stringify({
+        state: { settings: { ghostEnabled: true, ghostOpacity: 0.8, requireBiometrics: true } },
+        version: 0,
+      }),
+    );
+
+    await useSettingsStore.persist.rehydrate();
+
+    const { settings } = useSettingsStore.getState();
+    expect(settings.designTheme).toBe('minimalism');
+    expect(settings.ghostEnabled).toBe(true);
+    expect(settings.ghostOpacity).toBe(0.8);
+    expect(settings.requireBiometrics).toBe(true);
+    // Отсутствовавшие поля получают значения по умолчанию.
+    expect(settings.remindersEnabled).toBe(DEFAULT_SETTINGS.remindersEnabled);
+  });
+
+  it('сохраняет выбранный ранее designTheme после гидратации', async () => {
+    mmkvStorage.setItem(
+      'settings',
+      JSON.stringify({ state: { settings: { designTheme: 'gallery' } }, version: 0 }),
+    );
+
+    await useSettingsStore.persist.rehydrate();
+
+    expect(useSettingsStore.getState().settings.designTheme).toBe('gallery');
   });
 });

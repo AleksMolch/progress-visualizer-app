@@ -10,7 +10,12 @@
 /** Режим темы оформления. */
 export type ThemeMode = 'system' | 'light' | 'dark';
 
+/** Стабильные идентификаторы визуального оформления приложения. */
+export type DesignThemeId = 'minimalism' | 'liquid-glass' | 'gallery';
+
 export interface AppSettings {
+  /** Визуальное оформление (тема дизайна). */
+  designTheme: DesignThemeId;
   /** Режим темы: системная / светлая / тёмная. */
   themeMode: ThemeMode;
   /** Включён ли ghost overlay (показ последнего фото поверх камеры). */
