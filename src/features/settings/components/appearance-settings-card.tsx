@@ -25,6 +25,7 @@ import {
   type DesignThemeDefinition,
 } from '@/theme/design-themes';
 import { useAppTheme } from '@/theme/ThemeProvider';
+import { triggerHaptic } from '@/utils/haptics';
 
 // Короткие описания оформлений (UI-текст, не логика темы).
 const THEME_DESCRIPTIONS: Record<DesignThemeId, string> = {
@@ -46,6 +47,7 @@ export function AppearanceSettingsCard() {
   const { colors, metrics } = useAppTheme();
   const designTheme = useSettingsStore((s) => s.settings.designTheme);
   const themeMode = useSettingsStore((s) => s.settings.themeMode);
+  const hapticsEnabled = useSettingsStore((s) => s.settings.hapticsEnabled);
   const updateSettings = useSettingsStore((s) => s.updateSettings);
 
   // Доступные на этой платформе оформления (дефолт первым).
@@ -62,7 +64,10 @@ export function AppearanceSettingsCard() {
           return (
             <Pressable
               key={id}
-              onPress={() => updateSettings({ designTheme: id })}
+              onPress={() => {
+                updateSettings({ designTheme: id });
+                void triggerHaptic('selection', hapticsEnabled);
+              }}
               accessibilityRole="button"
               accessibilityState={{ selected }}
               accessibilityLabel={`Оформление: ${def.label}`}

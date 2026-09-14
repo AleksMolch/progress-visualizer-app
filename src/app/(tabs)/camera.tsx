@@ -37,6 +37,7 @@ import { radii, spacing } from '@/theme';
 import { FLOATING_TAB_BAR_INSET } from '@/theme/tab-bar';
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { resolveGhostVisibility } from '@/utils/ghost';
+import { triggerHaptic } from '@/utils/haptics';
 import { getLatestPhoto } from '@/utils/photos';
 
 /** Мин. нижний отступ контролов от края экрана. */
@@ -118,6 +119,8 @@ export default function CameraScreen() {
     setPeekActive(false);
     setIsCapturing(true);
     setCaptureError(null);
+    // Лёгкий тактильный отклик при нажатии затвора.
+    void triggerHaptic('capture', settings.hapticsEnabled);
     try {
       const picture = await cameraRef.current?.takePictureAsync();
       if (!picture) {

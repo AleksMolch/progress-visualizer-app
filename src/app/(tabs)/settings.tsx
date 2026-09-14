@@ -29,6 +29,7 @@ import { useAppTheme } from '@/theme/ThemeProvider';
 export default function SettingsScreen() {
   const { colors, metrics } = useAppTheme();
   const requireBiometrics = useSettingsStore((s) => s.settings.requireBiometrics);
+  const hapticsEnabled = useSettingsStore((s) => s.settings.hapticsEnabled);
   const updateSettings = useSettingsStore((s) => s.updateSettings);
 
   // Отступ под плавающую капсулу таббара (0 — стандартный таббар).
@@ -70,6 +71,22 @@ export default function SettingsScreen() {
         </AppCard>
 
         <ReminderSettingsCard />
+
+        <AppCard style={styles.card}>
+          <View style={styles.row}>
+            <View style={styles.rowText}>
+              <AppText variant="subtitle">Тактильный отклик</AppText>
+              <AppText color="textSecondary" variant="caption">
+                Лёгкая вибрация при съёмке и важных действиях
+              </AppText>
+            </View>
+            <Switch
+              value={hapticsEnabled}
+              onValueChange={(value) => updateSettings({ hapticsEnabled: value })}
+              trackColor={{ true: colors.primary }}
+            />
+          </View>
+        </AppCard>
 
         <AppearanceSettingsCard />
 
