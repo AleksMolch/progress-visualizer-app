@@ -53,8 +53,8 @@ export function ProjectListItem({
 }: ProjectListItemProps) {
   const { designTheme } = useAppTheme();
 
-  // В минимализме сохраняем прежний компактный текстовый вид.
-  if (designTheme === 'minimalism') {
+  // В «Простом» оформлении сохраняем компактный текстовый вид.
+  if (designTheme === 'simple') {
     return (
       <AppCard style={styles.card}>
         <Pressable onPress={onOpen} accessibilityRole="button">

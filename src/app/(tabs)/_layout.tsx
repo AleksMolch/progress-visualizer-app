@@ -3,70 +3,32 @@
  *
  * Функции:
  * - объявляет три вкладки: Проекты (index), Камера, Настройки;
- * - задаёт иконки вкладок (Ionicons из @expo/vector-icons);
- * - в оформлении Liquid Glass использует кастомный капсульный таббар
- *   (LiquidGlassTabBar), в остальных — стандартный таббар;
+ * - использует единый кастомный таббар MainTabBar (центральная кнопка камеры)
+ *   во всех оформлениях — материал панели зависит от выбранного стиля;
  * - отключает собственный заголовок вкладок (safe area берёт на себя AppScreen).
  *
  * Слой: UI (/src/app). Использует Tabs из expo-router/js-tabs.
  */
 
-import { Ionicons } from '@expo/vector-icons';
 import { Tabs, type BottomTabBarProps } from 'expo-router/js-tabs';
 
-import { LiquidGlassTabBar } from '@/features/navigation/components/liquid-glass-tab-bar';
-import { useAppTheme } from '@/theme/ThemeProvider';
+import { MainTabBar } from '@/features/navigation/components/main-tab-bar';
 
-// Оборачивает кастомную капсулу в сигнатуру таббара (как прямой prop `tabBar`).
-function renderLiquidGlassTabBar(props: BottomTabBarProps) {
-  return <LiquidGlassTabBar {...props} />;
+// Оборачивает кастомную панель в сигнатуру таббара (как прямой prop `tabBar`).
+function renderMainTabBar(props: BottomTabBarProps) {
+  return <MainTabBar {...props} />;
 }
 
 export default function TabLayout() {
-  const { colors, designTheme } = useAppTheme();
-
-  // Кастомная капсула — только для Liquid Glass. Важно: `tabBar` передаётся
-  // как ПРЯМОЙ prop навигатора (BottomTabNavigationConfig), а не в screenOptions.
-  const isGlass = designTheme === 'liquid-glass';
-
   return (
     <Tabs
-      tabBar={isGlass ? renderLiquidGlassTabBar : undefined}
+      tabBar={renderMainTabBar}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
-        ...(isGlass
-          ? {}
-          : { tabBarStyle: { backgroundColor: colors.background, borderTopColor: colors.border } }),
       }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Проекты',
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'images' : 'images-outline'} size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="camera"
-        options={{
-          title: 'Камера',
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'camera' : 'camera-outline'} size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: 'Настройки',
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'settings' : 'settings-outline'} size={size} color={color} />
-          ),
-        }}
-      />
+      <Tabs.Screen name="index" options={{ title: 'Проекты' }} />
+      <Tabs.Screen name="camera" options={{ title: 'Камера' }} />
+      <Tabs.Screen name="settings" options={{ title: 'Настройки' }} />
     </Tabs>
   );
 }

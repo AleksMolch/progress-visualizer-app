@@ -51,10 +51,10 @@ describe('settingsStore', () => {
   });
 
   it('переключает оформление, сохраняя остальные настройки', () => {
-    useSettingsStore.getState().updateSettings({ designTheme: 'gallery' });
+    useSettingsStore.getState().updateSettings({ designTheme: 'simple' });
 
     const { settings } = useSettingsStore.getState();
-    expect(settings.designTheme).toBe('gallery');
+    expect(settings.designTheme).toBe('simple');
     expect(settings.ghostEnabled).toBe(DEFAULT_SETTINGS.ghostEnabled);
   });
 
@@ -63,30 +63,38 @@ describe('settingsStore', () => {
   });
 });
 
-describe('normalizeSettings (platform default)', () => {
-  it('iOS: старая запись без designTheme → liquid-glass', () => {
+describe('normalizeSettings (platform default + миграция)', () => {
+  it('iOS: старая запись без designTheme → modern', () => {
     const settings = normalizeSettings({ ghostEnabled: true, themeMode: 'dark' }, 'ios');
-    expect(settings.designTheme).toBe('liquid-glass');
+    expect(settings.designTheme).toBe('modern');
     expect(settings.ghostEnabled).toBe(true);
     expect(settings.themeMode).toBe('dark');
   });
 
-  it('Android: старая запись без designTheme → material', () => {
-    expect(normalizeSettings({}, 'android').designTheme).toBe('material');
+  it('Android: старая запись без designTheme → modern', () => {
+    expect(normalizeSettings({}, 'android').designTheme).toBe('modern');
   });
 
-  it('web/прочее: без designTheme → minimalism', () => {
-    expect(normalizeSettings({}, 'web').designTheme).toBe('minimalism');
+  it('web/прочее: без designTheme → simple', () => {
+    expect(normalizeSettings({}, 'web').designTheme).toBe('simple');
   });
 
   it('неизвестный designTheme заменяется на platform default', () => {
-    expect(normalizeSettings({ designTheme: 'future-theme' }, 'ios').designTheme).toBe('liquid-glass');
-    expect(normalizeSettings({ designTheme: 42 }, 'android').designTheme).toBe('material');
+    expect(normalizeSettings({ designTheme: 'future-theme' }, 'ios').designTheme).toBe('modern');
+    expect(normalizeSettings({ designTheme: 42 }, 'android').designTheme).toBe('modern');
+  });
+
+  it('старые идентификаторы мигрируют в новые', () => {
+    expect(normalizeSettings({ designTheme: 'minimalism' }, 'ios').designTheme).toBe('simple');
+    expect(normalizeSettings({ designTheme: 'liquid-glass' }, 'ios').designTheme).toBe('modern');
+    expect(normalizeSettings({ designTheme: 'material' }, 'android').designTheme).toBe('modern');
+    expect(normalizeSettings({ designTheme: 'gallery' }, 'android').designTheme).toBe('modern');
+    expect(normalizeSettings({ designTheme: 'neumorphism' }, 'web').designTheme).toBe('neumorphism');
   });
 
   it('явный валидный designTheme сохраняется, не заменяется default', () => {
-    expect(normalizeSettings({ designTheme: 'minimalism' }, 'ios').designTheme).toBe('minimalism');
-    expect(normalizeSettings({ designTheme: 'gallery' }, 'android').designTheme).toBe('gallery');
+    expect(normalizeSettings({ designTheme: 'simple' }, 'ios').designTheme).toBe('simple');
+    expect(normalizeSettings({ designTheme: 'modern' }, 'android').designTheme).toBe('modern');
     expect(normalizeSettings({ designTheme: 'neumorphism' }, 'web').designTheme).toBe('neumorphism');
   });
 
@@ -101,7 +109,7 @@ describe('normalizeSettings (platform default)', () => {
   });
 
   it('обрабатывает null/undefined как значения по умолчанию', () => {
-    expect(normalizeSettings(undefined, 'ios').designTheme).toBe('liquid-glass');
+    expect(normalizeSettings(undefined, 'ios').designTheme).toBe('modern');
     expect(normalizeSettings(null, 'android').themeMode).toBe('system');
     expect(normalizeSettings('not-an-object', 'web').ghostEnabled).toBe(DEFAULT_SETTINGS.ghostEnabled);
   });
@@ -132,11 +140,22 @@ describe('settingsStore: гидратация старой записи', () => 
   it('сохраняет выбранный ранее designTheme после гидратации', async () => {
     mmkvStorage.setItem(
       'settings',
-      JSON.stringify({ state: { settings: { designTheme: 'gallery' } }, version: 0 }),
+      JSON.stringify({ state: { settings: { designTheme: 'neumorphism' } }, version: 0 }),
     );
 
     await useSettingsStore.persist.rehydrate();
 
-    expect(useSettingsStore.getState().settings.designTheme).toBe('gallery');
+    expect(useSettingsStore.getState().settings.designTheme).toBe('neumorphism');
+  });
+
+  it('старый designTheme мигрирует после гидратации', async () => {
+    mmkvStorage.setItem(
+      'settings',
+      JSON.stringify({ state: { settings: { designTheme: 'liquid-glass' } }, version: 0 }),
+    );
+
+    await useSettingsStore.persist.rehydrate();
+
+    expect(useSettingsStore.getState().settings.designTheme).toBe('modern');
   });
 });

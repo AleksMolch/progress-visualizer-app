@@ -3,13 +3,14 @@
  *
  * Функции:
  * - переключатель ghost overlay (on/off);
- * - доступная кнопка «Призрак 90%» (временный быстрый показ, hold-to-peek аналог);
+ * - кнопка «Источник» — открывает выбор эталона (последнее/первое/вручную);
  * - слайдер видимости overlay;
- * - переключатель сетки (on/off).
+ * - переключатель сетки (on/off);
+ * - подсказка о временном усилении призрака (tap по превью).
  *
  * Слой: UI (/src/features/camera/components). Состояние читает/меняет через
- * useSettingsStore; временный режим быстрого показа управляется родителем
- * (camera.tsx) через пропсы isPeekActive/onSetPeek.
+ * useSettingsStore; выбор источника — через колбэк onOpenReference (родитель
+ * открывает модальное окно).
  */
 
 import Slider from '@react-native-community/slider';
@@ -23,13 +24,23 @@ import { useAppTheme } from '@/theme/ThemeProvider';
 interface OverlayControlsProps {
   /** Есть ли фото для overlay (false — overlay недоступен). */
   hasPhoto: boolean;
-  /** Активен ли временный режим быстрого показа. */
-  isPeekActive: boolean;
-  /** Управляет временным режимом быстрого показа (родитель хранит состояние). */
-  onSetPeek: (active: boolean) => void;
+  /** Активно ли временное усиление призрака (tap по превью). */
+  isBoosted: boolean;
+  /** Подпись текущего источника эталона («Последнее» / «Первое» / «Вручную»). */
+  referenceLabel: string;
+  /** Открыть окно выбора источника эталона. */
+  onOpenReference: () => void;
+  /** Сброс временного усиления (при изменении ползунка). */
+  onResetBoost: () => void;
 }
 
-export function OverlayControls({ hasPhoto, isPeekActive, onSetPeek }: OverlayControlsProps) {
+export function OverlayControls({
+  hasPhoto,
+  isBoosted,
+  referenceLabel,
+  onOpenReference,
+  onResetBoost,
+}: OverlayControlsProps) {
   const { colors } = useAppTheme();
   const settings = useSettingsStore((s) => s.settings);
   const updateSettings = useSettingsStore((s) => s.updateSettings);
@@ -47,16 +58,18 @@ export function OverlayControls({ hasPhoto, isPeekActive, onSetPeek }: OverlayCo
           onPress={() => updateSettings({ ghostEnabled: !settings.ghostEnabled })}
         />
         <ToggleChip
-          label="Призрак 90%"
-          active={isPeekActive}
-          disabled={!hasPhoto}
-          onPress={() => onSetPeek(!isPeekActive)}
-        />
-        <ToggleChip
           label="Сетка"
           active={settings.gridEnabled}
           onPress={() => updateSettings({ gridEnabled: !settings.gridEnabled })}
         />
+        <Pressable
+          onPress={onOpenReference}
+          disabled={!hasPhoto}
+          accessibilityRole="button"
+          accessibilityLabel="Выбрать источник призрака"
+          style={[styles.chip, { borderColor: colors.border }, !hasPhoto && styles.chipDisabled]}>
+          <AppText variant="caption">Эталон: {referenceLabel}</AppText>
+        </Pressable>
       </View>
 
       <View style={styles.sliderBlock}>
@@ -73,17 +86,17 @@ export function OverlayControls({ hasPhoto, isPeekActive, onSetPeek }: OverlayCo
           maximumTrackTintColor={colors.border}
           thumbTintColor={colors.primary}
           onValueChange={(value) => {
-            // Начало изменения ползунка выходит из быстрого показа.
-            onSetPeek(false);
+            // Начало изменения ползунка сбрасывает временное усиление.
+            onResetBoost();
             updateSettings({ ghostOpacity: value });
           }}
           accessibilityLabel="Видимость ghost overlay"
         />
       </View>
 
-      {isPeekActive ? (
+      {isBoosted ? (
         <AppText variant="caption" color="textSecondary">
-          Действует временный режим 90% — отпустите или нажмите кнопку ещё раз.
+          Призрак усилен. Нажмите фон ещё раз, чтобы вернуть обычную видимость.
         </AppText>
       ) : null}
     </View>
@@ -134,6 +147,7 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: spacing.sm,
   },
   chip: {

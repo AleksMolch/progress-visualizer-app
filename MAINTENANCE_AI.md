@@ -107,13 +107,19 @@
 
 ### Добавление нового визуального оформления (без дублирования экранов)
 
-Приложение использует ОДНО дерево экранов и несколько визуальных вариантов
-(`minimalism`/`liquid-glass`/`gallery`/`material`/`neumorphism`). Новое оформление:
+Приложение использует ОДНО дерево экранов и три визуальных стиля
+(`modern`/`simple`/`neumorphism`). `modern` внутри платформенно-адаптивен:
+iOS — Liquid Glass, Android — Material 3. Мы намеренно НЕ держим Liquid Glass,
+Material и Gallery отдельными темами — пользователь выбирает «Современный»,
+приложение само выглядит нативно под платформу. Новое оформление:
 
 1. Добавить `DesignThemeId` в `src/models/settings.ts`.
-2. Добавить определение (палитры light/dark, `metrics`, `material`, при
-   необходимости `neu`) в `DESIGN_THEMES` (`src/theme/design-themes.ts`).
-3. При необходимости включить его в `getPlatformThemeIds()` и `getDefaultDesignThemeId()`.
+2. Добавить определение (label, description, `previewLight`/`previewDark`) в
+   `DESIGN_THEMES` и ветку в `resolveDesignTheme(id, scheme, platform)`
+   (`src/theme/design-themes.ts`).
+3. Включить его в `getPlatformThemeIds()`. Если нужен платформенный дефолт —
+   поправить `getDefaultDesignThemeId()` и `migrateDesignThemeId()` (если нужна
+   миграция старых значений).
 4. Компоненты уже читают токены через `useAppTheme()` — новых копий экранов НЕ нужно.
 
 Что НЕЛЬЗЯ делать:
@@ -122,16 +128,41 @@
 - Не добавлять `key={designTheme}` к Provider/Stack/Tabs/спискам.
 - Не размножать native GlassView в каждой ячейке списка.
 - Не делать темы paywall'ом.
-- **Не ломать platform defaults**: iOS → liquid-glass, Android → material;
+- **Не ломать platform defaults и миграцию**: iOS/Android → `modern`, web → `simple`;
   явный пользовательский выбор всегда важнее дефолта.
 
-### Жесты камеры и свайп вкладок
+### Жесты камеры, compare и нижнее меню
 
-- Свайп вкладок (`main-tab-swipe-gesture.tsx`) намеренно НЕ применён к Камере:
-  там горизонтальный селектор проектов, слайдер и hold-to-peek. Жестовые
-  колбэки, вызывающие setState/router/haptic, должны идти с `runOnJS(true)`.
-- Tap (призрак 90%) и horizontal pan (свайп) — разные recognizers с разными
-  порогами; не объединять их и не использовать устаревший PanGestureHandler.
+- Свайп вкладок (`main-tab-swipe-gesture.tsx`) намеренно НЕ применён к Камере.
+  Жестовые колбэки, вызывающие setState/router/haptic, — с `runOnJS(true)`.
+- Tap-to-boost призрака (камера) — `Gesture.Tap` на слое ПОД контролами, поэтому
+  не срабатывает на нижнем меню, затворе, кнопке «Эталон», слайдере, грид-тоггле,
+  селекторе проекта и модалках (они выше по z-index).
+- Pan-слайдер сравнения (`compare-slider.tsx`) — `Gesture.Pan` внутри
+  `GestureDetector`; он живёт в стеке проекта, где нет свайпа вкладок, поэтому
+  конфликт исключён. НЕ добавлять на compare screen сохранение/экспорт изображения.
+- Нижнее меню (`main-tab-bar.tsx`) — центральная кнопка камеры/затвора; съёмка
+  запускается через `camera-shutter-bridge.ts` (камера регистрирует обработчик),
+  а не через проброс пропсов через навигацию.
+
+### Как не сохранять временное состояние камеры
+
+- Временное усиление призрака (`isBoosted`) — локальный `useState`, НЕ пишется в
+  MMKV и НЕ идёт в `settingsStore`. Не добавлять его в `AppSettings` и в
+  `DEFAULT_SETTINGS`.
+- Сбросы временного состояния обязательны на: съёмку, смену проекта, уход с экрана
+  (`useFocusEffect` cleanup), фон (`AppState`), смену источника эталона, ползунок.
+
+### Работа с optional-полями фото и проекта
+
+- `PhotoMetadata.note/isFavorite/isHidden` и `Project.referenceMode/referencePhotoId`
+  — optional (safe migration). Старые записи читаются без физической миграции файлов.
+- Отсутствие `note`/`isFavorite`/`isHidden` трактуется как пусто/false/false.
+- `isHidden` НЕ удаляет файл и метаданные; скрытое фото исключается из timeline и
+  авто-выбора first/latest/reference. Не путать скрытие с удалением (delete —
+  отдельное destructive-действие с подтверждением).
+- `referenceMode` отсутствует у старых проектов → `latest` (резолвер
+  `resolveReferencePhoto` в `src/utils/reference.ts`).
 
 ### Тактильный отклик
 

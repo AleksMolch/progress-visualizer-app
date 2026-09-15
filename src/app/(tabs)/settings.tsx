@@ -13,6 +13,7 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, Switch, View } from 'react-native';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
@@ -24,17 +25,18 @@ import { MainTabSwipeGesture } from '@/features/navigation/components/main-tab-s
 import { isBiometricsAvailable } from '@/storage/biometrics';
 import { useSettingsStore } from '@/store/settingsStore';
 import { spacing } from '@/theme';
-import { FLOATING_TAB_BAR_INSET } from '@/theme/tab-bar';
+import { MAIN_TAB_BAR_INSET } from '@/theme/tab-bar';
 import { useAppTheme } from '@/theme/ThemeProvider';
 
 export default function SettingsScreen() {
-  const { colors, metrics } = useAppTheme();
+  const { colors } = useAppTheme();
+  const insets = useSafeAreaInsets();
   const requireBiometrics = useSettingsStore((s) => s.settings.requireBiometrics);
   const hapticsEnabled = useSettingsStore((s) => s.settings.hapticsEnabled);
   const updateSettings = useSettingsStore((s) => s.updateSettings);
 
-  // Отступ под плавающую капсулу таббара (0 — стандартный таббар).
-  const floatingInset = metrics.tabBarRadius > 0 ? FLOATING_TAB_BAR_INSET : 0;
+  // Отступ контента под плавающую панель вкладок.
+  const bottomInset = insets.bottom + MAIN_TAB_BAR_INSET;
 
   // null — ещё не определили доступность биометрии.
   const [available, setAvailable] = useState<boolean | null>(null);
@@ -46,7 +48,7 @@ export default function SettingsScreen() {
   return (
     <MainTabSwipeGesture tabIndex={2}>
       <AppScreen scroll>
-        <View style={[styles.container, { paddingBottom: floatingInset + spacing.lg }]}>
+        <View style={[styles.container, { paddingBottom: bottomInset }]}>
           <AppText variant="title">Настройки</AppText>
 
         <AppCard style={styles.card}>

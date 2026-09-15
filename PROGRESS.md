@@ -7,29 +7,25 @@
 
 ## ⚠️ ВАЖНО ДЛЯ СЛЕДУЮЩЕЙ СЕССИИ (читай первым)
 
-- **Где мы сейчас**: MVP завершён (Фазы 0–15) + сделаны app icon/splash, иконки
-  нижних вкладок (Ionicons), фиксы экрана проекта (кнопка «назад», превью фото).
-  Проект запушен на GitHub: `https://github.com/AleksMolch/progress-visualizer-app`
-  (origin обновлён на этот URL 2026-09-12, ветка `main` синхронизирована).
-- **Следующая задача**: улучшение дизайна + выбор темы оформления в Настройках
-  (несколько стандартных тем). Рекомендации по дизайну владелец передаст
-  отдельными файлами-инструкциями вместе со следующим промптом — прочитай их
-  первыми. Скелет задачи — в TODO.md, раздел «ДИЗАЙН И ТЕМЫ».
-  ⚠ `AppSettings.themeMode` (`system|light|dark`) УЖЕ есть в модели и
-  settingsStore, но НЕ подключён к ThemeProvider (тот всё ещё следует только
-  системной схеме через `useColorScheme`) — это недоделка, с неё и начинать.
+- **Где мы сейчас**: выполнена продуктовая итерация UI по
+  `AI_CODER_PRODUCT_UI_REDESIGN_TASK.md` (см. запись 2026-09-15 ниже): три
+  оформления (`modern`/`simple`/`neumorphism`), единое нижнее меню с центральной
+  кнопкой камеры/затвора, ghost reference per project (latest/first/manual),
+  экран проекта как история (summary + первое/последнее + quick compare + timeline
+  по месяцам), заметки/избранное/скрытие фото, compare-экран на 3 режима без
+  экспорта файла. Все проверки зелёные (typecheck/lint/test/expo-doctor/export).
+- **Следующая задача**: ручной визуальный ревью владельцем (темы, анимация
+  затвора, жесты tap-to-boost и слайдера сравнения) — модель не читает скриншоты.
+  Затем: замена `bundleIdentifier` и публикация.
 - **Рабочая папка проекта**: `/Users/aleks/dev/progress-visualizer-app`
-  (ASCII-путь). СТАРЫЙ путь `/Volumes/Т5-Documents/Project/progress-visualizer-app`
-  содержал кириллицу в имени тома и ломал CocoaPods — там НЕ работай.
+  (ASCII-путь).
 - **Git remote**: origin = `https://github.com/AleksMolch/progress-visualizer-app.git`.
 - **PATH**: `pod`, `brew` и CocoaPods живут в `/opt/homebrew/bin`.
-  Перед любым `npx expo prebuild` / `run:ios` / `pod install` выполни:
+  Перед `npx expo prebuild` / `run:ios` / `pod install`:
   `export PATH="/opt/homebrew/bin:$PATH"`.
-- **Окружение**: Node v22.18.0, Xcode 26.6 (Swift 6.3.3), CocoaPods 1.17.0,
-  Apple M4, macOS 26.3.1. Всё удовлетворяет Expo SDK 57.
-- **Запуск**: MMKV/camera/biometrics — native-модули, работают только в dev build
-  (`npx expo run:ios`), НЕ в Expo Go. Metro обычно уже запущен на :8081;
-  если нет — `npx expo start --port 8081` в фоне.
+- **Окружение**: Node v22.18.0, Xcode 26.6, CocoaPods 1.17.0, Apple M4.
+- **Запуск**: native-модули — только dev build (`npx expo run:ios`), НЕ Expo Go.
+  Metro на :8081 (см. `/tmp/metro.log`); если нет — `npx expo start --port 8081`.
 
 ## Шаблон записи
 
@@ -41,6 +37,57 @@
 - Результат проверок:
 - Известные проблемы:
 - Следующий шаг:
+
+---
+
+### 2026-09-15 — Продуктовая итерация UI (redesign, timeline, ghost reference, compare)
+
+- Что сделано: (1) оставлены три оформления `modern`/`simple`/`neumorphism` с
+  миграцией старых id и platform-рендером `modern` (iOS glass / Android Material);
+  (2) единое нижнее меню «Проекты — [камера/затвор] — Настройки» с центральной
+  выступающей кнопкой и анимацией «камера → затвор» (shutter bridge);
+  (3) ghost reference per project (latest/first/manual) + tap-to-boost вместо
+  режима «90%»; (4) экран проекта как история: summary, первое/последнее,
+  быстрое сравнение (Flow A), timeline по месяцам, бейджи; (5) заметки/избранное/
+  скрытие фото без удаления; (6) viewer с листом действий и compare-modal (Flow B);
+  (7) compare-экран на 3 режима (слайдер/рядом/наложение) с выбором пары (Flow C),
+  без сохранения файла.
+- Какие файлы созданы или изменены (ключевые):
+  - модели: `models/settings.ts` (+modern/simple/neumorphism), `models/project.ts`
+    (+referenceMode/referencePhotoId), `models/photo.ts` (+note/isFavorite/isHidden)
+  - тема: `theme/design-themes.ts` (переписан), `theme/ThemeProvider.tsx`
+    (+Platform.OS), `theme/tab-bar.ts` (+MAIN_TAB_BAR_*)
+  - store: `store/settingsStore.ts` (миграция), `store/projectStore.ts`
+    (+setProjectReference/+updatePhoto)
+  - utils: `utils/reference.ts`, `utils/progress.ts`, `utils/dates.ts`
+    (+formatDays/formatMonthLabel), `utils/photos.ts` (+visible/first/latest),
+    `utils/ghost.ts` (tap-to-boost 0.85)
+  - навигация: `features/navigation/components/main-tab-bar.tsx`,
+    `camera-shutter-bridge.ts`, удалён `liquid-glass-tab-bar.tsx`,
+    `app/(tabs)/_layout.tsx` (единый таббар)
+  - камера: `app/(tabs)/camera.tsx`, `overlay-controls.tsx`,
+    `ghost-reference-modal.tsx`
+  - экраны: `app/project/[id]/index.tsx`, `viewer/[photoId].tsx`,
+    `compare.tsx` (заменил `compare/[photoId].tsx`), `app/(tabs)/index.tsx`,
+    `settings.tsx`
+  - gallery: `photo-picker-sheet.tsx`, `action-sheet.tsx`, `note-editor-modal.tsx`,
+    `compare-overlay.tsx`, `compare-side-by-side.tsx` (+подписи дат)
+  - settings: `appearance-settings-card.tsx` (3 стиля)
+- Какие команды запускались:
+  - `npm run typecheck`, `npm run lint`, `npm test`, `npx expo-doctor`
+  - `npx expo export --platform ios` (проверка бандла)
+  - перезапуск Metro (`--clear`) + relaunch на симуляторе
+- Результат проверок:
+  - typecheck/lint: чисто; тесты: 145/145 (было 108); expo-doctor: 21/21
+  - бандл iOS: собран (2036 модулей, 4.4MB hbc) без ошибок
+  - запуск на симуляторе iPhone 17 Pro Max: без redbox/ERROR/fatal в логах Metro
+- Известные проблемы:
+  - Визуальная проверка (темы, анимация затвора, tap-to-boost, слайдер сравнения,
+    Liquid Glass) — ручная: модель не поддерживает ввод изображений.
+  - Жесты (tap-to-boost на камере, pan-слайдер сравнения, свайп вкладок) требуют
+    проверки на реальном устройстве.
+  - Android — нет эмулятора; Modern/Material-рендер не проверен.
+- Следующий шаг: ручной ревью владельцем, затем bundleIdentifier и публикация.
 
 ---
 

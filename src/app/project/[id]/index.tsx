@@ -1,23 +1,25 @@
 /**
- * Назначение: экран отдельного проекта — лента фотографий прогресса.
+ * Назначение: экран отдельного проекта — история прогресса (не просто сетка).
  *
  * Функции:
- * - читает id проекта из параметров маршрута;
- * - показывает название проекта и сетку фотографий;
- * - показывает empty state, если фото ещё нет;
- * - удаляет фото с подтверждением (Alert) — удаляет и файл, и метаданные;
- * - показывает empty state «проект не найден», если id некорректен.
+ * - верхний summary-блок (название, число фото, период, источник эталона);
+ * - блок «Первое / Последнее» (сравнение первой и последней точки);
+ * - блок «Быстрое сравнение» (Flow A): выбор двух снимков кружками 1/2;
+ * - timeline фото с группировкой по месяцам и бейджами (эталон/избранное/скрытое);
+ * - FAB «+» для нового снимка в текущем проекте.
  *
  * Слой: UI (/src/app). Фото отображаются через expo-image; файловую систему
- * не трогает напрямую — удаление идёт через useProjectStore.deletePhoto.
+ * не трогает напрямую — удаление идёт через useProjectStore.
  */
 
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { Alert, FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Alert, Pressable, SectionList, StyleSheet, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/app-button';
+import { AppCard } from '@/components/ui/app-card';
 import { AppScreen } from '@/components/ui/app-screen';
 import { AppText } from '@/components/ui/app-text';
 import { useAppStore } from '@/store/appStore';
@@ -25,6 +27,10 @@ import { useProjectStore } from '@/store/projectStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { radii, spacing } from '@/theme';
 import { useAppTheme } from '@/theme/ThemeProvider';
+import { formatDate, formatDays } from '@/utils/dates';
+import { advanceQuickCompare, getDaysBetweenPhotos, groupPhotosByMonth } from '@/utils/progress';
+import { getFirstVisiblePhoto, getLatestVisiblePhoto, getProjectPhotos } from '@/utils/photos';
+import { getReferenceMode, resolveReferencePhoto } from '@/utils/reference';
 import { triggerHaptic } from '@/utils/haptics';
 
 export default function ProjectScreen() {
@@ -38,10 +44,42 @@ export default function ProjectScreen() {
   const setActiveProjectId = useAppStore((s) => s.setActiveProjectId);
   const hapticsEnabled = useSettingsStore((s) => s.settings.hapticsEnabled);
 
-  // Фото текущего проекта, отсортированные по времени съёмки (свежие сверху).
-  const projectPhotos = photos
-    .filter((p) => p.projectId === id)
-    .sort((a, b) => b.takenAt - a.takenAt);
+  // Режим быстрого сравнения (Flow A) и порядок выбранных снимков (1 = До, 2 = После).
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selection, setSelection] = useState<string[]>([]);
+
+  // Показывать ли скрытые фото (по умолчанию — нет).
+  const [showHidden, setShowHidden] = useState(false);
+
+  // Все фото проекта, свежие сверху.
+  const projectPhotos = useMemo(() => getProjectPhotos(photos, id), [photos, id]);
+
+  // Фото для timeline: видимые (или все, если включён показ скрытых).
+  const timelinePhotos = useMemo(
+    () => (showHidden ? projectPhotos : projectPhotos.filter((p) => !p.isHidden)),
+    [projectPhotos, showHidden],
+  );
+
+  // Группировка по месяцам (вход уже отсортирован свежие сверху).
+  const monthGroups = useMemo(() => groupPhotosByMonth(timelinePhotos), [timelinePhotos]);
+
+  // Секции для SectionList (MonthGroup → SectionListData).
+  const sections = useMemo(
+    () => monthGroups.map((g) => ({ key: g.key, label: g.label, data: g.photos })),
+    [monthGroups],
+  );
+
+  // Первая и последняя видимые точки для блока «Первое / Последнее».
+  const firstPhoto = getFirstVisiblePhoto(photos, id);
+  const lastPhoto = getLatestVisiblePhoto(photos, id);
+  const daysBetween =
+    firstPhoto && lastPhoto ? getDaysBetweenPhotos(firstPhoto, lastPhoto) : null;
+
+  // Эталонное фото и подпись источника для summary.
+  const referencePhoto = project ? resolveReferencePhoto(project, photos) : null;
+  const referenceMode = project ? getReferenceMode(project) : 'latest';
+  const referenceLabel =
+    referenceMode === 'first' ? 'Первое фото' : referenceMode === 'manual' ? 'Эталон вручную' : 'Последнее фото';
 
   // Удаление фото с подтверждением.
   const handleDeletePhoto = (photoId: string) => {
@@ -51,7 +89,7 @@ export default function ProjectScreen() {
     ]);
   };
 
-  // Открыть камеру с выбранным текущим проектом (FAB «+»).
+  // Открыть камеру с выбранным текущим проектом.
   const handleAddPhoto = () => {
     if (!project) {
       return;
@@ -59,6 +97,38 @@ export default function ProjectScreen() {
     setActiveProjectId(project.id);
     void triggerHaptic('impact', hapticsEnabled);
     router.navigate('/camera');
+  };
+
+  // Открыть сравнение по явной паре.
+  const openCompare = (beforeId: string, afterId: string) => {
+    router.push(`/project/${id}/compare?before=${beforeId}&after=${afterId}`);
+  };
+
+  // Flow A: выбор снимков в режиме быстрого сравнения.
+  const handleQuickSelect = (photoId: string) => {
+    const next = advanceQuickCompare(selection, photoId);
+    if (next.length === 2) {
+      // Выбраны два снимка: открываем сравнение (порядок 1 = До, 2 = После).
+      openCompare(next[0], next[1]);
+      setSelection([]);
+      return;
+    }
+    setSelection(next);
+  };
+
+  // Выход из режима выбора пары.
+  const cancelSelection = () => {
+    setSelectionMode(false);
+    setSelection([]);
+  };
+
+  // Открытие фото: в режиме выбора — выбор, иначе — viewer.
+  const handlePhotoPress = (photoId: string) => {
+    if (selectionMode) {
+      handleQuickSelect(photoId);
+    } else {
+      router.push(`/project/${id}/viewer/${photoId}`);
+    }
   };
 
   // Проект не найден (например, после удаления или неверная ссылка).
@@ -89,28 +159,83 @@ export default function ProjectScreen() {
         }}
       />
 
-      {projectPhotos.length === 0 ? (
-        <View style={styles.empty}>
-          <AppText variant="title">Пока нет фотографий</AppText>
-          <AppText color="textSecondary" style={styles.emptyText}>
-            Сделайте первый снимок на вкладке «Камера».
-          </AppText>
-        </View>
-      ) : (
-        <FlatList
-          data={projectPhotos}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          contentContainerStyle={styles.grid}
-          renderItem={({ item }) => (
-            <PhotoTile
-              uri={item.uri}
-              onOpen={() => router.push(`/project/${id}/viewer/${item.id}`)}
-              onDelete={() => handleDeletePhoto(item.id)}
+      <SectionList
+        sections={sections}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.content}
+        stickySectionHeadersEnabled={false}
+        ListHeaderComponent={
+          <View style={styles.headerBlocks}>
+            <SummaryBlock
+              name={project.name}
+              visibleCount={firstPhoto ? timelinePhotos.length : 0}
+              firstTakenAt={firstPhoto?.takenAt}
+              lastTakenAt={lastPhoto?.takenAt}
+              daysBetween={daysBetween}
+              referenceLabel={referenceLabel}
+              onCapture={handleAddPhoto}
             />
-          )}
-        />
-      )}
+
+            {firstPhoto && lastPhoto ? (
+              <FirstLastBlock
+                firstUri={firstPhoto.uri}
+                lastUri={lastPhoto.uri}
+                daysBetween={daysBetween}
+                onPress={() => openCompare(firstPhoto.id, lastPhoto.id)}
+              />
+            ) : null}
+
+            <QuickCompareBlock
+              enabled={timelinePhotos.length >= 2}
+              selectionMode={selectionMode}
+              selectionCount={selection.length}
+              onToggle={() => {
+                if (timelinePhotos.length < 2) {
+                  return;
+                }
+                setSelectionMode((v) => !v);
+                setSelection([]);
+              }}
+              onCancel={cancelSelection}
+            />
+
+            <View style={styles.toolbar}>
+              <AppText variant="subtitle">История</AppText>
+              <Pressable
+                onPress={() => setShowHidden((v) => !v)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: showHidden }}
+                style={styles.hiddenToggle}>
+                <AppText variant="caption" color="primary">
+                  {showHidden ? 'Скрыть неудачные' : 'Показать скрытые'}
+                </AppText>
+              </Pressable>
+            </View>
+          </View>
+        }
+        renderSectionHeader={({ section }) => (
+          <AppText variant="subtitle" style={[styles.monthHeader, { color: colors.primary }]}>
+            {section.label}
+          </AppText>
+        )}
+        renderItem={({ item }) => (
+          <PhotoRow
+            photo={item}
+            isReference={item.id === referencePhoto?.id}
+            selectionNumber={selectionMode ? selection.indexOf(item.id) + 1 : 0}
+            onPress={() => handlePhotoPress(item.id)}
+            onDelete={() => handleDeletePhoto(item.id)}
+          />
+        )}
+        ListEmptyComponent={
+          <View style={styles.empty}>
+            <AppText variant="title">Пока нет фотографий</AppText>
+            <AppText color="textSecondary" style={styles.emptyText}>
+              Сделайте первый снимок на вкладке «Камера».
+            </AppText>
+          </View>
+        }
+      />
 
       <Pressable
         onPress={handleAddPhoto}
@@ -125,72 +250,322 @@ export default function ProjectScreen() {
 }
 
 /**
- * Плитка одного фото: тап открывает viewer, крестик удаляет фото.
+ * Верхний summary-блок проекта.
  */
-function PhotoTile({
-  uri,
-  onOpen,
+function SummaryBlock({
+  name,
+  visibleCount,
+  firstTakenAt,
+  lastTakenAt,
+  daysBetween,
+  referenceLabel,
+  onCapture,
+}: {
+  name: string;
+  visibleCount: number;
+  firstTakenAt?: number;
+  lastTakenAt?: number;
+  daysBetween: number | null;
+  referenceLabel: string;
+  onCapture: () => void;
+}) {
+  return (
+    <AppCard style={styles.summary}>
+      <AppText variant="title">{name}</AppText>
+      <AppText color="textSecondary">
+        {visibleCount === 0 ? 'Пока нет снимков' : `${visibleCount} фото`}
+      </AppText>
+      {firstTakenAt && lastTakenAt ? (
+        <AppText color="textSecondary" variant="caption">
+          {formatDate(firstTakenAt)} → {formatDate(lastTakenAt)}
+          {daysBetween !== null ? ` · ${formatDays(daysBetween)}` : ''}
+        </AppText>
+      ) : null}
+      <AppText color="textSecondary" variant="caption">
+        Источник призрака: {referenceLabel}
+      </AppText>
+      <AppButton label="Сделать снимок" onPress={onCapture} />
+    </AppCard>
+  );
+}
+
+/**
+ * Блок «Первое / Последнее»: две крупные миниатюры и период между ними.
+ */
+function FirstLastBlock({
+  firstUri,
+  lastUri,
+  daysBetween,
+  onPress,
+}: {
+  firstUri: string;
+  lastUri: string;
+  daysBetween: number | null;
+  onPress: () => void;
+}) {
+  const { colors } = useAppTheme();
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel="Сравнить первое и последнее фото">
+      <AppCard style={styles.firstLast}>
+        <View style={styles.firstLastRow}>
+          <View style={styles.firstLastPane}>
+            <Image source={{ uri: firstUri }} style={styles.firstLastImage} contentFit="cover" />
+            <View style={styles.caption}>
+              <AppText variant="caption" color="primaryText">
+                Первое
+              </AppText>
+            </View>
+          </View>
+          <Ionicons name="arrow-forward" size={20} color={colors.primary} />
+          <View style={styles.firstLastPane}>
+            <Image source={{ uri: lastUri }} style={styles.firstLastImage} contentFit="cover" />
+            <View style={styles.caption}>
+              <AppText variant="caption" color="primaryText">
+                Последнее
+              </AppText>
+            </View>
+          </View>
+        </View>
+        <AppText variant="caption" color="textSecondary" style={{ textAlign: 'center' }}>
+          {daysBetween !== null ? `${formatDays(daysBetween)} между снимками` : ''}
+        </AppText>
+      </AppCard>
+    </Pressable>
+  );
+}
+
+/**
+ * Блок «Быстрое сравнение» (Flow A).
+ */
+function QuickCompareBlock({
+  enabled,
+  selectionMode,
+  selectionCount,
+  onToggle,
+  onCancel,
+}: {
+  enabled: boolean;
+  selectionMode: boolean;
+  selectionCount: number;
+  onToggle: () => void;
+  onCancel: () => void;
+}) {
+  if (!enabled) {
+    return (
+      <AppCard style={styles.quickCompare}>
+        <AppText variant="subtitle">Быстрое сравнение</AppText>
+        <AppText color="textSecondary" variant="caption">
+          Сравнение появится после второго снимка.
+        </AppText>
+      </AppCard>
+    );
+  }
+
+  return (
+    <AppCard style={styles.quickCompare}>
+      {selectionMode ? (
+        <View style={styles.selectionPrompt}>
+          <AppText variant="subtitle">
+            {selectionCount === 0
+              ? 'Выберите два снимка для сравнения'
+              : `Выбрано: ${selectionCount} из 2`}
+          </AppText>
+          <AppButton label="Отмена" variant="secondary" onPress={onCancel} />
+        </View>
+      ) : (
+        <View style={styles.selectionPrompt}>
+          <View style={styles.selectionText}>
+            <AppText variant="subtitle">Быстрое сравнение</AppText>
+            <AppText color="textSecondary" variant="caption">
+              Выберите два снимка, чтобы сравнить изменения.
+            </AppText>
+          </View>
+          <AppButton label="Выбрать" onPress={onToggle} />
+        </View>
+      )}
+    </AppCard>
+  );
+}
+
+/**
+ * Строка фото в timeline: миниатюра + дата + заметка + бейджи + кружок выбора.
+ */
+function PhotoRow({
+  photo,
+  isReference,
+  selectionNumber,
+  onPress,
   onDelete,
 }: {
-  uri: string;
-  onOpen: () => void;
+  photo: { id: string; uri: string; takenAt: number; note?: string; isFavorite?: boolean; isHidden?: boolean };
+  isReference: boolean;
+  selectionNumber: number;
+  onPress: () => void;
   onDelete: () => void;
 }) {
   const { colors } = useAppTheme();
 
   return (
-    <View style={styles.tile}>
-      <Pressable
-        onPress={onOpen}
-        accessibilityRole="imagebutton"
-        accessibilityLabel="Открыть фото"
-        style={styles.photoButton}>
-        <Image source={{ uri }} style={styles.photo} contentFit="cover" />
+    <AppCard style={styles.photoRow}>
+      <Pressable onPress={onPress} accessibilityRole="imagebutton" style={styles.photoRowBody}>
+        <View style={styles.thumbWrap}>
+          <Image source={{ uri: photo.uri }} style={styles.thumb} contentFit="cover" />
+          {isReference ? (
+            <View style={[styles.referenceBadge, { backgroundColor: colors.primary }]}>
+              <AppText variant="caption" color="primaryText">
+                Эталон
+              </AppText>
+            </View>
+          ) : null}
+          {selectionNumber > 0 ? (
+            <View style={[styles.selectionCircle, { backgroundColor: colors.primary }]}>
+              <AppText variant="caption" color="primaryText">
+                {selectionNumber}
+              </AppText>
+            </View>
+          ) : null}
+        </View>
+        <View style={styles.photoRowText}>
+          <AppText variant="body">{formatDate(photo.takenAt)}</AppText>
+          {photo.note ? (
+            <AppText color="textSecondary" variant="caption" numberOfLines={1}>
+              {photo.note}
+            </AppText>
+          ) : null}
+          <View style={styles.rowBadges}>
+            {photo.isFavorite ? <Ionicons name="star" size={14} color={colors.primary} /> : null}
+            {photo.isHidden ? <Ionicons name="eye-off" size={14} color={colors.textSecondary} /> : null}
+          </View>
+        </View>
       </Pressable>
       <Pressable
         onPress={onDelete}
         accessibilityRole="button"
         accessibilityLabel="Удалить фото"
-        style={[styles.deleteButton, { backgroundColor: colors.danger }]}>
-        <AppText color="primaryText" variant="caption">
-          ✕
-        </AppText>
+        hitSlop={8}
+        style={styles.deleteButton}>
+        <Ionicons name="trash-outline" size={18} color={colors.textSecondary} />
       </Pressable>
-    </View>
+    </AppCard>
   );
 }
 
 const styles = StyleSheet.create({
-  grid: {
-    padding: spacing.sm,
+  content: {
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  headerBlocks: {
+    gap: spacing.md,
+  },
+  summary: {
+    gap: spacing.xs,
+  },
+  firstLast: {
     gap: spacing.sm,
   },
-  tile: {
+  firstLastRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  firstLastPane: {
     flex: 1,
-    aspectRatio: 1,
-    margin: spacing.xs,
     borderRadius: radii.md,
     overflow: 'hidden',
+    aspectRatio: 1,
   },
-  photoButton: {
-    flex: 1,
-  },
-  photo: {
+  firstLastImage: {
     width: '100%',
     height: '100%',
   },
-  deleteButton: {
+  caption: {
     position: 'absolute',
-    top: spacing.xs,
-    right: spacing.xs,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    top: 8,
+    left: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  quickCompare: {
+    gap: spacing.sm,
+  },
+  selectionPrompt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  selectionText: {
+    flex: 1,
+    gap: spacing.xs,
+  },
+  toolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing.sm,
+  },
+  hiddenToggle: {
+    padding: spacing.xs,
+  },
+  monthHeader: {
+    marginTop: spacing.sm,
+  },
+  photoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.sm,
+  },
+  photoRowBody: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  thumbWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: radii.md,
+    overflow: 'hidden',
+  },
+  thumb: {
+    width: '100%',
+    height: '100%',
+  },
+  referenceBadge: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: radii.sm,
+  },
+  selectionCircle: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  empty: {
+  photoRowText: {
     flex: 1,
+    gap: spacing.xs,
+  },
+  rowBadges: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  deleteButton: {
+    padding: spacing.xs,
+  },
+  empty: {
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.md,

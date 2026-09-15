@@ -10,13 +10,15 @@
 /** Режим темы оформления. */
 export type ThemeMode = 'system' | 'light' | 'dark';
 
-/** Стабильные идентификаторы визуального оформления приложения. */
-export type DesignThemeId =
-  | 'minimalism'
-  | 'liquid-glass'
-  | 'gallery'
-  | 'material'
-  | 'neumorphism';
+/**
+ * Стабильные идентификаторы визуального оформления приложения.
+ *
+ * Только три пользовательских стиля:
+ * - `modern` — платформенно-нативный (iOS Liquid Glass, Android Material 3);
+ * - `simple` — минималистичный стабильный режим без тяжёлых эффектов;
+ * - `neumorphism` — мягкий soft-UI.
+ */
+export type DesignThemeId = 'modern' | 'simple' | 'neumorphism';
 
 export interface AppSettings {
   /** Визуальное оформление (тема дизайна). */

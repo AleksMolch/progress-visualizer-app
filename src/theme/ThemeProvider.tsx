@@ -11,7 +11,7 @@
  */
 
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
-import { useColorScheme } from 'react-native';
+import { Platform, useColorScheme } from 'react-native';
 
 import { type DesignThemeId } from '@/models/settings';
 import { useSettingsStore } from '@/store/settingsStore';
@@ -55,7 +55,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
           ? 'dark'
           : 'light';
 
-  const resolved = resolveDesignTheme(designTheme, scheme);
+  const resolved = resolveDesignTheme(designTheme, scheme, Platform.OS);
 
   // Кэшируем значение, чтобы не пересоздавать контекст на каждый рендер.
   const value = useMemo(

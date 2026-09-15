@@ -51,6 +51,29 @@ describe('projectStore', () => {
     expect(projects[0].name).toBe('Новое имя');
   });
 
+  it('устанавливает источник эталонного фото (manual)', () => {
+    useProjectStore.getState().createProject('Проект');
+    const { id } = useProjectStore.getState().projects[0];
+
+    useProjectStore.getState().setProjectReference(id, 'manual', 'photo-1');
+
+    const project = useProjectStore.getState().projects[0];
+    expect(project.referenceMode).toBe('manual');
+    expect(project.referencePhotoId).toBe('photo-1');
+  });
+
+  it('очищает referencePhotoId для non-manual режима', () => {
+    useProjectStore.getState().createProject('Проект');
+    const { id } = useProjectStore.getState().projects[0];
+    useProjectStore.getState().setProjectReference(id, 'manual', 'photo-1');
+
+    useProjectStore.getState().setProjectReference(id, 'latest');
+
+    const project = useProjectStore.getState().projects[0];
+    expect(project.referenceMode).toBe('latest');
+    expect(project.referencePhotoId).toBeNull();
+  });
+
   it('удаляет проект', () => {
     useProjectStore.getState().createProject('Проект');
     const { id } = useProjectStore.getState().projects[0];
@@ -74,6 +97,47 @@ describe('projectStore', () => {
     useProjectStore.getState().deletePhoto('photo-1');
 
     expect(useProjectStore.getState().photos).toHaveLength(0);
+  });
+
+  it('обновляет заметку фото, сохраняя остальные поля', () => {
+    useProjectStore.getState().addPhoto(buildPhoto({ id: 'photo-1', width: 100, isFavorite: true }));
+
+    useProjectStore.getState().updatePhoto('photo-1', { note: 'после тренировки' });
+
+    const photo = useProjectStore.getState().photos[0];
+    expect(photo.note).toBe('после тренировки');
+    expect(photo.width).toBe(100);
+    expect(photo.isFavorite).toBe(true);
+  });
+
+  it('переключает избранное, не трогая заметку и скрытие', () => {
+    useProjectStore.getState().addPhoto(buildPhoto({ id: 'photo-1', note: 'заметка', isHidden: true }));
+
+    useProjectStore.getState().updatePhoto('photo-1', { isFavorite: true });
+
+    const photo = useProjectStore.getState().photos[0];
+    expect(photo.isFavorite).toBe(true);
+    expect(photo.note).toBe('заметка');
+    expect(photo.isHidden).toBe(true);
+  });
+
+  it('скрытие фото не удаляет файл и метаданные', async () => {
+    const tempFile = new File('file:///tmp/capture.jpg');
+    tempFile.create();
+    tempFile.write('image-bytes');
+    await useProjectStore.getState().saveCapturedPhoto({
+      projectId: 'project-1',
+      tempUri: tempFile.uri,
+    });
+    const { id, uri } = useProjectStore.getState().photos[0];
+
+    useProjectStore.getState().updatePhoto(id, { isHidden: true });
+
+    const photo = useProjectStore.getState().photos[0];
+    expect(photo.isHidden).toBe(true);
+    // Файл остаётся на месте, метаданные сохранены.
+    expect(new File(uri).exists).toBe(true);
+    expect(useProjectStore.getState().photos).toHaveLength(1);
   });
 
   it('удаляет фото вместе с проектом', () => {

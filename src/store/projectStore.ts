@@ -15,7 +15,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { type PhotoMetadata } from '@/models/photo';
-import { type Project } from '@/models/project';
+import { type Project, type ProjectReferenceMode } from '@/models/project';
 import { mmkvStorage } from '@/storage/mmkv';
 import {
   deletePhotoFile,
@@ -38,7 +38,13 @@ interface ProjectState {
   createProject: (name: string) => void;
   updateProject: (id: string, name: string) => void;
   deleteProject: (id: string) => void;
+  setProjectReference: (
+    id: string,
+    referenceMode: ProjectReferenceMode,
+    referencePhotoId?: string | null,
+  ) => void;
   addPhoto: (photo: PhotoMetadata) => void;
+  updatePhoto: (id: string, partial: Partial<PhotoMetadata>) => void;
   deletePhoto: (id: string) => void;
   saveCapturedPhoto: (input: SaveCapturedPhotoInput) => Promise<void>;
 }
@@ -77,8 +83,32 @@ export const useProjectStore = create<ProjectState>()(
         }));
       },
 
+      // Установка источника эталонного фото для ghost overlay.
+      // Для non-manual режимов referencePhotoId очищается; для manual — сохраняется.
+      setProjectReference: (id, referenceMode, referencePhotoId) =>
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === id
+              ? {
+                  ...p,
+                  referenceMode,
+                  referencePhotoId:
+                    referenceMode === 'manual' ? (referencePhotoId ?? p.referencePhotoId ?? null) : null,
+                  updatedAt: Date.now(),
+                }
+              : p,
+          ),
+        })),
+
       // Добавление метаданных фото (вызывающий код сам формирует объект).
       addPhoto: (photo) => set((state) => ({ photos: [...state.photos, photo] })),
+
+      // Частичное обновление метаданных фото (заметка/избранное/скрытие).
+      // Файл фото при этом НЕ трогается — только метаданные.
+      updatePhoto: (id, partial) =>
+        set((state) => ({
+          photos: state.photos.map((photo) => (photo.id === id ? { ...photo, ...partial } : photo)),
+        })),
 
       // Удаление метаданных фото и его файла из sandbox по идентификатору.
       deletePhoto: (id) => {

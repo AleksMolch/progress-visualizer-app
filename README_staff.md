@@ -64,10 +64,17 @@ ProgressPrivate — privacy-first мобильное приложение для
 
 ## 4. Модель данных
 
-- `Project`: id, name, createdAt, updatedAt.
-- `PhotoMetadata`: id, projectId, uri (локальный путь), takenAt, width?, height?.
-- `AppSettings`: designTheme, themeMode, ghostEnabled, ghostOpacity, gridEnabled,
-  requireBiometrics, remindersEnabled, reminderTime.
+- `Project`: id, name, createdAt, updatedAt, referenceMode? (`latest|first|manual`),
+  referencePhotoId? (эталонное фото для ghost overlay).
+- `PhotoMetadata`: id, projectId, uri (локальный путь), takenAt, width?, height?,
+  note? (заметка), isFavorite?, isHidden? (скрытие без удаления).
+- `AppSettings`: designTheme (`modern|simple|neumorphism`), themeMode, ghostEnabled,
+  ghostOpacity, gridEnabled, requireBiometrics, remindersEnabled, reminderTime,
+  hapticsEnabled.
+
+Все поля `?` — безопасные optional-поля: старые записи читаются без миграции
+физических файлов. Скрытие фото (`isHidden`) НЕ удаляет файл и метаданные —
+только исключает из обычного timeline и авто-выбора first/latest/reference.
 
 Метаданные — в MMKV (зашифровано). Файлы фото — в sandbox приложения
 (`Paths.document/photos/<projectId>/`).
@@ -166,68 +173,100 @@ npx expo-doctor
 
 ---
 
-## 10. Оформления, материал, навигация и быстрый призрак
+## 10. Оформления, ghost reference, экран проекта и compare
 
-### 10.1. Два независимых выбора
+### 10.1. Три оформления
 
-- `designTheme`: `minimalism` | `liquid-glass` | `gallery` | `material` | `neumorphism`.
+- `designTheme`: `modern` | `simple` | `neumorphism` (контракт в `src/models/settings.ts`).
 - `themeMode`: `system` | `light` | `dark` — независимый цветовой режим.
 
 Определения тем, палитры, радиусы и материалы — в `src/theme/design-themes.ts`.
-Провайдер (`src/theme/ThemeProvider.tsx`) резолвит пару
-`(designTheme, scheme)` и отдаёт через `useAppTheme()`: `colors`, `scheme`,
-`designTheme`, `metrics`, `material`, `neu` (неоморфные токены, только для neumorphism).
+`resolveDesignTheme(id, scheme, platform)` резолвит пару «оформление + схема +
+платформа». Для `modern` рендерер зависит от платформы:
+
+- iOS → native-glass таббар + frosted-карточки (Liquid Glass);
+- Android → elevated-карточки + solid-таббар (Material 3);
+- web/прочее → solid fallback.
+
+Акцентная палитра общая (#208AEF) на всех платформах — различаются только
+поверхности и радиусы.
+
+Провайдер (`src/theme/ThemeProvider.tsx`) отдаёт через `useAppTheme()`:
+`colors`, `scheme`, `designTheme`, `metrics`, `material`, `neu`.
 
 ### 10.2. Platform default и миграция
 
-- `getDefaultDesignThemeId(platform)`: iOS → `liquid-glass`, Android → `material`,
-  прочее → `minimalism`.
-- `getPlatformThemeIds(platform)` — список для UI выбора (порядок: дефолт первым).
-- `normalizeSettings(raw, platform)` в `src/store/settingsStore.ts`: отсутствующий
-  ИЛИ неизвестный `designTheme` → platform default; явный валидный выбор сохраняется.
-- persist использует кастомный `merge` (передаёт `Platform.OS`); `skipHydration: true`
-  и порядок `initializeStorage → rehydrateStores` не менялись.
+- `getDefaultDesignThemeId(platform)`: iOS/Android → `modern`, прочее → `simple`.
+- `migrateDesignThemeId(value)` переводит старые id: `minimalism → simple`,
+  `liquid-glass|material|gallery → modern`, `neumorphism → neumorphism`.
+- `normalizeSettings(raw, platform)` в `src/store/settingsStore.ts`: мигрирует или
+  подставляет platform default; явный валидный выбор пользователя не перезаписывается.
+- persist использует кастомный `merge` (передаёт `Platform.OS`); `skipHydration: true`.
 
 ### 10.3. Материал поверхностей
 
 - `src/components/ui/adaptive-surface.tsx` + `.ios.tsx` + `src/theme/material.ts`:
-  `solid`/`elevated`/`neumorphic`/`frosted`/`native-glass`. На iOS native-glass →
-  `GlassView`, frosted → `BlurView`; вне iOS — solid. Reduce Transparency → solid
-  для прозрачных материалов. Neumorphic → `NeuSurface` (`boxShadow`), elevated →
-  View + тень.
-- Капсула Liquid Glass — `src/features/navigation/components/liquid-glass-tab-bar.tsx`
-  (кастомный `tabBar` только для liquid-glass); размеры — `src/theme/tab-bar.ts`.
+  `solid`/`elevated`/`neumorphic`/`frosted`/`native-glass`. Reduce Transparency → solid.
 
-### 10.4. Быстрый призрак (hold-to-peek)
+### 10.4. Единое нижнее меню
 
-- Чистая логика — `src/utils/ghost.ts` (`resolveGhostVisibility`, `PEEK_OPACITY = 0.9`).
-- Жест — `Gesture.Tap` c `onTouchesDown/onTouchesUp` (+`runOnJS(true)`) на слое под
-  контролами (`src/app/(tabs)/camera.tsx`). Временное состояние `isPeekActive` НЕ персистится.
-- Доступная альтернатива — кнопка «Призрак 90%» в `overlay-controls.tsx` (toggle).
-- Сбросы: на capture, смену проекта, изменение ползунка, blur-навигацию
-  (`useFocusEffect`), фон (`AppState`).
+- `src/features/navigation/components/main-tab-bar.tsx` — кастомный `tabBar` для
+  всех стилей: «Проекты — [камера/затвор] — Настройки».
+- Центральная кнопка выступает над панелью; на камере кроссфейд «камера → затвор»
+  (Reanimated). Съёмку запускает `triggerShutter()` из
+  `src/features/navigation/camera-shutter-bridge.ts` (камера регистрирует обработчик).
+- Размеры — `src/theme/tab-bar.ts` (`MAIN_TAB_BAR_INSET`, `CENTER_BUTTON_SIZE`).
+- Свайп вкладок — `main-tab-swipe-gesture.tsx` (НЕ на камере).
 
-### 10.5. Свайп между вкладками
+### 10.5. Ghost reference (эталон призрака)
 
-- `src/features/navigation/components/main-tab-swipe-gesture.tsx` — `Gesture.Pan`
-  (`activeOffsetX ±60`, `failOffsetY ±20`, `runOnJS(true)`), переключает
-  Проекты ↔ Камера ↔ Настройки через `router.replace`.
-- Применён к экранам Проекты (tabIndex 0) и Настройки (tabIndex 2).
-- НЕ применён к Камере (tabIndex 1): там уже есть горизонтальный селектор
-  проектов, слайдер и hold-to-peek. Чтобы добавить новую вкладку — дополнить
-  `TAB_HREFS` в компоненте.
+- Модель: `Project.referenceMode` + `referencePhotoId`.
+- Чистая логика — `src/utils/reference.ts`: `resolveReferencePhoto(project, photos)`
+  (latest/first/manual; скрытые исключаются из авто, пропавший manual → fallback на
+  latest), `getReferenceMode`, `isManualReferenceMissing`.
+- UI камеры: кнопка «Эталон» (`overlay-controls.tsx`) открывает
+  `ghost-reference-modal.tsx`; ручной выбор — `photo-picker-sheet.tsx`.
+- Временное усиление призрака (tap по превью) — `src/utils/ghost.ts`
+  (`resolveGhostVisibility`, `BOOSTED_OPACITY = 0.85`). Состояние `isBoosted`
+  локальное, НЕ персистится. Сбросы: съёмка, смена проекта, уход с экрана
+  (`useFocusEffect`), фон (`AppState`), смена источника, ползунок.
 
-### 10.6. Тактильный отклик
+### 10.6. Экран проекта как история (Flow A)
+
+- `src/app/project/[id]/index.tsx`: summary + «Первое/Последнее» + «Быстрое
+  сравнение» + timeline по месяцам (`groupPhotosByMonth` из `src/utils/progress.ts`).
+- Бейджи: «Эталон» (слева-сверху), избранное/скрытое; выбор пары — кружки 1/2
+  (справа-сверху). Логика выбора — `advanceQuickCompare` в `src/utils/progress.ts`.
+- Скрытые фото показываются только при включённом фильтре «Показать скрытые».
+- Дни между снимками и плюрализация — `formatDays`, `getDaysBetweenPhotos`.
+
+### 10.7. Действия с фото (viewer, Flow B)
+
+- `src/app/project/[id]/viewer/[photoId].tsx`: лист действий «…» (action-sheet.tsx):
+  сравнить, заметка (note-editor-modal.tsx), избранное, скрыть/показать,
+  сделать эталоном, экспорт, удалить.
+- «Сравнить» открывает лист вариантов: с предыдущим/первым/последним/вручную.
+- Действия меняют только метаданные через `useProjectStore.updatePhoto` /
+  `setProjectReference`; файлы фото не трогаются (кроме удаления).
+
+### 10.8. Compare screen (Flow C)
+
+- Маршрут: `/project/[id]/compare?before=<id>&after=<id>` (`src/app/project/[id]/compare.tsx`).
+- Валидация и упорядочивание пары по дате — `validateComparePair` (`src/utils/progress.ts`).
+- Три режима: `compare-slider.tsx`, `compare-side-by-side.tsx`, `compare-overlay.tsx`.
+- Кнопки «До»/«После» открывают `photo-picker-sheet.tsx` и меняют пару локально.
+- Без сохранения файла и без `react-native-view-shot`/Skia.
+
+### 10.9. Тактильный отклик
 
 - `src/utils/haptics.ts` — `triggerHaptic(type, enabled)`; `hapticsEnabled` в настройках.
-- Точки вызова: съёмка (impact Medium), выбор оформления (selection), свайп (selection),
-  FAB (impact). Единственное место импорта `expo-haptics` — `src/utils/haptics.ts`.
+- Единственное место импорта `expo-haptics` — `src/utils/haptics.ts`.
 
-### 10.7. Отступы под плавающую капсулу
+### 10.10. Отступы под нижнее меню
 
-Плавающий таббар перекрывает контент. Списки/настройки добавляют
-`FLOATING_TAB_BAR_INSET`; камера смещает затвор и панель. Один источник
-констант — `src/theme/tab-bar.ts`.
+Единое меню перекрывает контент. Списки/настройки добавляют
+`MAIN_TAB_BAR_INSET` + `insets.bottom`; камера смещает панель контролов.
+Один источник констант — `src/theme/tab-bar.ts`.
 
 ---
 

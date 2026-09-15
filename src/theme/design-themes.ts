@@ -2,13 +2,18 @@
  * Назначение: определения визуальных оформлений, platform defaults и резолвер темы.
  *
  * Функции:
- * - DESIGN_THEMES: палитры, метрики и материалы для пяти оформлений;
- * - getDefaultDesignThemeId(platform): дефолт оформления для платформы;
+ * - DESIGN_THEMES: три пользовательских оформления (modern / simple / neumorphism);
+ * - getDefaultDesignThemeId(platform): дефолт оформления для новых установок;
  * - getPlatformThemeIds(platform): список оформлений для UI выбора на платформе;
- * - resolveDesignTheme(id, scheme): палитра и токены для пары «оформление + схема»;
+ * - migrateDesignThemeId(value): переводит старые идентификаторы в новые;
+ * - resolveDesignTheme(id, scheme, platform): палитра и токены для тройки
+ *   «оформление + схема + платформа»;
  * - isDesignThemeId(value): валидация идентификатора оформления.
  *
  * Слой: theme (/src/theme). Чистые данные и функции без React-зависимостей.
+ *
+ * Важно: `modern` — один пользовательский стиль с разными platform-рендерерами
+ * (iOS — Liquid Glass, Android — Material 3), без отдельного выбора пользователем.
  */
 
 import { type DesignThemeId } from '@/models/settings';
@@ -22,7 +27,7 @@ export interface ThemeMetrics {
   cardRadius: number;
   /** Радиус кнопок. */
   buttonRadius: number;
-  /** Радиус нижней панели вкладок (0 — стандартный таббар без капсулы). */
+  /** Радиус нижней панели вкладок (0 — обычная панель без капсулы). */
   tabBarRadius: number;
 }
 
@@ -47,61 +52,13 @@ export interface DesignThemeDefinition {
   id: DesignThemeId;
   /** Человекочитаемое название (для UI выбора оформления). */
   label: string;
-  /** Палитра светлой схемы. */
-  light: ThemeColors;
-  /** Палитра тёмной схемы. */
-  dark: ThemeColors;
-  metrics: ThemeMetrics;
-  material: ThemeMaterial;
-  /** Неоморфные токены по схемам (только для neumorphism). */
-  neu?: { light: NeumorphismTokens; dark: NeumorphismTokens };
+  /** Короткое пояснение (для UI выбора оформления). */
+  description: string;
+  /** Светлая палитра для искусственного превью в настройках. */
+  previewLight: ThemeColors;
+  /** Тёмная палитра для искусственного превью в настройках. */
+  previewDark: ThemeColors;
 }
-
-// Палитра оформления «Галерея» (Wolt-inspired, но собственные значения).
-const galleryLight: ThemeColors = {
-  background: '#F4F7F9',
-  surface: '#FFFFFF',
-  text: '#17212B',
-  textSecondary: '#53636D',
-  primary: '#007C91',
-  primaryText: '#FFFFFF',
-  border: '#DCE4E8',
-  danger: '#D64545',
-};
-
-const galleryDark: ThemeColors = {
-  background: '#0E171C',
-  surface: '#17242A',
-  text: '#EAF2F4',
-  textSecondary: '#AFC0C7',
-  primary: '#66D9E8',
-  primaryText: '#06252B',
-  border: '#26343B',
-  danger: '#FF6B6B',
-};
-
-// Палитра «Material Design» (MD3, собственные значения по ролям).
-const materialLight: ThemeColors = {
-  background: '#FFFBFE',
-  surface: '#FFFBFE',
-  text: '#1D1B20',
-  textSecondary: '#49454F',
-  primary: '#6750A4',
-  primaryText: '#FFFFFF',
-  border: '#CAC4D0',
-  danger: '#B3261E',
-};
-
-const materialDark: ThemeColors = {
-  background: '#141218',
-  surface: '#141218',
-  text: '#E6E0E9',
-  textSecondary: '#CAC4D0',
-  primary: '#D0BCFF',
-  primaryText: '#381E72',
-  border: '#49454F',
-  danger: '#F2B8B5',
-};
 
 // Палитра «Неоморфизм» (светлая/тёмная) и её теневые токены.
 const neuLight: ThemeColors = {
@@ -128,87 +85,75 @@ const neuDark: ThemeColors = {
 
 /** Все доступные оформления (порядок — канонический, не UI-порядок). */
 export const DESIGN_THEMES: Record<DesignThemeId, DesignThemeDefinition> = {
-  minimalism: {
-    id: 'minimalism',
+  modern: {
+    id: 'modern',
+    label: 'Современный',
+    description: 'Нативный вид под вашу платформу',
+    previewLight: lightColors,
+    previewDark: darkColors,
+  },
+  simple: {
+    id: 'simple',
     label: 'Простой',
-    light: lightColors,
-    dark: darkColors,
-    metrics: { cardRadius: 14, buttonRadius: 10, tabBarRadius: 0 },
-    material: { card: 'solid', tabBar: 'solid' },
-  },
-  'liquid-glass': {
-    id: 'liquid-glass',
-    label: 'Liquid Glass',
-    light: lightColors,
-    dark: darkColors,
-    metrics: { cardRadius: 14, buttonRadius: 10, tabBarRadius: 32 },
-    material: { card: 'frosted', tabBar: 'native-glass' },
-  },
-  gallery: {
-    id: 'gallery',
-    label: 'Галерея',
-    light: galleryLight,
-    dark: galleryDark,
-    metrics: { cardRadius: 20, buttonRadius: 14, tabBarRadius: 0 },
-    material: { card: 'solid', tabBar: 'solid' },
-  },
-  material: {
-    id: 'material',
-    label: 'Material Design',
-    light: materialLight,
-    dark: materialDark,
-    metrics: { cardRadius: 12, buttonRadius: 16, tabBarRadius: 0 },
-    material: { card: 'elevated', tabBar: 'solid' },
+    description: 'Минимум эффектов, максимум читаемости',
+    previewLight: lightColors,
+    previewDark: darkColors,
   },
   neumorphism: {
     id: 'neumorphism',
     label: 'Неоморфизм',
-    light: neuLight,
-    dark: neuDark,
-    metrics: { cardRadius: 20, buttonRadius: 20, tabBarRadius: 0 },
-    material: { card: 'neumorphic', tabBar: 'neumorphic' },
-    neu: {
-      light: { shadowLight: '#FFFFFF', shadowDark: '#B7C4DD', surfacePressed: '#DCE6F5' },
-      dark: { shadowLight: '#2A2C34', shadowDark: '#0D0E11', surfacePressed: '#17181C' },
-    },
+    description: 'Мягкие вдавленные поверхности',
+    previewLight: neuLight,
+    previewDark: neuDark,
   },
 };
 
 /** Канонический список идентификаторов оформлений. */
-export const DESIGN_THEME_IDS: DesignThemeId[] = [
-  'minimalism',
-  'liquid-glass',
-  'gallery',
-  'material',
-  'neumorphism',
-];
+export const DESIGN_THEME_IDS: DesignThemeId[] = ['modern', 'simple', 'neumorphism'];
+
+// Карта старых идентификаторов (до продуктовой итерации) в новые.
+// Используется только в migrateDesignThemeId — после миграции не хранится в настройках.
+const LEGACY_THEME_MAP: Record<string, DesignThemeId> = {
+  minimalism: 'simple',
+  'liquid-glass': 'modern',
+  material: 'modern',
+  gallery: 'modern',
+  neumorphism: 'neumorphism',
+};
 
 /**
- * Возвращает оформление по умолчанию для новых установок на платформе.
- * iOS → Liquid Glass, Android → Material, остальные → Простой.
+ * Переводит сохранённое значение оформления в актуальный идентификатор.
+ *
+ * @param value — сохранённое (возможно, старое) значение.
+ * @returns Актуальный DesignThemeId или null, если значение неизвестно.
  */
-export function getDefaultDesignThemeId(platform: string): DesignThemeId {
-  if (platform === 'ios') {
-    return 'liquid-glass';
+export function migrateDesignThemeId(value: unknown): DesignThemeId | null {
+  if (typeof value !== 'string') {
+    return null;
   }
-  if (platform === 'android') {
-    return 'material';
+  if (isDesignThemeId(value)) {
+    return value;
   }
-  return 'minimalism';
+  return LEGACY_THEME_MAP[value] ?? null;
 }
 
 /**
- * Возвращает список оформлений, доступных в UI выбора на платформе
- * (порядок соответствует приоритету: дефолт первым).
+ * Возвращает оформление по умолчанию для новых установок на платформе.
+ * iOS → modern, Android → modern, web/прочее → simple.
  */
-export function getPlatformThemeIds(platform: string): DesignThemeId[] {
-  if (platform === 'ios') {
-    return ['liquid-glass', 'minimalism', 'neumorphism', 'gallery', 'material'];
+export function getDefaultDesignThemeId(platform: string): DesignThemeId {
+  if (platform === 'ios' || platform === 'android') {
+    return 'modern';
   }
-  if (platform === 'android') {
-    return ['material', 'minimalism', 'neumorphism', 'gallery', 'liquid-glass'];
-  }
-  return ['minimalism', 'neumorphism'];
+  return 'simple';
+}
+
+/**
+ * Возвращает список оформлений, доступных в UI выбора на платформе.
+ * Набор одинаков для всех платформ: три стиля.
+ */
+export function getPlatformThemeIds(_platform: string): DesignThemeId[] {
+  return ['modern', 'simple', 'neumorphism'];
 }
 
 /**
@@ -216,16 +161,10 @@ export function getPlatformThemeIds(platform: string): DesignThemeId[] {
  * Используется при нормализации сохранённых настроек.
  */
 export function isDesignThemeId(value: unknown): value is DesignThemeId {
-  return (
-    value === 'minimalism' ||
-    value === 'liquid-glass' ||
-    value === 'gallery' ||
-    value === 'material' ||
-    value === 'neumorphism'
-  );
+  return value === 'modern' || value === 'simple' || value === 'neumorphism';
 }
 
-/** Результат резолвера: палитра и визуальные токены для текущей пары. */
+/** Результат резолвера: палитра и визуальные токены для текущей тройки. */
 export interface ResolvedDesignTheme {
   id: DesignThemeId;
   colors: ThemeColors;
@@ -235,17 +174,75 @@ export interface ResolvedDesignTheme {
   neu?: NeumorphismTokens;
 }
 
+// Неоморфные токены по схемам (для оформления neumorphism).
+const NEU_TOKENS: Record<ColorScheme, NeumorphismTokens> = {
+  light: { shadowLight: '#FFFFFF', shadowDark: '#B7C4DD', surfacePressed: '#DCE6F5' },
+  dark: { shadowLight: '#2A2C34', shadowDark: '#0D0E11', surfacePressed: '#17181C' },
+};
+
+// Токены оформления «Простой» (solid-поверхности, минимальные эффекты).
+const SIMPLE_METRICS: ThemeMetrics = { cardRadius: 14, buttonRadius: 10, tabBarRadius: 0 };
+const SIMPLE_MATERIAL: ThemeMaterial = { card: 'solid', tabBar: 'solid' };
+
 /**
- * Возвращает палитру и токены оформления для заданной цветовой схемы.
+ * Возвращает палитру и токены оформления для заданной цветовой схемы и платформы.
  * Схема уже должна быть разрешена (system → light/dark) вызывающим кодом.
+ *
+ * Для `modern` выбор рендерера зависит от платформы:
+ * - iOS: Liquid Glass (native-glass таббар, frosted-карточки);
+ * - Android: Material 3 (elevated-карточки, tonal-кнопки);
+ * - прочее: solid-поверхности (fallback без native glass).
  */
-export function resolveDesignTheme(id: DesignThemeId, scheme: ColorScheme): ResolvedDesignTheme {
-  const def = DESIGN_THEMES[id];
+export function resolveDesignTheme(
+  id: DesignThemeId,
+  scheme: ColorScheme,
+  platform: string,
+): ResolvedDesignTheme {
+  if (id === 'simple') {
+    return {
+      id,
+      colors: scheme === 'dark' ? darkColors : lightColors,
+      metrics: SIMPLE_METRICS,
+      material: SIMPLE_MATERIAL,
+    };
+  }
+
+  if (id === 'neumorphism') {
+    return {
+      id,
+      colors: scheme === 'dark' ? neuDark : neuLight,
+      metrics: { cardRadius: 20, buttonRadius: 20, tabBarRadius: 24 },
+      material: { card: 'neumorphic', tabBar: 'neumorphic' },
+      neu: NEU_TOKENS[scheme],
+    };
+  }
+
+  // modern: акцент и базовая палитра одинаковы на всех платформах, различаются
+  // только поверхности (стекло / material / solid) и радиусы.
+  const colors = scheme === 'dark' ? darkColors : lightColors;
+
+  if (platform === 'ios') {
+    return {
+      id,
+      colors,
+      metrics: { cardRadius: 14, buttonRadius: 10, tabBarRadius: 32 },
+      material: { card: 'frosted', tabBar: 'native-glass' },
+    };
+  }
+
+  if (platform === 'android') {
+    return {
+      id,
+      colors,
+      metrics: { cardRadius: 12, buttonRadius: 16, tabBarRadius: 0 },
+      material: { card: 'elevated', tabBar: 'solid' },
+    };
+  }
+
   return {
     id,
-    colors: scheme === 'dark' ? def.dark : def.light,
-    metrics: def.metrics,
-    material: def.material,
-    neu: def.neu ? def.neu[scheme] : undefined,
+    colors,
+    metrics: SIMPLE_METRICS,
+    material: SIMPLE_MATERIAL,
   };
 }

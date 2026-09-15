@@ -14,13 +14,13 @@ import { Platform } from 'react-native';
 
 import { type AppSettings } from '@/models/settings';
 import { mmkvStorage } from '@/storage/mmkv';
-import { getDefaultDesignThemeId, isDesignThemeId } from '@/theme/design-themes';
+import { getDefaultDesignThemeId, migrateDesignThemeId } from '@/theme/design-themes';
 
 // Значения настроек по умолчанию (до первого изменения пользователем).
 // Примечание: designTheme здесь — переходное значение до гидратации;
 // реальный default для новых установок определяется платформой в normalizeSettings.
 export const DEFAULT_SETTINGS: AppSettings = {
-  designTheme: 'minimalism',
+  designTheme: 'modern',
   themeMode: 'system',
   hapticsEnabled: true,
   ghostEnabled: true,
@@ -36,7 +36,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
  *
  * Гарантии (для совместимости со старыми установками):
  * - отсутствующий или неизвестный designTheme заменяется на платформенный default
- *   (iOS → liquid-glass, Android → material, остальные → minimalism);
+ *   (iOS/Android → modern, остальные → simple);
+ * - старые идентификаторы оформлений (minimalism/liquid-glass/material/gallery)
+ *   мигрируют в новый контракт (см. migrateDesignThemeId);
  * - явно сохранённый валидный designTheme сохраняется;
  * - неизвестный themeMode заменяется на 'system';
  * - прежние значения остальных полей (ghost, биометрия, напоминания и т.д.) сохраняются.
@@ -46,10 +48,10 @@ export function normalizeSettings(raw: unknown, platform: string): AppSettings {
 
   const settings: AppSettings = { ...DEFAULT_SETTINGS, ...partial };
 
-  // Проверяем ИСХОДНОЕ значение designTheme: отсутствует/неизвестно → platform default.
-  if (!isDesignThemeId(partial.designTheme)) {
-    settings.designTheme = getDefaultDesignThemeId(platform);
-  }
+  // Мигрируем ИСХОДНОЕ значение designTheme: старые id → новые, неизвестное →
+  // platform default. Явный валидный выбор пользователя не перезаписывается.
+  const migrated = migrateDesignThemeId(partial.designTheme);
+  settings.designTheme = migrated ?? getDefaultDesignThemeId(platform);
   if (settings.themeMode !== 'system' && settings.themeMode !== 'light' && settings.themeMode !== 'dark') {
     settings.themeMode = 'system';
   }

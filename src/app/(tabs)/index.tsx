@@ -15,6 +15,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Alert, FlatList, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/ui/app-button';
 import { AppScreen } from '@/components/ui/app-screen';
@@ -24,20 +25,19 @@ import { ProjectListItem } from '@/features/projects/components/project-list-ite
 import { MainTabSwipeGesture } from '@/features/navigation/components/main-tab-swipe-gesture';
 import { useProjectStore } from '@/store/projectStore';
 import { spacing } from '@/theme';
-import { FLOATING_TAB_BAR_INSET } from '@/theme/tab-bar';
-import { useAppTheme } from '@/theme/ThemeProvider';
-import { getLatestPhoto } from '@/utils/photos';
+import { MAIN_TAB_BAR_INSET } from '@/theme/tab-bar';
+import { getLatestVisiblePhoto } from '@/utils/photos';
 
 export default function ProjectsScreen() {
-  const { metrics } = useAppTheme();
+  const insets = useSafeAreaInsets();
   const projects = useProjectStore((s) => s.projects);
   const photos = useProjectStore((s) => s.photos);
   const createProject = useProjectStore((s) => s.createProject);
   const updateProject = useProjectStore((s) => s.updateProject);
   const deleteProject = useProjectStore((s) => s.deleteProject);
 
-  // Отступ под плавающую капсулу таббара (0 — стандартный таббар).
-  const floatingInset = metrics.tabBarRadius > 0 ? FLOATING_TAB_BAR_INSET : 0;
+  // Отступ контента под плавающую панель вкладок.
+  const bottomInset = insets.bottom + MAIN_TAB_BAR_INSET;
 
   // Состояние модального окна: открыто ли, и какой проект редактируется (null — создание).
   const [modalVisible, setModalVisible] = useState(false);
@@ -101,7 +101,7 @@ export default function ProjectsScreen() {
         <FlatList
           data={projects}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={[styles.list, { paddingBottom: floatingInset + spacing.lg }]}
+          contentContainerStyle={[styles.list, { paddingBottom: bottomInset }]}
           ListHeaderComponent={
             <View style={styles.header}>
               <AppText variant="title">Проекты</AppText>
@@ -113,7 +113,7 @@ export default function ProjectsScreen() {
               name={item.name}
               photoCount={photoCount(item.id)}
               updatedAt={item.updatedAt}
-              coverUri={getLatestPhoto(photos, item.id)?.uri}
+              coverUri={getLatestVisiblePhoto(photos, item.id)?.uri}
               onOpen={() => router.push(`/project/${item.id}`)}
               onRename={() => openEditModal(item.id)}
               onDelete={() => handleDelete(item.id)}

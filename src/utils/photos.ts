@@ -2,35 +2,15 @@
  * Назначение: чистые функции для выборки фотографий проекта.
  *
  * Функции:
- * - getLatestPhoto(): возвращает самое свежее фото проекта (по takenAt)
- *   или null, если фото ещё нет.
+ * - getProjectPhotos(): фото проекта, свежие сверху;
+ * - getChronologicalPhotos(): фото проекта от ранних к поздним;
+ * - getVisiblePhotos(): НЕ скрытые фото проекта;
+ * - getFirstVisiblePhoto() / getLatestVisiblePhoto(): первая/последняя видимая точка.
  *
- * Слой: util (/src/utils). Чистая функция без внешних зависимостей.
+ * Слой: util (/src/utils). Чистые функции без внешних зависимостей.
  */
 
 import { type PhotoMetadata } from '@/models/photo';
-
-/**
- * Возвращает последнее (самое свежее) фото проекта.
- * @param photos — полный список метаданных фото.
- * @param projectId — идентификатор проекта.
- * @returns Последнее фото проекта или null, если фото ещё нет.
- */
-export function getLatestPhoto(
-  photos: PhotoMetadata[],
-  projectId: string,
-): PhotoMetadata | null {
-  let latest: PhotoMetadata | null = null;
-  for (const photo of photos) {
-    if (photo.projectId !== projectId) {
-      continue;
-    }
-    if (latest === null || photo.takenAt > latest.takenAt) {
-      latest = photo;
-    }
-  }
-  return latest;
-}
 
 /**
  * Возвращает фото проекта, отсортированные по времени съёмки (свежие сверху).
@@ -64,33 +44,61 @@ export function getChronologicalPhotos(
 }
 
 /**
- * Возвращает предыдущее (более раннее) фото проекта относительно заданного.
- * Используется для сравнения «до/после»: текущее фото против предыдущего.
+ * Возвращает НЕ скрытые фото проекта (без учёта порядка).
+ * Скрытые фото не участвуют в обычном timeline и авто-выборе first/latest/reference.
  * @param photos — полный список метаданных фото.
  * @param projectId — идентификатор проекта.
- * @param photoId — идентификатор текущего фото.
- * @returns Предыдущее фото (с меньшим takenAt) или null, если его нет.
+ * @returns Массив видимых фото проекта.
  */
-export function getPreviousPhoto(
+export function getVisiblePhotos(
   photos: PhotoMetadata[],
   projectId: string,
-  photoId: string,
+): PhotoMetadata[] {
+  return photos.filter((p) => p.projectId === projectId && !p.isHidden);
+}
+
+/**
+ * Возвращает первое (самое раннее) НЕ скрытое фото проекта.
+ * @param photos — полный список метаданных фото.
+ * @param projectId — идентификатор проекта.
+ * @returns Самое раннее видимое фото или null, если видимых фото нет.
+ */
+export function getFirstVisiblePhoto(
+  photos: PhotoMetadata[],
+  projectId: string,
 ): PhotoMetadata | null {
-  const current = photos.find((p) => p.id === photoId && p.projectId === projectId);
-  if (!current) {
+  const visible = getVisiblePhotos(photos, projectId);
+  if (visible.length === 0) {
     return null;
   }
-
-  let previous: PhotoMetadata | null = null;
-  for (const photo of photos) {
-    if (photo.projectId !== projectId || photo.id === photoId) {
-      continue;
-    }
-    if (photo.takenAt < current.takenAt) {
-      if (previous === null || photo.takenAt > previous.takenAt) {
-        previous = photo;
-      }
+  let first = visible[0];
+  for (const photo of visible) {
+    if (photo.takenAt < first.takenAt) {
+      first = photo;
     }
   }
-  return previous;
+  return first;
+}
+
+/**
+ * Возвращает последнее (самое свежее) НЕ скрытое фото проекта.
+ * @param photos — полный список метаданных фото.
+ * @param projectId — идентификатор проекта.
+ * @returns Самое свежее видимое фото или null, если видимых фото нет.
+ */
+export function getLatestVisiblePhoto(
+  photos: PhotoMetadata[],
+  projectId: string,
+): PhotoMetadata | null {
+  const visible = getVisiblePhotos(photos, projectId);
+  if (visible.length === 0) {
+    return null;
+  }
+  let latest = visible[0];
+  for (const photo of visible) {
+    if (photo.takenAt > latest.takenAt) {
+      latest = photo;
+    }
+  }
+  return latest;
 }

@@ -21,4 +21,10 @@ export interface PhotoMetadata {
   width?: number;
   /** Высота изображения в пикселях (необязательно). */
   height?: number;
+  /** Пользовательская заметка к фото (необязательно). */
+  note?: string;
+  /** Отмечено ли фото как избранное (необязательно; отсутствие = false). */
+  isFavorite?: boolean;
+  /** Скрыто ли фото из обычного timeline (необязательно; отсутствие = false). */
+  isHidden?: boolean;
 }

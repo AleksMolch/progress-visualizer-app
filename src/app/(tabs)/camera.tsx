@@ -1,11 +1,13 @@
 /**
- * Назначение: экран съёмки с выбором активного проекта.
+ * Назначение: экран съёмки с выбором активного проекта и эталонным призраком.
  *
  * Функции:
- * - запрашивает разрешение камеры;
- * - показывает превью камеры (CameraView);
- * - позволяет выбрать активный проект для съёмки;
- * - делает снимок и сохраняет его в sandbox (через store, не напрямую).
+ * - запрашивает разрешение камеры и показывает превью (CameraView);
+ * - выбирает активный проект для съёмки;
+ * - показывает ghost overlay по эталонному фото проекта (latest / first / manual);
+ * - tap по свободной зоне превью временно усиливает призрак (не сохраняется);
+ * - делает снимок и сохраняет его в sandbox (через store, не напрямую);
+ * - съёмка запускается центральной кнопкой нижней панели (shutter bridge).
  *
  * Слой: UI (/src/app). Файловую систему не трогает: захват идёт через
  * useProjectStore.saveCapturedPhoto, который сам работает со storage-слоем.
@@ -28,31 +30,37 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppButton } from '@/components/ui/app-button';
 import { AppText } from '@/components/ui/app-text';
 import { GhostOverlay } from '@/features/camera/components/ghost-overlay';
+import { GhostReferenceModal } from '@/features/camera/components/ghost-reference-modal';
 import { GridOverlay } from '@/features/camera/components/grid-overlay';
 import { OverlayControls } from '@/features/camera/components/overlay-controls';
+import { setShutterHandler } from '@/features/navigation/camera-shutter-bridge';
+import { PhotoPickerSheet } from '@/features/gallery/components/photo-picker-sheet';
 import { useAppStore } from '@/store/appStore';
 import { useProjectStore } from '@/store/projectStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { radii, spacing } from '@/theme';
-import { FLOATING_TAB_BAR_INSET } from '@/theme/tab-bar';
-import { useAppTheme } from '@/theme/ThemeProvider';
+import { MAIN_TAB_BAR_INSET } from '@/theme/tab-bar';
 import { resolveGhostVisibility } from '@/utils/ghost';
 import { triggerHaptic } from '@/utils/haptics';
-import { getLatestPhoto } from '@/utils/photos';
+import { getVisiblePhotos } from '@/utils/photos';
+import { getReferenceMode, isManualReferenceMissing, resolveReferencePhoto } from '@/utils/reference';
 
-/** Мин. нижний отступ контролов от края экрана. */
-const CONTROLS_BOTTOM_INSET = 24;
+/** Нижний отступ контролов от нижней панели вкладок. */
+const CONTROLS_BOTTOM_GAP = 16;
 
 export default function CameraScreen() {
-  const { metrics } = useAppTheme();
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [captureError, setCaptureError] = useState<string | null>(null);
 
-  // Временный режим быстрого показа призрака (hold-to-peek / доступная кнопка).
-  // Это локальное состояние экрана — в persist/MMKV не записывается.
-  const [isPeekActive, setPeekActive] = useState(false);
+  // Временное усиление видимости призрака (tap по превью). Локальное состояние —
+  // НЕ сохраняется в persist/MMKV.
+  const [isBoosted, setBoosted] = useState(false);
+
+  // Видимость модалок выбора источника эталона.
+  const [referenceModalVisible, setReferenceModalVisible] = useState(false);
+  const [manualPickerVisible, setManualPickerVisible] = useState(false);
 
   // Активный проект берём из appStore, список — из projectStore.
   const projects = useProjectStore((s) => s.projects);
@@ -60,68 +68,49 @@ export default function CameraScreen() {
   const activeProjectId = useAppStore((s) => s.activeProjectId);
   const setActiveProjectId = useAppStore((s) => s.setActiveProjectId);
   const saveCapturedPhoto = useProjectStore((s) => s.saveCapturedPhoto);
+  const setProjectReference = useProjectStore((s) => s.setProjectReference);
   const settings = useSettingsStore((s) => s.settings);
 
-  // Отступ под плавающую капсулу таббара (0 — стандартный таббар).
-  const floatingInset = metrics.tabBarRadius > 0 ? FLOATING_TAB_BAR_INSET : 0;
+  const insets = useSafeAreaInsets();
 
   // Эффективный активный проект: выбранный или первый из списка.
   const activeProject = projects.find((p) => p.id === activeProjectId) ?? projects[0] ?? null;
 
-  // Последнее фото активного проекта для ghost overlay (null — фото ещё нет).
-  const latestPhoto = activeProject ? getLatestPhoto(photos, activeProject.id) : null;
+  // Эталонное фото по режиму проекта (latest/first/manual).
+  const referencePhoto = activeProject ? resolveReferencePhoto(activeProject, photos) : null;
+  const referenceMode = activeProject ? getReferenceMode(activeProject) : 'latest';
+  const manualMissing = activeProject ? isManualReferenceMissing(activeProject, photos) : false;
+  const referenceReady = referencePhoto !== null;
 
-  // Эталон доступен, если у активного проекта есть фото.
-  const referenceReady = latestPhoto !== null;
+  // Подпись текущего источника для панели.
+  const referenceLabel = referenceMode === 'first' ? 'Первое' : referenceMode === 'manual' ? 'Вручную' : 'Последнее';
 
-  // Итоговая видимость и непрозрачность призрака (обычный + быстрый показ).
+  // Видимые фото проекта (хронологически, старые → новые) для ручного выбора.
+  const visiblePhotos = useMemo(() => {
+    if (!activeProject) {
+      return [];
+    }
+    return getVisiblePhotos(photos, activeProject.id).sort((a, b) => a.takenAt - b.takenAt);
+  }, [photos, activeProject]);
+
+  // Итоговая видимость и непрозрачность призрака (обычный + временное усиление).
   const { visible: ghostVisible, effectiveOpacity: ghostEffectiveOpacity } =
     resolveGhostVisibility({
       ghostEnabled: settings.ghostEnabled,
       referenceReady,
-      isPeekActive,
+      isBoosted,
       ghostOpacity: settings.ghostOpacity,
     });
 
-  // Жест быстрого показа: касание с удержанием пальца на свободной зоне превью
-  // включает 90%, отпускание возвращает обычный режим. runOnJS — чтобы setState
-  // выполнялся на JS-потоке, а не в worklet-рантайме.
-  const peekGesture = useMemo(
-    () =>
-      Gesture.Tap()
-        .runOnJS(true)
-        .onTouchesDown(() => setPeekActive(true))
-        .onTouchesUp(() => setPeekActive(false)),
-    [],
-  );
-
-  // Сброс быстрого показа при уходе с экрана (переключение вкладки/навигация).
-  useFocusEffect(
-    useCallback(() => {
-      return () => setPeekActive(false);
-    }, []),
-  );
-
-  // Сброс быстрого показа при уходе приложения в фон.
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state !== 'active') {
-        setPeekActive(false);
-      }
-    });
-    return () => subscription.remove();
-  }, []);
-
   // Захват кадра и сохранение в sandbox через store.
-  const handleCapture = async () => {
+  const handleCapture = useCallback(async () => {
     if (!activeProject || isCapturing) {
       return;
     }
-    // Съёмка выходит из быстрого показа.
-    setPeekActive(false);
+    // Съёмка сбрасывает временное усиление.
+    setBoosted(false);
     setIsCapturing(true);
     setCaptureError(null);
-    // Лёгкий тактильный отклик при нажатии затвора.
     void triggerHaptic('capture', settings.hapticsEnabled);
     try {
       const picture = await cameraRef.current?.takePictureAsync();
@@ -139,6 +128,66 @@ export default function CameraScreen() {
     } finally {
       setIsCapturing(false);
     }
+  }, [activeProject, isCapturing, settings.hapticsEnabled, saveCapturedPhoto]);
+
+  // Регистрируем съёмку для центральной кнопки нижней панели (shutter bridge).
+  useEffect(() => {
+    setShutterHandler(() => {
+      void handleCapture();
+    });
+    return () => setShutterHandler(null);
+  }, [handleCapture]);
+
+  // Tap по превью: переключение временного усиления призрака.
+  const boostGesture = useMemo(
+    () =>
+      Gesture.Tap()
+        .runOnJS(true)
+        .onEnd(() => setBoosted((v) => !v)),
+    [],
+  );
+
+  // Сброс временного усиления при уходе с экрана.
+  useFocusEffect(
+    useCallback(() => {
+      return () => setBoosted(false);
+    }, []),
+  );
+
+  // Сброс временного усиления при уходе приложения в фон.
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') {
+        setBoosted(false);
+      }
+    });
+    return () => subscription.remove();
+  }, []);
+
+  // Выбор источника эталона (latest/first).
+  const handleSelectMode = (mode: 'latest' | 'first' | 'manual') => {
+    if (!activeProject) {
+      return;
+    }
+    if (mode === 'manual') {
+      setManualPickerVisible(true);
+      return;
+    }
+    // Смена источника сбрасывает временное усиление.
+    setBoosted(false);
+    setProjectReference(activeProject.id, mode);
+    setReferenceModalVisible(false);
+  };
+
+  // Выбор ручного эталона из листа.
+  const handleSelectManualPhoto = (photoId: string) => {
+    if (!activeProject) {
+      return;
+    }
+    setBoosted(false);
+    setProjectReference(activeProject.id, 'manual', photoId);
+    setManualPickerVisible(false);
+    setReferenceModalVisible(false);
   };
 
   // Пока разрешение загружается — показываем индикатор.
@@ -189,15 +238,15 @@ export default function CameraScreen() {
       />
 
       <GhostOverlay
-        uri={latestPhoto?.uri ?? null}
+        uri={referencePhoto?.uri ?? null}
         opacity={ghostEffectiveOpacity}
         enabled={ghostVisible}
       />
 
       <GridOverlay enabled={settings.gridEnabled} />
 
-      {/* Слой распознавания hold-to-peek: под контролами, поверх превью. */}
-      <GestureDetector gesture={peekGesture}>
+      {/* Слой tap-to-boost: под контролами, поверх превью. */}
+      <GestureDetector gesture={boostGesture}>
         <View style={StyleSheet.absoluteFill} />
       </GestureDetector>
 
@@ -205,8 +254,8 @@ export default function CameraScreen() {
         projects={projects}
         activeId={activeProject?.id ?? null}
         onSelect={(id) => {
-          // Смена проекта сбрасывает быстрый показ.
-          setPeekActive(false);
+          // Смена проекта сбрасывает временное усиление.
+          setBoosted(false);
           setActiveProjectId(id);
         }}
       />
@@ -219,18 +268,38 @@ export default function CameraScreen() {
         </View>
       ) : null}
 
-      <View style={[styles.controlsWrap, { bottom: 120 + floatingInset }]}>
+      <View
+        style={[
+          styles.controlsWrap,
+          { bottom: insets.bottom + MAIN_TAB_BAR_INSET + CONTROLS_BOTTOM_GAP },
+        ]}>
         <OverlayControls
-          hasPhoto={latestPhoto !== null}
-          isPeekActive={isPeekActive}
-          onSetPeek={setPeekActive}
+          hasPhoto={referenceReady}
+          isBoosted={isBoosted}
+          referenceLabel={referenceLabel}
+          onOpenReference={() => setReferenceModalVisible(true)}
+          onResetBoost={() => setBoosted(false)}
         />
       </View>
 
-      <ShutterButton
-        isCapturing={isCapturing}
-        onPress={handleCapture}
-        floatingInset={floatingInset}
+      <GhostReferenceModal
+        visible={referenceModalVisible}
+        mode={referenceMode}
+        manualPhoto={referenceMode === 'manual' ? referencePhoto : null}
+        manualMissing={manualMissing}
+        onSelectMode={handleSelectMode}
+        onSelectManual={() => setManualPickerVisible(true)}
+        onClose={() => setReferenceModalVisible(false)}
+      />
+
+      <PhotoPickerSheet
+        visible={manualPickerVisible}
+        title="Выберите эталон"
+        photos={visiblePhotos}
+        selectedId={referenceMode === 'manual' ? activeProject?.referencePhotoId ?? null : null}
+        referenceId={activeProject?.referencePhotoId ?? null}
+        onSelect={handleSelectManualPhoto}
+        onClose={() => setManualPickerVisible(false)}
       />
     </View>
   );
@@ -292,41 +361,6 @@ function ProjectSelector({
   );
 }
 
-/**
- * Круглая кнопка спуска затвора с индикатором съёмки.
- */
-function ShutterButton({
-  isCapturing,
-  onPress,
-  floatingInset,
-}: {
-  isCapturing: boolean;
-  onPress: () => void;
-  floatingInset: number;
-}) {
-  const insets = useSafeAreaInsets();
-  return (
-    <View
-      style={[
-        styles.shutterWrap,
-        { paddingBottom: insets.bottom + CONTROLS_BOTTOM_INSET + floatingInset },
-      ]}>
-      <Pressable
-        onPress={onPress}
-        disabled={isCapturing}
-        accessibilityRole="button"
-        accessibilityLabel="Сделать снимок"
-        style={styles.shutter}>
-        {isCapturing ? (
-          <ActivityIndicator color="#FFFFFF" />
-        ) : (
-          <View style={styles.shutterInner} />
-        )}
-      </Pressable>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -371,29 +405,5 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: spacing.md,
     right: spacing.md,
-    bottom: 120,
-  },
-  shutterWrap: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  shutter: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-  },
-  shutterInner: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#FFFFFF',
   },
 });

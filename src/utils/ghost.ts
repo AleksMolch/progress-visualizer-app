@@ -1,9 +1,9 @@
 /**
- * Назначение: чистые функции видимости ghost overlay (быстрый показ призрака).
+ * Назначение: чистые функции видимости ghost overlay (временное усиление).
  *
  * Функции:
  * - resolveGhostVisibility(): вычисляет видимость и эффективную непрозрачность
- *   призрака из постоянных настроек и временного режима «быстрого показа».
+ *   призрака из постоянных настроек и временного усиления (tap по превью).
  *
  * Слой: util (/src/utils). Чистая функция без React и внешних зависимостей.
  */
@@ -14,8 +14,8 @@ export interface GhostVisibilityInput {
   ghostEnabled: boolean;
   /** Успешно ли загружено эталонное изображение. */
   referenceReady: boolean;
-  /** Активен ли временный режим быстрого показа (hold-to-peek / кнопка). */
-  isPeekActive: boolean;
+  /** Активно ли временное усиление видимости (tap по превью). */
+  isBoosted: boolean;
   /** Обычная непрозрачность призрака из настроек (0..1). */
   ghostOpacity: number;
 }
@@ -24,24 +24,25 @@ export interface GhostVisibilityInput {
 export interface GhostVisibilityResult {
   /** Показывать ли призрак. */
   visible: boolean;
-  /** Итоговая непрозрачность (в быстром режиме — фиксированные 0.9). */
+  /** Итоговая непрозрачность (в усиленном режиме — фиксированные 0.85). */
   effectiveOpacity: number;
 }
 
-/** Непрозрачность в режиме быстрого показа (видимость старого снимка 90%). */
-export const PEEK_OPACITY = 0.9;
+/** Непрозрачность при временном усилении (комфортный уровень выравнивания). */
+export const BOOSTED_OPACITY = 0.85;
 
 /**
  * Вычисляет видимость и непрозрачность призрака.
  *
  * Семантика:
  * - призрак виден, только если эталон загружен И (обычный призрак включён ИЛИ
- *   активен быстрый показ);
- * - в быстром режиме непрозрачность всегда ровно 0.9 (даже если обычная равна 1);
+ *   активно временное усиление);
+ * - при временном усилении непрозрачность всегда ровно 0.85 (даже если обычная
+ *   отличается) — это временное состояние, оно НЕ сохраняется в настройки;
  * - иначе используется обычная настройка ghostOpacity.
  */
 export function resolveGhostVisibility(input: GhostVisibilityInput): GhostVisibilityResult {
-  const visible = input.referenceReady && (input.ghostEnabled || input.isPeekActive);
-  const effectiveOpacity = input.isPeekActive ? PEEK_OPACITY : input.ghostOpacity;
+  const visible = input.referenceReady && (input.ghostEnabled || input.isBoosted);
+  const effectiveOpacity = input.isBoosted ? BOOSTED_OPACITY : input.ghostOpacity;
   return { visible, effectiveOpacity };
 }

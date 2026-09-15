@@ -2,8 +2,7 @@
  * Назначение: секция настроек «Оформление» и «Цветовой режим».
  *
  * Функции:
- * - выбор визуального оформления из доступных на платформе вариантов
- *   (с искусственным превью);
+ * - выбор визуального оформления из трёх вариантов (с искусственным превью);
  * - выбор цветового режима: системный / светлый / тёмный;
  * - выбор применяется сразу через settingsStore и персистится.
  *
@@ -16,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/app-text';
-import { type DesignThemeId, type ThemeMode } from '@/models/settings';
+import { type ThemeMode } from '@/models/settings';
 import { useSettingsStore } from '@/store/settingsStore';
 import { radii, spacing } from '@/theme';
 import {
@@ -26,15 +25,6 @@ import {
 } from '@/theme/design-themes';
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { triggerHaptic } from '@/utils/haptics';
-
-// Короткие описания оформлений (UI-текст, не логика темы).
-const THEME_DESCRIPTIONS: Record<DesignThemeId, string> = {
-  minimalism: 'Простой и лёгкий интерфейс',
-  'liquid-glass': 'Стеклянные поверхности и плавающее меню',
-  gallery: 'Крупные фото и выразительная типографика',
-  material: 'Материальный дизайн с мягкими elevation',
-  neumorphism: 'Мягкие вдавленные поверхности',
-};
 
 // Варианты цветового режима с подписями.
 const THEME_MODES: { value: ThemeMode; label: string }[] = [
@@ -50,7 +40,7 @@ export function AppearanceSettingsCard() {
   const hapticsEnabled = useSettingsStore((s) => s.settings.hapticsEnabled);
   const updateSettings = useSettingsStore((s) => s.updateSettings);
 
-  // Доступные на этой платформе оформления (дефолт первым).
+  // Доступные на этой платформе оформления (одинаковый набор: три стиля).
   const platformThemeIds = getPlatformThemeIds(Platform.OS);
 
   return (
@@ -83,7 +73,7 @@ export function AppearanceSettingsCard() {
               <View style={styles.themeText}>
                 <AppText variant="subtitle">{def.label}</AppText>
                 <AppText color="textSecondary" variant="caption">
-                  {THEME_DESCRIPTIONS[id]}
+                  {def.description}
                 </AppText>
               </View>
               <Ionicons
@@ -95,6 +85,10 @@ export function AppearanceSettingsCard() {
           );
         })}
       </View>
+
+      <AppText color="textSecondary" variant="caption">
+        «Современный» выглядит нативно: Liquid Glass на iOS и Material Design на Android.
+      </AppText>
 
       <AppText variant="subtitle">Цветовой режим</AppText>
       <View style={styles.modeRow}>
@@ -132,7 +126,7 @@ export function AppearanceSettingsCard() {
  * Строится на палитре темы, без пользовательских фото и реального навигатора.
  */
 function ThemePreview({ def }: { def: DesignThemeDefinition }) {
-  const palette = def.light;
+  const palette = def.previewLight;
 
   return (
     <View style={styles.preview}>

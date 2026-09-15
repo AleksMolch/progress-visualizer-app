@@ -7,6 +7,9 @@
  * Слой: model (/src/models). Чистый тип без логики и зависимостей.
  */
 
+/** Источник эталонного фото для ghost overlay (выбор на уровне проекта). */
+export type ProjectReferenceMode = 'latest' | 'first' | 'manual';
+
 export interface Project {
   /** Уникальный идентификатор проекта. */
   id: string;
@@ -16,4 +19,14 @@ export interface Project {
   createdAt: number;
   /** Метка времени последнего изменения (epoch ms). */
   updatedAt: number;
+  /**
+   * Источник эталонного фото для ghost overlay. Отсутствует у старых проектов —
+   * трактуется как `latest` (см. resolveReferencePhoto).
+   */
+  referenceMode?: ProjectReferenceMode;
+  /**
+   * Идентификатор вручную выбранного эталонного фото (при referenceMode === 'manual').
+   * null — эталон не выбран или сброшен.
+   */
+  referencePhotoId?: string | null;
 }

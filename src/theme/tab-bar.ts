@@ -1,16 +1,20 @@
 /**
- * Назначение: размеры плавающей панели нижних вкладок (Liquid Glass).
+ * Назначение: размеры единой панели нижних вкладок (все оформления).
  *
  * Функции:
  * - общие константы, чтобы layout таббара и экраны считали отступ под
- *   плавающую капсулу одинаково (без «магических» чисел в разных файлах).
+ *   панель одинаково (без «магических» чисел в разных файлах).
  *
  * Слой: theme (/src/theme). Чистые константы.
  */
 
-/** Высота плавающей капсулы. */
-export const FLOATING_TAB_BAR_HEIGHT = 64;
-/** Отступ капсулы над нижней safe area. */
-export const FLOATING_TAB_BAR_GAP = 12;
-/** Суммарный вертикальный отступ, который плавающая капсула занимает над safe area. */
-export const FLOATING_TAB_BAR_INSET = FLOATING_TAB_BAR_HEIGHT + FLOATING_TAB_BAR_GAP;
+/** Высота панели вкладок. */
+export const MAIN_TAB_BAR_HEIGHT = 64;
+/** Отступ панели над нижней safe area (для плавающих капсул). */
+export const MAIN_TAB_BAR_GAP = 12;
+/** Суммарный вертикальный отступ, который панель занимает над safe area. */
+export const MAIN_TAB_BAR_INSET = MAIN_TAB_BAR_HEIGHT + MAIN_TAB_BAR_GAP;
+/** Диаметр центральной круглой кнопки камеры/затвора. */
+export const CENTER_BUTTON_SIZE = 56;
+/** Насколько центральная кнопка выступает над верхней линией панели. */
+export const CENTER_BUTTON_RAISED = 12;
