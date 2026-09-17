@@ -18,6 +18,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/app-text';
+import { useI18n } from '@/i18n';
 import { type PhotoMetadata } from '@/models/photo';
 import { radii, spacing } from '@/theme';
 import { useAppTheme } from '@/theme/ThemeProvider';
@@ -50,6 +51,7 @@ export function PhotoPickerSheet({
   onClose,
 }: PhotoPickerSheetProps) {
   const { colors } = useAppTheme();
+  const { t, locale } = useI18n();
   const insets = useSafeAreaInsets();
 
   return (
@@ -64,7 +66,7 @@ export function PhotoPickerSheet({
 
           {photos.length === 0 ? (
             <AppText color="textSecondary" style={styles.empty}>
-              Нет доступных фото.
+              {t('camera.noAvailablePhotos')}
             </AppText>
           ) : (
             <ScrollView contentContainerStyle={styles.list}>
@@ -87,14 +89,14 @@ export function PhotoPickerSheet({
                       contentFit="cover"
                     />
                     <View style={styles.rowBody}>
-                      <AppText variant="body">{formatDate(photo.takenAt)}</AppText>
+                      <AppText variant="body">{formatDate(photo.takenAt, locale)}</AppText>
                       {photo.note ? (
                         <AppText color="textSecondary" variant="caption" numberOfLines={1}>
                           {photo.note}
                         </AppText>
                       ) : null}
                       <View style={styles.badges}>
-                        {isReference ? <Badge label="Эталон" /> : null}
+                        {isReference ? <Badge label={t('project.reference')} /> : null}
                         {photo.isFavorite ? (
                           <Ionicons name="star" size={14} color={colors.primary} />
                         ) : null}

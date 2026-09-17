@@ -113,6 +113,34 @@ describe('normalizeSettings (platform default + миграция)', () => {
     expect(normalizeSettings(null, 'android').themeMode).toBe('system');
     expect(normalizeSettings('not-an-object', 'web').ghostEnabled).toBe(DEFAULT_SETTINGS.ghostEnabled);
   });
+
+  it('Android: сохранённый simple/minimalism мигрирует в modern', () => {
+    expect(normalizeSettings({ designTheme: 'simple' }, 'android').designTheme).toBe('modern');
+    expect(normalizeSettings({ designTheme: 'minimalism' }, 'android').designTheme).toBe('modern');
+  });
+
+  it('iOS: simple сохраняется (доступен)', () => {
+    expect(normalizeSettings({ designTheme: 'simple' }, 'ios').designTheme).toBe('simple');
+  });
+});
+
+describe('normalizeSettings (язык)', () => {
+  it('явный валидный язык сохраняется', () => {
+    expect(normalizeSettings({ language: 'es' }, 'ios').language).toBe('es');
+  });
+
+  it('без сохранённого языка → русский (default)', () => {
+    expect(normalizeSettings({}, 'ios').language).toBe('ru');
+    expect(normalizeSettings({}, 'android').language).toBe('ru');
+  });
+
+  it('неизвестный язык → русский (default)', () => {
+    expect(normalizeSettings({ language: 'fr' }, 'ios').language).toBe('ru');
+  });
+
+  it('значение по умолчанию в DEFAULT_SETTINGS — русский', () => {
+    expect(DEFAULT_SETTINGS.language).toBe('ru');
+  });
 });
 
 describe('settingsStore: гидратация старой записи', () => {

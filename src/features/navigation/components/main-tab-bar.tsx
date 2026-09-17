@@ -25,6 +25,7 @@ import Animated, {
 
 import { AdaptiveSurface } from '@/components/ui/adaptive-surface';
 import { AppText } from '@/components/ui/app-text';
+import { useI18n } from '@/i18n';
 import {
   CENTER_BUTTON_RAISED,
   CENTER_BUTTON_SIZE,
@@ -36,6 +37,7 @@ import { triggerShutter } from '../camera-shutter-bridge';
 
 export function MainTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { colors, metrics, material, scheme } = useAppTheme();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
 
   // Находим маршруты по именам (порядок в state может не совпадать с макетом).
@@ -132,14 +134,14 @@ export function MainTabBar({ state, descriptors, navigation }: BottomTabBarProps
             projectsRoute,
             'images',
             'images-outline',
-            'Проекты',
+            t('nav.projects'),
           )}
           <View style={{ width: CENTER_BUTTON_SIZE }} />
           {renderSideItem(
             settingsRoute,
             'settings',
             'settings-outline',
-            'Настройки',
+            t('nav.settings'),
           )}
         </View>
       </AdaptiveSurface>
@@ -148,7 +150,7 @@ export function MainTabBar({ state, descriptors, navigation }: BottomTabBarProps
       <Pressable
         onPress={onCameraPress}
         accessibilityRole="button"
-        accessibilityLabel={isCameraFocused ? 'Сделать снимок' : 'Камера'}
+        accessibilityLabel={isCameraFocused ? t('camera.shutterLabel') : t('nav.camera')}
         style={[styles.centerButton, { marginTop: -CENTER_BUTTON_RAISED }]}>
         <Animated.View
           style={[

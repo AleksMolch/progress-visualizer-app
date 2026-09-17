@@ -23,6 +23,7 @@ import { AppText } from '@/components/ui/app-text';
 import { ProjectFormModal } from '@/features/projects/components/project-form-modal';
 import { ProjectListItem } from '@/features/projects/components/project-list-item';
 import { MainTabSwipeGesture } from '@/features/navigation/components/main-tab-swipe-gesture';
+import { useI18n } from '@/i18n';
 import { useProjectStore } from '@/store/projectStore';
 import { spacing } from '@/theme';
 import { MAIN_TAB_BAR_INSET } from '@/theme/tab-bar';
@@ -30,6 +31,7 @@ import { getLatestVisiblePhoto } from '@/utils/photos';
 
 export default function ProjectsScreen() {
   const insets = useSafeAreaInsets();
+  const { t } = useI18n();
   const projects = useProjectStore((s) => s.projects);
   const photos = useProjectStore((s) => s.photos);
   const createProject = useProjectStore((s) => s.createProject);
@@ -77,11 +79,11 @@ export default function ProjectsScreen() {
       return;
     }
     Alert.alert(
-      'Удалить проект?',
-      `«${project.name}» и все его фотографии будут удалены без возможности восстановления.`,
+      t('projects.deleteTitle'),
+      t('projects.deleteMessage', { name: project.name }),
       [
-        { text: 'Отмена', style: 'cancel' },
-        { text: 'Удалить', style: 'destructive', onPress: () => deleteProject(id) },
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.delete'), style: 'destructive', onPress: () => deleteProject(id) },
       ],
     );
   };
@@ -91,11 +93,11 @@ export default function ProjectsScreen() {
       <AppScreen>
       {projects.length === 0 ? (
         <View style={styles.empty}>
-          <AppText variant="title">Пока нет проектов</AppText>
+          <AppText variant="title">{t('projects.emptyTitle')}</AppText>
           <AppText color="textSecondary" style={styles.emptyText}>
-            Создайте проект, чтобы начать отслеживать прогресс по фотографиям.
+            {t('projects.emptyDescription')}
           </AppText>
-          <AppButton label="Создать проект" onPress={openCreateModal} />
+          <AppButton label={t('projects.emptyButton')} onPress={openCreateModal} />
         </View>
       ) : (
         <FlatList
@@ -104,8 +106,8 @@ export default function ProjectsScreen() {
           contentContainerStyle={[styles.list, { paddingBottom: bottomInset }]}
           ListHeaderComponent={
             <View style={styles.header}>
-              <AppText variant="title">Проекты</AppText>
-              <AppButton label="Создать" onPress={openCreateModal} />
+              <AppText variant="title">{t('projects.header')}</AppText>
+              <AppButton label={t('projects.create')} onPress={openCreateModal} />
             </View>
           }
           renderItem={({ item }) => (
@@ -125,7 +127,7 @@ export default function ProjectsScreen() {
       {modalVisible ? (
         <ProjectFormModal
           initialName={editingProject?.name ?? ''}
-          title={editingProject ? 'Переименовать проект' : 'Новый проект'}
+          title={editingProject ? t('projects.renameProject') : t('projects.newProject')}
           onSave={handleSave}
           onCancel={() => setModalVisible(false)}
         />

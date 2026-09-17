@@ -50,10 +50,6 @@ export interface NeumorphismTokens {
 /** Полное описание одного визуального оформления. */
 export interface DesignThemeDefinition {
   id: DesignThemeId;
-  /** Человекочитаемое название (для UI выбора оформления). */
-  label: string;
-  /** Короткое пояснение (для UI выбора оформления). */
-  description: string;
   /** Светлая палитра для искусственного превью в настройках. */
   previewLight: ThemeColors;
   /** Тёмная палитра для искусственного превью в настройках. */
@@ -87,22 +83,16 @@ const neuDark: ThemeColors = {
 export const DESIGN_THEMES: Record<DesignThemeId, DesignThemeDefinition> = {
   modern: {
     id: 'modern',
-    label: 'Современный',
-    description: 'Нативный вид под вашу платформу',
     previewLight: lightColors,
     previewDark: darkColors,
   },
   simple: {
     id: 'simple',
-    label: 'Простой',
-    description: 'Минимум эффектов, максимум читаемости',
     previewLight: lightColors,
     previewDark: darkColors,
   },
   neumorphism: {
     id: 'neumorphism',
-    label: 'Неоморфизм',
-    description: 'Мягкие вдавленные поверхности',
     previewLight: neuLight,
     previewDark: neuDark,
   },
@@ -138,6 +128,23 @@ export function migrateDesignThemeId(value: unknown): DesignThemeId | null {
 }
 
 /**
+ * Резолвит сохранённое значение оформления с учётом платформы.
+ *
+ * На Android стиль `simple` недоступен (остались только modern и neumorphism),
+ * поэтому сохранённое `simple` (и устаревшее `minimalism`) мигрирует в `modern`.
+ * @param value — сохранённое (возможно, старое) значение.
+ * @param platform — платформа ('ios' | 'android' | прочее).
+ * @returns Актуальный DesignThemeId или null, если значение неизвестно.
+ */
+export function resolveDesignThemeId(value: unknown, platform: string): DesignThemeId | null {
+  const migrated = migrateDesignThemeId(value);
+  if (migrated === 'simple' && platform === 'android') {
+    return 'modern';
+  }
+  return migrated;
+}
+
+/**
  * Возвращает оформление по умолчанию для новых установок на платформе.
  * iOS → modern, Android → modern, web/прочее → simple.
  */
@@ -150,9 +157,12 @@ export function getDefaultDesignThemeId(platform: string): DesignThemeId {
 
 /**
  * Возвращает список оформлений, доступных в UI выбора на платформе.
- * Набор одинаков для всех платформ: три стиля.
+ * На Android стиль `simple` скрыт: остаются только modern и neumorphism.
  */
-export function getPlatformThemeIds(_platform: string): DesignThemeId[] {
+export function getPlatformThemeIds(platform: string): DesignThemeId[] {
+  if (platform === 'android') {
+    return ['modern', 'neumorphism'];
+  }
   return ['modern', 'simple', 'neumorphism'];
 }
 

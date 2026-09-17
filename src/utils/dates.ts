@@ -1,72 +1,55 @@
 /**
- * Назначение: чистые функции форматирования дат и времени.
+ * Назначение: чистые функции форматирования дат и времени (locale-aware).
  *
  * Функции:
- * - formatDate(): форматирует метку времени (epoch ms) в локализованную дату.
+ * - formatDate(timestamp, locale): короткая дата в заданной локали;
+ * - formatMonthLabel(timestamp, locale): заголовок месяца, например «Сентябрь 2026».
  *
- * Слой: util (/src/utils). Чистая функция без внешних зависимостей.
+ * Слой: util (/src/utils). Чистые функции без внешних зависимостей.
  */
 
+// Названия месяцев по локалям (для детерминированного заголовка месяца).
+const MONTHS: Record<string, string[]> = {
+  en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+  ru: ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'],
+  kk: ['қаңтар', 'ақпан', 'наурыз', 'сәуір', 'мамыр', 'маусым', 'шілде', 'тамыз', 'қыркүйек', 'қазан', 'қараша', 'желтоқсан'],
+  es: ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
+};
+
+/** Возвращает первое слово с заглавной буквы. */
+function capitalize(word: string): string {
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
 /**
- * Форматирует метку времени в короткую локализованную дату.
+ * Форматирует метку времени в короткую дату в заданной локали.
  * @param timestamp — метка времени в миллисекундах (epoch ms).
- * @returns Строку вида «22 авг. 2026 г.» (в локали устройства).
+ * @param locale — локаль (например 'ru', 'en', 'zh-Hans'); undefined — локаль устройства.
+ * @returns Строку вида «22 авг. 2026 г.».
  */
-export function formatDate(timestamp: number): string {
-  return new Date(timestamp).toLocaleDateString(undefined, {
+export function formatDate(timestamp: number, locale?: string): string {
+  return new Date(timestamp).toLocaleDateString(locale, {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
   });
 }
 
-// Названия месяцев по-русски (для детерминированного заголовка месяца).
-const MONTHS_RU = [
-  'январь',
-  'февраль',
-  'март',
-  'апрель',
-  'май',
-  'июнь',
-  'июль',
-  'август',
-  'сентябрь',
-  'октябрь',
-  'ноябрь',
-  'декабрь',
-] as const;
-
 /**
  * Форматирует метку времени в заголовок месяца, например «Сентябрь 2026».
- * Использует ручной список месяцев (детерминированно, без локали и «г.»).
  * @param timestamp — метка времени в миллисекундах (epoch ms).
- * @returns Строку вида «Сентябрь 2026».
+ * @param locale — локаль ('ru' | 'en' | 'kk' | 'es' | 'zh-Hans'); по умолчанию 'en'.
+ * @returns Строку вида «Сентябрь 2026» (для zh: «2026年9月»).
  */
-export function formatMonthLabel(timestamp: number): string {
+export function formatMonthLabel(timestamp: number, locale = 'en'): string {
   const date = new Date(timestamp);
-  const month = MONTHS_RU[date.getMonth()];
-  const capitalized = month.charAt(0).toUpperCase() + month.slice(1);
-  return `${capitalized} ${date.getFullYear()}`;
-}
+  const year = date.getFullYear();
 
-/**
- * Форматирует количество дней с корректной русской плюрализацией.
- * @param days — количество дней (неотрицательное целое).
- * @returns Строку вида «1 день», «2 дня», «5 дней», «42 дня».
- */
-export function formatDays(days: number): string {
-  const n = Math.abs(days);
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-
-  let word: string;
-  if (mod10 === 1 && mod100 !== 11) {
-    word = 'день';
-  } else if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) {
-    word = 'дня';
-  } else {
-    word = 'дней';
+  if (locale === 'zh-Hans') {
+    return `${year}年${date.getMonth() + 1}月`;
   }
 
-  return `${n} ${word}`;
+  const months = MONTHS[locale] ?? MONTHS.en;
+  const month = months[date.getMonth()];
+  return `${capitalize(month)} ${year}`;
 }

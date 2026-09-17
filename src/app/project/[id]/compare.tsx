@@ -22,6 +22,8 @@ import { CompareOverlay } from '@/features/gallery/components/compare-overlay';
 import { CompareSideBySide } from '@/features/gallery/components/compare-side-by-side';
 import { CompareSlider } from '@/features/gallery/components/compare-slider';
 import { PhotoPickerSheet } from '@/features/gallery/components/photo-picker-sheet';
+import { type MessageKey } from '@/i18n';
+import { useI18n } from '@/i18n';
 import { useProjectStore } from '@/store/projectStore';
 import { radii, spacing } from '@/theme';
 import { useAppTheme } from '@/theme/ThemeProvider';
@@ -32,11 +34,11 @@ import { getVisiblePhotos } from '@/utils/photos';
 // Режимы сравнения.
 type CompareMode = 'slider' | 'side-by-side' | 'overlay';
 
-// Подписи и порядок режимов segmented control.
-const MODES: { value: CompareMode; label: string }[] = [
-  { value: 'slider', label: 'Слайдер' },
-  { value: 'side-by-side', label: 'Рядом' },
-  { value: 'overlay', label: 'Наложение' },
+// Подписи режимов segmented control (по ключам).
+const MODES: { value: CompareMode; key: MessageKey }[] = [
+  { value: 'slider', key: 'compare.slider' },
+  { value: 'side-by-side', key: 'compare.sideBySide' },
+  { value: 'overlay', key: 'compare.overlay' },
 ];
 
 export default function CompareScreen() {
@@ -46,6 +48,7 @@ export default function CompareScreen() {
     after?: string;
   }>();
   const { colors } = useAppTheme();
+  const { t, locale } = useI18n();
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -81,7 +84,7 @@ export default function CompareScreen() {
     }
     const otherId = pickerTarget === 'before' ? afterId : beforeId;
     if (photoId === otherId) {
-      Alert.alert('Нельзя выбрать одно и то же фото', 'Выберите разные фото для «До» и «После».');
+      Alert.alert(t('compare.samePhotoTitle'), t('compare.samePhotoMessage'));
       return;
     }
     if (pickerTarget === 'before') {
@@ -96,15 +99,13 @@ export default function CompareScreen() {
   if (error) {
     return (
       <View style={[styles.empty, { backgroundColor: colors.background }]}>
-        <Stack.Screen options={{ title: 'Сравнение' }} />
-        <AppText variant="title">Нет фото для сравнения</AppText>
+        <Stack.Screen options={{ title: t('compare.title') }} />
+        <AppText variant="title">{t('compare.noPairTitle')}</AppText>
         <AppText color="textSecondary" style={styles.emptyText}>
-          {error === 'same-photo'
-            ? 'Для сравнения нужно два разных фото.'
-            : 'Выберите два фото из проекта, чтобы сравнить их.'}
+          {error === 'same-photo' ? t('compare.samePhoto') : t('compare.missing')}
         </AppText>
         <Pressable onPress={() => router.back()} style={styles.backLink}>
-          <AppText color="primary">Назад</AppText>
+          <AppText color="primary">{t('common.back')}</AppText>
         </Pressable>
       </View>
     );
@@ -117,7 +118,7 @@ export default function CompareScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Stack.Screen options={{ title: 'Сравнение' }} />
+      <Stack.Screen options={{ title: t('compare.title') }} />
 
       {/* Область сравнения. */}
       <View style={styles.stage}>
@@ -127,8 +128,8 @@ export default function CompareScreen() {
           <CompareSideBySide
             beforeUri={beforePhoto.uri}
             afterUri={afterPhoto.uri}
-            beforeLabel={formatDate(beforePhoto.takenAt)}
-            afterLabel={formatDate(afterPhoto.takenAt)}
+            beforeLabel={formatDate(beforePhoto.takenAt, locale)}
+            afterLabel={formatDate(afterPhoto.takenAt, locale)}
           />
         ) : (
           <CompareOverlay beforeUri={beforePhoto.uri} afterUri={afterPhoto.uri} />
@@ -142,9 +143,9 @@ export default function CompareScreen() {
           accessibilityRole="button"
           style={[styles.pairButton, { backgroundColor: colors.surface }]}>
           <AppText variant="caption" color="textSecondary">
-            До
+            {t('compare.before')}
           </AppText>
-          <AppText variant="caption">{formatDate(beforePhoto.takenAt)}</AppText>
+          <AppText variant="caption">{formatDate(beforePhoto.takenAt, locale)}</AppText>
         </Pressable>
         <Ionicons name="arrow-forward" size={16} color={colors.textSecondary} />
         <Pressable
@@ -152,9 +153,9 @@ export default function CompareScreen() {
           accessibilityRole="button"
           style={[styles.pairButton, { backgroundColor: colors.surface }]}>
           <AppText variant="caption" color="textSecondary">
-            После
+            {t('compare.after')}
           </AppText>
-          <AppText variant="caption">{formatDate(afterPhoto.takenAt)}</AppText>
+          <AppText variant="caption">{formatDate(afterPhoto.takenAt, locale)}</AppText>
         </Pressable>
       </View>
 
@@ -177,7 +178,7 @@ export default function CompareScreen() {
                 { backgroundColor: selected ? colors.primary : 'transparent' },
               ]}>
               <AppText variant="caption" color={selected ? 'primaryText' : 'text'}>
-                {m.label}
+                {t(m.key)}
               </AppText>
             </Pressable>
           );
@@ -186,7 +187,7 @@ export default function CompareScreen() {
 
       <PhotoPickerSheet
         visible={pickerTarget !== null}
-        title={pickerTarget === 'before' ? 'Выберите фото «До»' : 'Выберите фото «После»'}
+        title={pickerTarget === 'before' ? t('compare.pickBefore') : t('compare.pickAfter')}
         photos={visiblePhotos}
         selectedId={pickerTarget === 'before' ? beforeId : afterId}
         referenceId={project?.referencePhotoId ?? null}

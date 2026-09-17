@@ -164,6 +164,29 @@ Material и Gallery отдельными темами — пользовател
 - `referenceMode` отсутствует у старых проектов → `latest` (резолвер
   `resolveReferencePhoto` в `src/utils/reference.ts`).
 
+### Локализация (i18n)
+
+- Движок — `src/i18n/` (собственный, БЕЗ i18next и т.п.). Добавление строки:
+  сначала ключ в `src/i18n/locales/en.ts` (канон), затем тот же ключ во все 4 остальные
+  локали — компилятор (`Record<MessageKey, Message>`) и тест полноты не дадут пропустить.
+- `t(key, params)` поддерживает интерполяцию `{name}` и плюрализацию через объект
+  `{ one/few/many/other }` (правила — в `pluralForm`, ru — three форм).
+- В UI использовать хук `useI18n()` → `t`; НЕ импортировать `translate` напрямую в экранах.
+- Язык по умолчанию — русский (`DEFAULT_SETTINGS.language = 'ru'`, `normalizeSettings`
+  подставляет `ru` при отсутствии/неизвестном значении); явный выбор в `settings.language`
+  всегда важнее. Переключение языка НЕ меняет маршрут (locale не в URL) — только store.
+- Компактный переключатель — `LanguageSwitcher` (варианты clean/glass/minimal);
+  короткие коды — `LANGUAGE_SHORT` в `src/i18n/locale.ts`.
+- Даты/месяцы — `formatDate(timestamp, locale)` и `formatMonthLabel(timestamp, locale)`
+  (передавать `locale` из `useI18n()`). Названия проектов и заметки пользователя не переводить.
+
+### Темы на Android
+
+- На Android доступны только `modern` и `neumorphism` (`getPlatformThemeIds('android')`);
+  `simple`/`minimalism` мигрируют в `modern` через `resolveDesignThemeId(value, platform)`.
+- НЕ возвращать `simple` на Android ни в UI, ни в миграции — иначе после перезапуска
+  стиль восстановится и сломает контракт.
+
 ### Тактильный отклик
 
 - Единственное место импорта `expo-haptics` — `src/utils/haptics.ts`

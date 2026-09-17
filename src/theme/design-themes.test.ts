@@ -9,6 +9,7 @@ import {
   isDesignThemeId,
   migrateDesignThemeId,
   resolveDesignTheme,
+  resolveDesignThemeId,
 } from './design-themes';
 
 // Все обязательные семантические цвета палитры.
@@ -105,10 +106,30 @@ describe('getDefaultDesignThemeId', () => {
 });
 
 describe('getPlatformThemeIds', () => {
-  it('на всех платформах — одни и те же три стиля', () => {
-    for (const platform of ['ios', 'android', 'web']) {
-      expect(getPlatformThemeIds(platform)).toEqual(['modern', 'simple', 'neumorphism']);
-    }
+  it('iOS/web: три стиля (Современный, Простой, Неоморфизм)', () => {
+    expect(getPlatformThemeIds('ios')).toEqual(['modern', 'simple', 'neumorphism']);
+    expect(getPlatformThemeIds('web')).toEqual(['modern', 'simple', 'neumorphism']);
+  });
+
+  it('Android: только Современный и Неоморфизм (без «Простого»)', () => {
+    expect(getPlatformThemeIds('android')).toEqual(['modern', 'neumorphism']);
+  });
+});
+
+describe('resolveDesignThemeId', () => {
+  it('на Android мигрирует simple/minimalism в modern', () => {
+    expect(resolveDesignThemeId('simple', 'android')).toBe('modern');
+    expect(resolveDesignThemeId('minimalism', 'android')).toBe('modern');
+  });
+
+  it('на iOS/прочее оставляет simple без изменений', () => {
+    expect(resolveDesignThemeId('simple', 'ios')).toBe('simple');
+    expect(resolveDesignThemeId('simple', 'web')).toBe('simple');
+  });
+
+  it('возвращает null для неизвестного значения', () => {
+    expect(resolveDesignThemeId('unknown', 'android')).toBeNull();
+    expect(resolveDesignThemeId(42, 'ios')).toBeNull();
   });
 });
 

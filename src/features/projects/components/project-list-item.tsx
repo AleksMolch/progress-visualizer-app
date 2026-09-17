@@ -21,6 +21,7 @@ import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppText } from '@/components/ui/app-text';
 import { AdaptiveSurface } from '@/components/ui/adaptive-surface';
+import { useI18n } from '@/i18n';
 import { spacing } from '@/theme';
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { formatDate } from '@/utils/dates';
@@ -52,6 +53,7 @@ export function ProjectListItem({
   onDelete,
 }: ProjectListItemProps) {
   const { designTheme } = useAppTheme();
+  const { t, locale } = useI18n();
 
   // В «Простом» оформлении сохраняем компактный текстовый вид.
   if (designTheme === 'simple') {
@@ -60,13 +62,13 @@ export function ProjectListItem({
         <Pressable onPress={onOpen} accessibilityRole="button">
           <AppText variant="subtitle">{name}</AppText>
           <AppText color="textSecondary" variant="caption">
-            {photoCount} фото · {formatDate(updatedAt)}
+            {t('projects.photoCount', { count: photoCount })} · {formatDate(updatedAt, locale)}
           </AppText>
         </Pressable>
 
         <View style={styles.actions}>
-          <AppButton label="Переименовать" variant="secondary" onPress={onRename} />
-          <AppButton label="Удалить" variant="danger" onPress={onDelete} />
+          <AppButton label={t('projects.rename')} variant="secondary" onPress={onRename} />
+          <AppButton label={t('common.delete')} variant="danger" onPress={onDelete} />
         </View>
       </AppCard>
     );
@@ -100,6 +102,7 @@ function PhotoCard({
   onDelete,
 }: Omit<ProjectListItemProps, 'coverUri'> & { coverUri?: string }) {
   const { colors, metrics, material, scheme } = useAppTheme();
+  const { t, locale } = useI18n();
 
   // Полупрозрачная заливка для frosted-карточек (Liquid Glass).
   const surfaceBackground =
@@ -121,14 +124,14 @@ function PhotoCard({
         <View style={styles.photoBody}>
           <AppText variant="subtitle">{name}</AppText>
           <AppText color="textSecondary" variant="caption">
-            {photoCount} фото · {formatDate(updatedAt)}
+            {t('projects.photoCount', { count: photoCount })} · {formatDate(updatedAt, locale)}
           </AppText>
         </View>
       </Pressable>
 
       <View style={styles.actionsPadded}>
-        <AppButton label="Переименовать" variant="secondary" onPress={onRename} />
-        <AppButton label="Удалить" variant="danger" onPress={onDelete} />
+        <AppButton label={t('projects.rename')} variant="secondary" onPress={onRename} />
+        <AppButton label={t('common.delete')} variant="danger" onPress={onDelete} />
       </View>
     </AdaptiveSurface>
   );
@@ -140,6 +143,7 @@ function PhotoCard({
  */
 function ProjectCover({ uri }: { uri?: string }) {
   const { colors } = useAppTheme();
+  const { t } = useI18n();
   const [failed, setFailed] = useState(false);
 
   if (!uri || failed) {
@@ -147,7 +151,7 @@ function ProjectCover({ uri }: { uri?: string }) {
       <View style={[styles.coverPlaceholder, { backgroundColor: colors.surface }]}>
         <Ionicons name="images-outline" size={36} color="rgba(32,138,239,0.45)" />
         <AppText variant="caption" color="textSecondary">
-          Нет фото
+          {t('projects.noPhotos')}
         </AppText>
       </View>
     );

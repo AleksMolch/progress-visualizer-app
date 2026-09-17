@@ -68,9 +68,9 @@ ProgressPrivate — privacy-first мобильное приложение для
   referencePhotoId? (эталонное фото для ghost overlay).
 - `PhotoMetadata`: id, projectId, uri (локальный путь), takenAt, width?, height?,
   note? (заметка), isFavorite?, isHidden? (скрытие без удаления).
-- `AppSettings`: designTheme (`modern|simple|neumorphism`), themeMode, ghostEnabled,
-  ghostOpacity, gridEnabled, requireBiometrics, remindersEnabled, reminderTime,
-  hapticsEnabled.
+- `AppSettings`: designTheme (`modern|simple|neumorphism`), themeMode, language
+  (`ru|en|zh-Hans|kk|es`), ghostEnabled, ghostOpacity, gridEnabled,
+  requireBiometrics, remindersEnabled, reminderTime, hapticsEnabled.
 
 Все поля `?` — безопасные optional-поля: старые записи читаются без миграции
 физических файлов. Скрытие фото (`isHidden`) НЕ удаляет файл и метаданные —
@@ -270,7 +270,51 @@ npx expo-doctor
 
 ---
 
-## 11. Что нельзя делать при поддержке
+## 11. Локализация, Android-темы и UX-исправления
+
+### 11.1. i18n (5 языков)
+
+- Словари — `src/i18n/locales/{en,ru,zh-Hans,kk,es}.ts`; движок — `src/i18n/index.ts`
+  (`translate`, `useI18n`), чистая часть — `src/i18n/locale.ts` (`detectDeviceLocale`,
+  `isAppLanguage`, `LOCALES`, `LANGUAGE_NAMES`).
+- `en` — канонический источник ключей (тип `MessageKey` выводится из него); остальные
+  локали — `Record<MessageKey, Message>` (полнота проверяется компилятором + тестом).
+- Механизмы: интерполяция `{param}`, плюрализация (`{ one/few/many/other }`; правила в
+  `pluralForm`), fallback en → ключ. Реактивность — через `settings.language` (persist).
+- Язык: явный выбор пользователя > русский (язык по умолчанию). Даты —
+  `formatDate(timestamp, locale)`, месяцы — `formatMonthLabel(timestamp, locale)`.
+- Компактный переключатель — `src/features/settings/components/language-switcher.tsx`
+  (кнопка + dropdown, варианты clean/glass/minimal; короткие коды `LANGUAGE_SHORT`).
+- Добавление строки: в `en.ts` (ключ), затем все 4 остальные локали (компилятор не даст
+  пропустить). Названия проектов и заметки пользователя НЕ переводятся.
+
+### 11.2. Android-темы
+
+- `getPlatformThemeIds('android')` → `['modern','neumorphism']` (без «Простого»).
+- `resolveDesignThemeId(value, platform)` мигрирует `simple`/`minimalism` → `modern` на
+  Android; iOS/прочее сохраняют `simple`.
+
+### 11.3. Слайдер сравнения (геометрия)
+
+- `compare-slider.tsx`: верхнее фото на всю область W×H, ширина меняется только у
+  clipping-контейнера; позиция разделителя — shared value `ratio` (0..1) для поворота/ресайза.
+
+### 11.4. Редактор заметки и клавиатура
+
+- Tap по фону — только `Keyboard.dismiss()` (не закрывает окно); закрытие — кнопками;
+  при отмене с изменениями — `Alert` подтверждения; `KeyboardAvoidingView` + `ScrollView`;
+  Android Back (onRequestClose) учитывает несохранённые изменения.
+
+### 11.5. Звук затвора (ограничение)
+
+- Источник: `expo-camera` `takePictureAsync()` с `shutterSound` (default `true`) — системный
+  звук камеры. Своего звука нет, двойного срабатывания нет (shutter bridge + guard `isCapturing`).
+- Поддерживаемое управление — только `shutterSound: false` (полное отключение); громкость
+  системного звука через API не регулируется. Принято: не отключать и не добавлять свой звук.
+
+---
+
+## 12. Что нельзя делать при поддержке
 
 - Добавлять сетевые запросы с фото или метаданными.
 - Добавлять рекламные или аналитические SDK.
@@ -282,7 +326,7 @@ npx expo-doctor
 
 ---
 
-## 12. Связанные документы
+## 13. Связанные документы
 
 - CONSTITUTION.md — неизменяемые правила
 - ARCHITECTURE.md — границы слоёв

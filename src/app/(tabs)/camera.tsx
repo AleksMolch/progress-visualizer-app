@@ -35,6 +35,7 @@ import { GridOverlay } from '@/features/camera/components/grid-overlay';
 import { OverlayControls } from '@/features/camera/components/overlay-controls';
 import { setShutterHandler } from '@/features/navigation/camera-shutter-bridge';
 import { PhotoPickerSheet } from '@/features/gallery/components/photo-picker-sheet';
+import { useI18n } from '@/i18n';
 import { useAppStore } from '@/store/appStore';
 import { useProjectStore } from '@/store/projectStore';
 import { useSettingsStore } from '@/store/settingsStore';
@@ -49,6 +50,7 @@ import { getReferenceMode, isManualReferenceMissing, resolveReferencePhoto } fro
 const CONTROLS_BOTTOM_GAP = 16;
 
 export default function CameraScreen() {
+  const { t } = useI18n();
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -83,7 +85,12 @@ export default function CameraScreen() {
   const referenceReady = referencePhoto !== null;
 
   // Подпись текущего источника для панели.
-  const referenceLabel = referenceMode === 'first' ? 'Первое' : referenceMode === 'manual' ? 'Вручную' : 'Последнее';
+  const referenceLabel =
+    referenceMode === 'first'
+      ? t('camera.sourceFirstShort')
+      : referenceMode === 'manual'
+        ? t('camera.sourceManualShort')
+        : t('camera.sourceLatestShort');
 
   // Видимые фото проекта (хронологически, старые → новые) для ручного выбора.
   const visiblePhotos = useMemo(() => {
@@ -124,11 +131,11 @@ export default function CameraScreen() {
         height: picture.height,
       });
     } catch {
-      setCaptureError('Не удалось сохранить снимок');
+      setCaptureError(t('camera.captureError'));
     } finally {
       setIsCapturing(false);
     }
-  }, [activeProject, isCapturing, settings.hapticsEnabled, saveCapturedPhoto]);
+  }, [activeProject, isCapturing, settings.hapticsEnabled, saveCapturedPhoto, t]);
 
   // Регистрируем съёмку для центральной кнопки нижней панели (shutter bridge).
   useEffect(() => {
@@ -203,14 +210,12 @@ export default function CameraScreen() {
   if (!permission.granted) {
     return (
       <CenteredState>
-        <AppText variant="subtitle">Нужен доступ к камере</AppText>
+        <AppText variant="subtitle">{t('camera.needPermission')}</AppText>
         <AppText color="textSecondary">
-          {permission.canAskAgain
-            ? 'Разрешите доступ, чтобы делать фотографии прогресса.'
-            : 'Доступ запрещён. Разрешите камеру в настройках устройства.'}
+          {permission.canAskAgain ? t('camera.permissionHint') : t('camera.permissionDenied')}
         </AppText>
         {permission.canAskAgain ? (
-          <AppButton label="Разрешить доступ" onPress={requestPermission} />
+          <AppButton label={t('camera.allow')} onPress={requestPermission} />
         ) : null}
       </CenteredState>
     );
@@ -220,10 +225,8 @@ export default function CameraScreen() {
   if (projects.length === 0) {
     return (
       <CenteredState>
-        <AppText variant="subtitle">Пока нет проектов</AppText>
-        <AppText color="textSecondary">
-          Создайте проект на вкладке «Проекты», чтобы начать съёмку.
-        </AppText>
+        <AppText variant="subtitle">{t('camera.noProjects')}</AppText>
+        <AppText color="textSecondary">{t('camera.noProjectsHint')}</AppText>
       </CenteredState>
     );
   }
@@ -294,7 +297,7 @@ export default function CameraScreen() {
 
       <PhotoPickerSheet
         visible={manualPickerVisible}
-        title="Выберите эталон"
+        title={t('camera.pickReference')}
         photos={visiblePhotos}
         selectedId={referenceMode === 'manual' ? activeProject?.referencePhotoId ?? null : null}
         referenceId={activeProject?.referencePhotoId ?? null}

@@ -15,6 +15,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/app-text';
+import { useI18n } from '@/i18n';
 
 interface CompareOverlayProps {
   /** Путь к фото «до» (нижний слой). */
@@ -24,6 +25,7 @@ interface CompareOverlayProps {
 }
 
 export function CompareOverlay({ beforeUri, afterUri }: CompareOverlayProps) {
+  const { t } = useI18n();
   // Прозрачность верхнего фото (0..1), начальное значение 50%.
   const [opacity, setOpacity] = useState(0.5);
 
@@ -40,7 +42,7 @@ export function CompareOverlay({ beforeUri, afterUri }: CompareOverlayProps) {
 
       <View style={styles.controls}>
         <AppText variant="caption" color="primaryText">
-          Видимость после: {Math.round(opacity * 100)}%
+          {t('compare.overlayLabel', { percent: Math.round(opacity * 100) })}
         </AppText>
         <Slider
           style={styles.slider}
@@ -52,7 +54,7 @@ export function CompareOverlay({ beforeUri, afterUri }: CompareOverlayProps) {
           minimumTrackTintColor="#FFFFFF"
           maximumTrackTintColor="rgba(255,255,255,0.4)"
           thumbTintColor="#FFFFFF"
-          accessibilityLabel="Прозрачность верхнего фото"
+          accessibilityLabel={t('compare.overlayLabel', { percent: Math.round(opacity * 100) })}
         />
       </View>
     </View>

@@ -31,6 +31,7 @@ import { ActionSheet, type ActionSheetAction } from '@/features/gallery/componen
 import { NoteEditorModal } from '@/features/gallery/components/note-editor-modal';
 import { PhotoPickerSheet } from '@/features/gallery/components/photo-picker-sheet';
 import { ZoomablePhoto } from '@/features/gallery/components/zoomable-photo';
+import { useI18n } from '@/i18n';
 import { exportPhotoToLibrary, requestMediaLibraryPermission } from '@/storage/mediaLibrary';
 import { useProjectStore } from '@/store/projectStore';
 import { useAppTheme } from '@/theme/ThemeProvider';
@@ -42,6 +43,7 @@ export default function PhotoViewerScreen() {
   const { id, photoId } = useLocalSearchParams<{ id: string; photoId: string }>();
   const { width } = useWindowDimensions();
   const { colors } = useAppTheme();
+  const { t } = useI18n();
   const router = useRouter();
 
   const photos = useProjectStore((s) => s.photos);
@@ -112,11 +114,11 @@ export default function PhotoViewerScreen() {
     }
     setActionsVisible(false);
     Alert.alert(
-      'Экспортировать в галерею?',
-      'Фотография будет скопирована в общую галерею устройства и окажется вне защищённого хранилища приложения.',
+      t('viewer.exportTitle'),
+      t('viewer.exportMessage'),
       [
-        { text: 'Отмена', style: 'cancel' },
-        { text: 'Экспортировать', onPress: () => void exportCurrent(currentPhoto.uri) },
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('viewer.exportAction'), onPress: () => void exportCurrent(currentPhoto.uri) },
       ],
     );
   };
@@ -124,14 +126,14 @@ export default function PhotoViewerScreen() {
   async function exportCurrent(uri: string): Promise<void> {
     const granted = await requestMediaLibraryPermission();
     if (!granted) {
-      Alert.alert('Нет доступа к галерее', 'Разрешите сохранение фото в настройках устройства.');
+      Alert.alert(t('viewer.noGalleryAccess'), t('viewer.galleryPermissionHint'));
       return;
     }
     const ok = await exportPhotoToLibrary(uri);
     if (ok) {
-      Alert.alert('Готово', 'Фотография сохранена в галерею.');
+      Alert.alert(t('viewer.exportDone'), t('viewer.exportSaved'));
     } else {
-      Alert.alert('Ошибка', 'Не удалось экспортировать фотографию.');
+      Alert.alert(t('viewer.exportError'), t('viewer.exportFailed'));
     }
   }
 
@@ -141,10 +143,10 @@ export default function PhotoViewerScreen() {
       return;
     }
     setActionsVisible(false);
-    Alert.alert('Удалить фото?', 'Фотография будет удалена без возможности восстановления.', [
-      { text: 'Отмена', style: 'cancel' },
+    Alert.alert(t('project.deletePhotoTitle'), t('project.deletePhotoMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Удалить',
+        text: t('common.delete'),
         style: 'destructive',
         onPress: () => {
           deletePhoto(currentPhoto.id);
@@ -157,7 +159,7 @@ export default function PhotoViewerScreen() {
   if (!currentPhoto) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Stack.Screen options={{ title: 'Фото' }} />
+        <Stack.Screen options={{ title: t('nav.photo') }} />
       </View>
     );
   }
@@ -168,7 +170,7 @@ export default function PhotoViewerScreen() {
   const actions: ActionSheetAction[] = [
     {
       key: 'compare',
-      label: 'Сравнить',
+      label: t('viewer.compare'),
       icon: 'git-compare-outline',
       disabled: !canCompare,
       onPress: () => {
@@ -178,7 +180,7 @@ export default function PhotoViewerScreen() {
     },
     {
       key: 'note',
-      label: currentPhoto.note ? 'Редактировать заметку' : 'Добавить заметку',
+      label: currentPhoto.note ? t('viewer.editNote') : t('viewer.addNote'),
       icon: 'create-outline',
       onPress: () => {
         setActionsVisible(false);
@@ -187,7 +189,7 @@ export default function PhotoViewerScreen() {
     },
     {
       key: 'favorite',
-      label: currentPhoto.isFavorite ? 'Убрать из избранного' : 'В избранное',
+      label: currentPhoto.isFavorite ? t('viewer.unfavorite') : t('viewer.favorite'),
       icon: currentPhoto.isFavorite ? 'star' : 'star-outline',
       onPress: () => {
         setActionsVisible(false);
@@ -197,7 +199,7 @@ export default function PhotoViewerScreen() {
     },
     {
       key: 'hide',
-      label: currentPhoto.isHidden ? 'Показать снова' : 'Скрыть снимок',
+      label: currentPhoto.isHidden ? t('viewer.unhide') : t('viewer.hide'),
       icon: currentPhoto.isHidden ? 'eye-outline' : 'eye-off-outline',
       onPress: () => {
         setActionsVisible(false);
@@ -206,7 +208,7 @@ export default function PhotoViewerScreen() {
     },
     {
       key: 'reference',
-      label: 'Сделать эталоном',
+      label: t('viewer.makeReference'),
       icon: 'aperture-outline',
       onPress: () => {
         setActionsVisible(false);
@@ -216,13 +218,13 @@ export default function PhotoViewerScreen() {
     },
     {
       key: 'export',
-      label: 'Экспорт в галерею',
+      label: t('viewer.export'),
       icon: 'download-outline',
       onPress: handleExport,
     },
     {
       key: 'delete',
-      label: 'Удалить',
+      label: t('common.delete'),
       icon: 'trash-outline',
       destructive: true,
       onPress: handleDelete,
@@ -233,25 +235,25 @@ export default function PhotoViewerScreen() {
   const compareActions: ActionSheetAction[] = [
     {
       key: 'previous',
-      label: 'С предыдущим',
+      label: t('viewer.withPrevious'),
       disabled: !previousPhoto,
       onPress: () => previousPhoto && openCompare(previousPhoto.id, currentPhoto.id),
     },
     {
       key: 'first',
-      label: 'С первым',
+      label: t('viewer.withFirst'),
       disabled: !firstPhoto || firstPhoto.id === currentPhoto.id,
       onPress: () => firstPhoto && openCompare(firstPhoto.id, currentPhoto.id),
     },
     {
       key: 'last',
-      label: 'С последним',
+      label: t('viewer.withLast'),
       disabled: !lastPhoto || lastPhoto.id === currentPhoto.id,
       onPress: () => lastPhoto && openCompare(currentPhoto.id, lastPhoto.id),
     },
     {
       key: 'manual',
-      label: 'Выбрать вручную',
+      label: t('viewer.pickCompare'),
       icon: 'images-outline',
       onPress: () => {
         setCompareVisible(false);
@@ -264,12 +266,12 @@ export default function PhotoViewerScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Stack.Screen
         options={{
-          title: 'Фото',
+          title: t('nav.photo'),
           headerRight: () => (
             <Pressable
               onPress={() => setActionsVisible(true)}
               accessibilityRole="button"
-              accessibilityLabel="Действия с фото"
+              accessibilityLabel={t('viewer.actions')}
               hitSlop={8}
               style={styles.moreButton}>
               <Ionicons name="ellipsis-horizontal" size={22} color={colors.primary} />
@@ -296,21 +298,21 @@ export default function PhotoViewerScreen() {
 
       <ActionSheet
         visible={actionsVisible}
-        title="Действия"
+        title={t('viewer.actions')}
         actions={actions}
         onClose={() => setActionsVisible(false)}
       />
 
       <ActionSheet
         visible={compareVisible}
-        title="Сравнить с"
+        title={t('viewer.compareWith')}
         actions={compareActions}
         onClose={() => setCompareVisible(false)}
       />
 
       <PhotoPickerSheet
         visible={manualPickerVisible}
-        title="Выберите фото для сравнения"
+        title={t('viewer.pickCompare')}
         photos={visiblePhotos}
         selectedId={currentPhoto.id}
         referenceId={undefined}

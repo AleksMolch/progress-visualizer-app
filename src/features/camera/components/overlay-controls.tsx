@@ -17,6 +17,7 @@ import Slider from '@react-native-community/slider';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/app-text';
+import { useI18n } from '@/i18n';
 import { useSettingsStore } from '@/store/settingsStore';
 import { radii, spacing, type ThemeColors } from '@/theme';
 import { useAppTheme } from '@/theme/ThemeProvider';
@@ -42,6 +43,7 @@ export function OverlayControls({
   onResetBoost,
 }: OverlayControlsProps) {
   const { colors } = useAppTheme();
+  const { t } = useI18n();
   const settings = useSettingsStore((s) => s.settings);
   const updateSettings = useSettingsStore((s) => s.updateSettings);
 
@@ -52,13 +54,13 @@ export function OverlayControls({
     <View style={[styles.panel, { backgroundColor: colors.surface }]}>
       <View style={styles.row}>
         <ToggleChip
-          label="Призрак"
+          label={t('camera.ghost')}
           active={ghostEnabled}
           disabled={!hasPhoto}
           onPress={() => updateSettings({ ghostEnabled: !settings.ghostEnabled })}
         />
         <ToggleChip
-          label="Сетка"
+          label={t('camera.grid')}
           active={settings.gridEnabled}
           onPress={() => updateSettings({ gridEnabled: !settings.gridEnabled })}
         />
@@ -66,15 +68,15 @@ export function OverlayControls({
           onPress={onOpenReference}
           disabled={!hasPhoto}
           accessibilityRole="button"
-          accessibilityLabel="Выбрать источник призрака"
+          accessibilityLabel={t('camera.ghostSourceTitle')}
           style={[styles.chip, { borderColor: colors.border }, !hasPhoto && styles.chipDisabled]}>
-          <AppText variant="caption">Эталон: {referenceLabel}</AppText>
+          <AppText variant="caption">{t('camera.referenceLabel', { source: referenceLabel })}</AppText>
         </Pressable>
       </View>
 
       <View style={styles.sliderBlock}>
         <AppText variant="caption" color="textSecondary">
-          Видимость призрака {Math.round(settings.ghostOpacity * 100)}%
+          {t('camera.visibility', { percent: Math.round(settings.ghostOpacity * 100) })}
         </AppText>
         <Slider
           style={styles.slider}
@@ -90,13 +92,13 @@ export function OverlayControls({
             onResetBoost();
             updateSettings({ ghostOpacity: value });
           }}
-          accessibilityLabel="Видимость ghost overlay"
+          accessibilityLabel={t('camera.visibility', { percent: Math.round(settings.ghostOpacity * 100) })}
         />
       </View>
 
       {isBoosted ? (
         <AppText variant="caption" color="textSecondary">
-          Призрак усилен. Нажмите фон ещё раз, чтобы вернуть обычную видимость.
+          {t('camera.boosted')}
         </AppText>
       ) : null}
     </View>

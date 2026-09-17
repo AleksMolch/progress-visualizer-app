@@ -12,16 +12,18 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { Platform } from 'react-native';
 
+import { isAppLanguage } from '@/i18n/locale';
 import { type AppSettings } from '@/models/settings';
 import { mmkvStorage } from '@/storage/mmkv';
-import { getDefaultDesignThemeId, migrateDesignThemeId } from '@/theme/design-themes';
+import { getDefaultDesignThemeId, resolveDesignThemeId } from '@/theme/design-themes';
 
 // Значения настроек по умолчанию (до первого изменения пользователем).
-// Примечание: designTheme здесь — переходное значение до гидратации;
-// реальный default для новых установок определяется платформой в normalizeSettings.
+// Примечание: designTheme и language здесь — переходные значения до гидратации;
+// реальные defaults для новых установок определяются платформой в normalizeSettings.
 export const DEFAULT_SETTINGS: AppSettings = {
   designTheme: 'modern',
   themeMode: 'system',
+  language: 'ru',
   hapticsEnabled: true,
   ghostEnabled: true,
   ghostOpacity: 0.5,
@@ -36,10 +38,12 @@ export const DEFAULT_SETTINGS: AppSettings = {
  *
  * Гарантии (для совместимости со старыми установками):
  * - отсутствующий или неизвестный designTheme заменяется на платформенный default
- *   (iOS/Android → modern, остальные → simple);
+ *   (iOS/Android → modern, остальные → simple); на Android `simple`/`minimalism`
+ *   мигрируют в `modern` (стиль скрыт на этой платформе);
  * - старые идентификаторы оформлений (minimalism/liquid-glass/material/gallery)
- *   мигрируют в новый контракт (см. migrateDesignThemeId);
+ *   мигрируют в новый контракт (см. resolveDesignThemeId);
  * - явно сохранённый валидный designTheme сохраняется;
+ * - язык: явный валидный выбор сохраняется; иначе — русский (язык по умолчанию);
  * - неизвестный themeMode заменяется на 'system';
  * - прежние значения остальных полей (ghost, биометрия, напоминания и т.д.) сохраняются.
  */
@@ -48,10 +52,12 @@ export function normalizeSettings(raw: unknown, platform: string): AppSettings {
 
   const settings: AppSettings = { ...DEFAULT_SETTINGS, ...partial };
 
-  // Мигрируем ИСХОДНОЕ значение designTheme: старые id → новые, неизвестное →
-  // platform default. Явный валидный выбор пользователя не перезаписывается.
-  const migrated = migrateDesignThemeId(partial.designTheme);
-  settings.designTheme = migrated ?? getDefaultDesignThemeId(platform);
+  // Оформление: мигрируем ИСХОДНОЕ значение, учитывая платформу (Android без simple).
+  settings.designTheme = resolveDesignThemeId(partial.designTheme, platform) ?? getDefaultDesignThemeId(platform);
+
+  // Язык: явный валидный выбор важнее; иначе — русский (default).
+  settings.language = isAppLanguage(partial.language) ? partial.language : 'ru';
+
   if (settings.themeMode !== 'system' && settings.themeMode !== 'light' && settings.themeMode !== 'dark') {
     settings.themeMode = 'system';
   }

@@ -19,6 +19,7 @@ import { StyleSheet, View } from 'react-native';
 import { AppButton } from '@/components/ui/app-button';
 import { AppScreen } from '@/components/ui/app-screen';
 import { AppText } from '@/components/ui/app-text';
+import { useI18n } from '@/i18n';
 import { useProjectStore } from '@/store/projectStore';
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { getChronologicalPhotos } from '@/utils/photos';
@@ -29,6 +30,7 @@ const FRAME_INTERVAL_MS = 700;
 export default function TimelapseScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useAppTheme();
+  const { t } = useI18n();
 
   const photos = useProjectStore((s) => s.photos);
 
@@ -55,13 +57,13 @@ export default function TimelapseScreen() {
 
   return (
     <AppScreen style={styles.screen}>
-      <Stack.Screen options={{ title: 'Timelapse' }} />
+      <Stack.Screen options={{ title: t('nav.timelapse') }} />
 
       {!current ? (
         <View style={styles.empty}>
-          <AppText variant="title">Недостаточно фото</AppText>
+          <AppText variant="title">{t('timelapse.notEnough')}</AppText>
           <AppText color="textSecondary" style={styles.emptyText}>
-            Для просмотра прогресса нужно хотя бы одно фото.
+            {t('timelapse.hint')}
           </AppText>
         </View>
       ) : (
@@ -78,7 +80,7 @@ export default function TimelapseScreen() {
               {Math.min(index, sequence.length - 1) + 1} / {sequence.length}
             </AppText>
             <AppButton
-              label={playing ? 'Пауза' : 'Продолжить'}
+              label={playing ? t('timelapse.pause') : t('timelapse.resume')}
               variant="secondary"
               onPress={() => setPlaying((value) => !value)}
             />

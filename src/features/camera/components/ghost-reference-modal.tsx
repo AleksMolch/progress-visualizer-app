@@ -15,6 +15,8 @@ import { Image } from 'expo-image';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/app-text';
+import { type MessageKey } from '@/i18n';
+import { useI18n } from '@/i18n';
 import { type PhotoMetadata } from '@/models/photo';
 import { type ProjectReferenceMode } from '@/models/project';
 import { radii, spacing } from '@/theme';
@@ -37,10 +39,10 @@ interface GhostReferenceModalProps {
   onClose: () => void;
 }
 
-// Варианты режима с подписями (manual обрабатывается отдельно).
-const MODE_OPTIONS: { value: ProjectReferenceMode; label: string; hint: string }[] = [
-  { value: 'latest', label: 'Последнее фото', hint: 'Самый свежий снимок проекта' },
-  { value: 'first', label: 'Первое фото', hint: 'Самый ранний снимок проекта' },
+// Варианты режима с ключами подписей (manual обрабатывается отдельно).
+const MODE_OPTIONS: { value: ProjectReferenceMode; label: MessageKey; hint: MessageKey }[] = [
+  { value: 'latest', label: 'camera.latest', hint: 'camera.latestHint' },
+  { value: 'first', label: 'camera.first', hint: 'camera.firstHint' },
 ];
 
 export function GhostReferenceModal({
@@ -53,6 +55,7 @@ export function GhostReferenceModal({
   onClose,
 }: GhostReferenceModalProps) {
   const { colors } = useAppTheme();
+  const { t } = useI18n();
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -60,7 +63,7 @@ export function GhostReferenceModal({
         <Pressable
           style={[styles.card, { backgroundColor: colors.surface }]}
           onPress={() => {}}>
-          <AppText variant="subtitle">Источник призрака</AppText>
+          <AppText variant="subtitle">{t('camera.ghostSourceTitle')}</AppText>
 
           {MODE_OPTIONS.map((option) => {
             const selected = mode === option.value;
@@ -75,9 +78,9 @@ export function GhostReferenceModal({
                   { borderColor: selected ? colors.primary : colors.border },
                 ]}>
                 <View style={styles.optionText}>
-                  <AppText variant="body">{option.label}</AppText>
+                  <AppText variant="body">{t(option.label)}</AppText>
                   <AppText color="textSecondary" variant="caption">
-                    {option.hint}
+                    {t(option.hint)}
                   </AppText>
                 </View>
                 <Ionicons
@@ -99,7 +102,7 @@ export function GhostReferenceModal({
               { borderColor: mode === 'manual' ? colors.primary : colors.border },
             ]}>
             <View style={styles.optionText}>
-              <AppText variant="body">Выбрать вручную</AppText>
+              <AppText variant="body">{t('camera.manual')}</AppText>
               {manualPhoto ? (
                 <View style={styles.manualPreview}>
                   <Image
@@ -108,12 +111,12 @@ export function GhostReferenceModal({
                     contentFit="cover"
                   />
                   <AppText color="textSecondary" variant="caption">
-                    Выбран эталон вручную
+                    {t('camera.manualSelected')}
                   </AppText>
                 </View>
               ) : (
                 <AppText color="textSecondary" variant="caption">
-                  Указать конкретное фото как эталон
+                  {t('camera.manualHint')}
                 </AppText>
               )}
             </View>
@@ -126,13 +129,13 @@ export function GhostReferenceModal({
 
           {manualMissing ? (
             <AppText color="textSecondary" variant="caption">
-              Выбранный эталон недоступен (удалён или скрыт). Выберите другой.
+              {t('camera.manualMissing')}
             </AppText>
           ) : null}
 
           <Pressable onPress={onClose} accessibilityRole="button" style={styles.close}>
             <AppText variant="subtitle" color="primary">
-              Готово
+              {t('common.done')}
             </AppText>
           </Pressable>
         </Pressable>

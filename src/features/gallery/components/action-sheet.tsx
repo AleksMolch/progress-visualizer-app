@@ -14,6 +14,7 @@ import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/app-text';
+import { useI18n } from '@/i18n';
 import { radii, spacing } from '@/theme';
 import { useAppTheme } from '@/theme/ThemeProvider';
 
@@ -45,6 +46,7 @@ interface ActionSheetProps {
 
 export function ActionSheet({ visible, title, actions, onClose }: ActionSheetProps) {
   const { colors } = useAppTheme();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
 
   return (
@@ -83,7 +85,7 @@ export function ActionSheet({ visible, title, actions, onClose }: ActionSheetPro
 
           <Pressable onPress={onClose} accessibilityRole="button" style={styles.cancel}>
             <AppText variant="subtitle" color="primary">
-              Отмена
+              {t('common.cancel')}
             </AppText>
           </Pressable>
         </Pressable>

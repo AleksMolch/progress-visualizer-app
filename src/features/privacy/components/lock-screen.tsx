@@ -15,6 +15,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/app-button';
 import { AppText } from '@/components/ui/app-text';
+import { useI18n } from '@/i18n';
 import { authenticateWithBiometrics } from '@/storage/biometrics';
 import { spacing } from '@/theme';
 import { useAppTheme } from '@/theme/ThemeProvider';
@@ -26,6 +27,7 @@ interface LockScreenProps {
 
 export function LockScreen({ onUnlock }: LockScreenProps) {
   const { colors } = useAppTheme();
+  const { t } = useI18n();
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,10 +40,10 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
       if (success) {
         onUnlock();
       } else {
-        setError('Не удалось подтвердить. Попробуйте ещё раз.');
+        setError(t('lock.failed'));
       }
     } catch {
-      setError('Не удалось запустить биометрию. Попробуйте ещё раз.');
+      setError(t('lock.error'));
     } finally {
       setIsAuthenticating(false);
     }
@@ -50,9 +52,9 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.content}>
-        <AppText variant="title">Приложение заблокировано</AppText>
+        <AppText variant="title">{t('lock.title')}</AppText>
         <AppText color="textSecondary" style={styles.description}>
-          Для доступа к фотографиям подтвердите личность.
+          {t('lock.description')}
         </AppText>
 
         {error ? (
@@ -62,7 +64,7 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
         ) : null}
 
         <AppButton
-          label="Разблокировать"
+          label={t('lock.unlock')}
           onPress={handleUnlock}
           loading={isAuthenticating}
         />

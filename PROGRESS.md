@@ -7,25 +7,20 @@
 
 ## ⚠️ ВАЖНО ДЛЯ СЛЕДУЮЩЕЙ СЕССИИ (читай первым)
 
-- **Где мы сейчас**: выполнена продуктовая итерация UI по
-  `AI_CODER_PRODUCT_UI_REDESIGN_TASK.md` (см. запись 2026-09-15 ниже): три
-  оформления (`modern`/`simple`/`neumorphism`), единое нижнее меню с центральной
-  кнопкой камеры/затвора, ghost reference per project (latest/first/manual),
-  экран проекта как история (summary + первое/последнее + quick compare + timeline
-  по месяцам), заметки/избранное/скрытие фото, compare-экран на 3 режима без
-  экспорта файла. Все проверки зелёные (typecheck/lint/test/expo-doctor/export).
-- **Следующая задача**: ручной визуальный ревью владельцем (темы, анимация
-  затвора, жесты tap-to-boost и слайдера сравнения) — модель не читает скриншоты.
-  Затем: замена `bundleIdentifier` и публикация.
-- **Рабочая папка проекта**: `/Users/aleks/dev/progress-visualizer-app`
-  (ASCII-путь).
+- **Где мы сейчас**: выполнена продуктовая итерация UI + пакет UX-исправлений
+  (`AI_CODER_FIXES_EMPTY_SLIDER_NOTES_AUDIO_I18N.md`, см. запись 2026-09-16 ниже):
+  i18n на 5 языков (ru/en/zh-Hans/kk/es), empty states, фикс геометрии слайдера
+  сравнения, кнопка «Отмена», редактор заметки с клавиатурой, скрытие «Простого» на
+  Android, термин «Таймлапс». Все проверки зелёные (typecheck/lint/test/expo-doctor/export).
+- **Следующая задача**: ручная приёмка на реальных устройствах (звук затвора, слайдер,
+  клавиатура, жесты) + проверка переводов носителями; затем bundleIdentifier и публикация.
+- **Рабочая папка проекта**: `/Users/aleks/dev/progress-visualizer-app` (ASCII-путь).
 - **Git remote**: origin = `https://github.com/AleksMolch/progress-visualizer-app.git`.
-- **PATH**: `pod`, `brew` и CocoaPods живут в `/opt/homebrew/bin`.
-  Перед `npx expo prebuild` / `run:ios` / `pod install`:
-  `export PATH="/opt/homebrew/bin:$PATH"`.
+- **PATH**: `pod`/`brew`/CocoaPods — в `/opt/homebrew/bin`; перед prebuild/run:ios/pod install
+  выполни `export PATH="/opt/homebrew/bin:$PATH"`.
 - **Окружение**: Node v22.18.0, Xcode 26.6, CocoaPods 1.17.0, Apple M4.
 - **Запуск**: native-модули — только dev build (`npx expo run:ios`), НЕ Expo Go.
-  Metro на :8081 (см. `/tmp/metro.log`); если нет — `npx expo start --port 8081`.
+  Metro на :8081 (`/tmp/metro.log`). EAS APK — см. запись 2026-09-16.
 
 ## Шаблон записи
 
@@ -37,6 +32,83 @@
 - Результат проверок:
 - Известные проблемы:
 - Следующий шаг:
+
+---
+
+### 2026-09-16 — UX-исправления: i18n, слайдер, клавиатура, звук, Android-темы
+
+- Что сделано: (1) i18n на 5 языков (ru/en/zh-Hans/kk/es) — собственный движок
+  (интерполяция, плюрализация, fallback en, полнота через типы + тест), селектор языка
+  в настройках, определение языка устройства при первом запуске; (2) empty states
+  («Наблюдайте за изменениями» / первое фото / один снимок / все скрыты); (3) фикс
+  геометрии слайдера сравнения (clip вместо сжатия, позиция сохраняется при повороте);
+  (4) кнопка «Отмена» в быстром сравнении на месте «Выбрать»; (5) редактор заметки:
+  tap по фону скрывает только клавиатуру, подтверждение при отмене с изменениями,
+  KeyboardAvoidingView; (6) Android скрывает «Простой» (simple/minimalism → modern);
+  (7) «Timelapse» → «Таймлапс»; (8) звук затвора — исследование (системный, ограничение
+  зафиксировано, без изменений кода).
+- Какие файлы созданы или изменены (ключевые):
+  - i18n: `src/i18n/{index,locale,types}.ts`, `locales/{en,ru,zh-Hans,kk,es}.ts`,
+    `i18n.test.ts`
+  - модели/store: `models/settings.ts` (+language), `store/settingsStore.ts`
+    (+language/миграция Android), `theme/design-themes.ts` (+resolveDesignThemeId,
+    Android без simple)
+  - экраны переведены на t(): `app/_layout.tsx`, `(tabs)/_layout.tsx`,
+    `(tabs)/{index,camera,settings}.tsx`, `project/[id]/{index,compare,timelapse}.tsx`,
+    `viewer/[photoId].tsx`, `support.tsx`
+  - компоненты: `main-tab-bar.tsx`, `overlay-controls.tsx`, `ghost-reference-modal.tsx`,
+    `photo-picker-sheet.tsx`, `action-sheet.tsx`, `note-editor-modal.tsx` (переписан),
+    `compare-slider.tsx` (переписан), `compare-overlay/side-by-side.tsx`,
+    `appearance-settings-card.tsx`, `language-settings-card.tsx` (новый),
+    `reminder-settings-card.tsx`, `project-list-item.tsx`, `project-form-modal.tsx`,
+    `lock-screen.tsx`
+  - utils: `dates.ts` (formatDate/formatMonthLabel locale-aware, убран formatDays),
+    `progress.ts` (groupPhotosByMonth locale)
+  - docs: `DECISIONS.md`, `README.md`, `README_staff.md`, `MAINTENANCE_AI.md`
+- Какие команды запускались:
+  - `npm run typecheck`, `npm run lint`, `npm test`, `npx expo-doctor`
+  - `npx expo export --platform ios` (проверка бандла)
+- Результат проверок:
+  - typecheck/lint: чисто; тесты: 169/169 (было 145); expo-doctor: 21/21
+  - бандл iOS: собран без ошибок
+- Известные проблемы:
+  - Звук затвора — системный (`expo-camera`, `shutterSound` default true); громкость
+    через API не регулируется; нужна проверка на реальных iOS/Android (эмулятор не
+    слышно) — решение зафиксировано, код не менялся.
+  - Слайдер/клавиатура/жесты — ручная приёмка на устройстве (модель не читает скриншоты).
+  - Переводы zh-Hans/kk/es не проверены носителем (полнота — компилятор + тест).
+- Следующий шаг: ручная приёмка на устройствах, проверка переводов, затем bundleIdentifier
+  и публикация.
+
+---
+
+### 2026-09-17 — Переключатель языка (dropdown) + русский по умолчанию
+
+- Что сделано: (1) русский язык по умолчанию (`DEFAULT_SETTINGS.language = 'ru'`,
+  убрано определение языка устройства); (2) компонент `LanguageSwitcher` — компактная
+  кнопка (Globe + короткий код + chevron) с dropdown (Modal + measureInWindow), варианты
+  clean/glass/minimal, пункты с нативным названием + кодом + check-иконкой, без флагов,
+  доступный (aria/hover/focus/клавиатура); (3) переключатель встроен в Настройки вместо
+  прежнего списка `LanguageSettingsCard` (удалён); (4) короткие коды `LANGUAGE_SHORT`.
+- Какие файлы созданы или изменены:
+  - создан: `src/features/settings/components/language-switcher.tsx`
+  - удалён: `src/features/settings/components/language-settings-card.tsx`
+  - изменены: `src/i18n/locale.ts` (+LANGUAGE_SHORT, −detectDeviceLocale),
+    `src/i18n/index.ts` (реэкспорт), `src/store/settingsStore.ts` (default ru),
+    `src/store/settingsStore.test.ts`, `src/i18n/i18n.test.ts` (+метаданные языков),
+    `src/i18n/locales/*.ts` (+language.change), `src/app/(tabs)/settings.tsx`,
+    `DECISIONS.md`, `README.md`, `README_staff.md`, `MAINTENANCE_AI.md`
+- Какие команды запускались:
+  - `npm run typecheck`, `npm run lint`, `npm test`, `npx expo export --platform ios`
+  - перезапуск Metro (`--clear`) + relaunch на симуляторе
+- Результат проверок:
+  - typecheck/lint: чисто; тесты: 171/171 (было 169); экспорт iOS: собран без ошибок;
+    запуск на симуляторе без redbox/ошибок
+- Известные проблемы:
+  - Визуальная проверка dropdown (позиция, hover/focus, варианты glass/minimal) — ручная
+    (модель не читает скриншоты).
+- Следующий шаг: ручная приёмка переключателя на устройстве/web; далее bundleIdentifier
+  и публикация.
 
 ---
 

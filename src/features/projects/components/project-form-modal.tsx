@@ -18,6 +18,7 @@ import { Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/app-button';
 import { AppText } from '@/components/ui/app-text';
+import { useI18n } from '@/i18n';
 import { radii, spacing } from '@/theme';
 import { useAppTheme } from '@/theme/ThemeProvider';
 
@@ -39,6 +40,7 @@ export function ProjectFormModal({
   onCancel,
 }: ProjectFormModalProps) {
   const { colors } = useAppTheme();
+  const { t } = useI18n();
   const [name, setName] = useState(initialName);
 
   // Имя не должно быть пустым или состоять только из пробелов.
@@ -63,7 +65,7 @@ export function ProjectFormModal({
           <TextInput
             value={name}
             onChangeText={setName}
-            placeholder="Название проекта"
+            placeholder={t('projects.namePlaceholder')}
             placeholderTextColor={colors.textSecondary}
             autoFocus
             returnKeyType="done"
@@ -75,8 +77,8 @@ export function ProjectFormModal({
           />
 
           <View style={styles.actions}>
-            <AppButton label="Отмена" variant="secondary" onPress={onCancel} />
-            <AppButton label="Сохранить" onPress={handleSave} disabled={!canSave} />
+            <AppButton label={t('common.cancel')} variant="secondary" onPress={onCancel} />
+            <AppButton label={t('common.save')} onPress={handleSave} disabled={!canSave} />
           </View>
         </Pressable>
       </Pressable>

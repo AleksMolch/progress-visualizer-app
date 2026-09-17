@@ -2,20 +2,22 @@
  * Назначение: секция настроек «Оформление» и «Цветовой режим».
  *
  * Функции:
- * - выбор визуального оформления из трёх вариантов (с искусственным превью);
+ * - выбор визуального оформления из доступных на платформе вариантов
+ *   (с искусственным превью); на Android «Простой» скрыт;
  * - выбор цветового режима: системный / светлый / тёмный;
  * - выбор применяется сразу через settingsStore и персистится.
  *
  * Слой: UI (/src/features/settings/components). Палитру оформлений берёт из
- * DESIGN_THEMES; список платформы — getPlatformThemeIds. Не монтирует настоящий
- * навигатор/камеру внутри превью.
+ * DESIGN_THEMES; список платформы — getPlatformThemeIds; тексты — через useI18n.
  */
 
 import { Ionicons } from '@expo/vector-icons';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/app-text';
-import { type ThemeMode } from '@/models/settings';
+import { type MessageKey } from '@/i18n';
+import { useI18n } from '@/i18n';
+import { type DesignThemeId, type ThemeMode } from '@/models/settings';
 import { useSettingsStore } from '@/store/settingsStore';
 import { radii, spacing } from '@/theme';
 import {
@@ -26,31 +28,45 @@ import {
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { triggerHaptic } from '@/utils/haptics';
 
-// Варианты цветового режима с подписями.
-const THEME_MODES: { value: ThemeMode; label: string }[] = [
-  { value: 'system', label: 'Как в системе' },
-  { value: 'light', label: 'Светлый' },
-  { value: 'dark', label: 'Тёмный' },
+// Ключи названий и описаний оформлений (по id).
+const THEME_LABEL_KEYS: Record<DesignThemeId, MessageKey> = {
+  modern: 'settings.modern',
+  simple: 'settings.simple',
+  neumorphism: 'settings.neumorphism',
+};
+const THEME_DESC_KEYS: Record<DesignThemeId, MessageKey> = {
+  modern: 'settings.modernDesc',
+  simple: 'settings.simpleDesc',
+  neumorphism: 'settings.neumorphismDesc',
+};
+
+// Варианты цветового режима с ключами подписей.
+const THEME_MODES: { value: ThemeMode; key: MessageKey }[] = [
+  { value: 'system', key: 'settings.system' },
+  { value: 'light', key: 'settings.light' },
+  { value: 'dark', key: 'settings.dark' },
 ];
 
 export function AppearanceSettingsCard() {
   const { colors, metrics } = useAppTheme();
+  const { t } = useI18n();
   const designTheme = useSettingsStore((s) => s.settings.designTheme);
   const themeMode = useSettingsStore((s) => s.settings.themeMode);
   const hapticsEnabled = useSettingsStore((s) => s.settings.hapticsEnabled);
   const updateSettings = useSettingsStore((s) => s.updateSettings);
 
-  // Доступные на этой платформе оформления (одинаковый набор: три стиля).
+  // Доступные на этой платформе оформления.
   const platformThemeIds = getPlatformThemeIds(Platform.OS);
 
   return (
     <View style={styles.block}>
-      <AppText variant="subtitle">Оформление</AppText>
+      <AppText variant="subtitle">{t('settings.appearance')}</AppText>
 
       <View style={styles.themeList}>
         {platformThemeIds.map((id) => {
           const def = DESIGN_THEMES[id];
           const selected = designTheme === id;
+          const label = t(THEME_LABEL_KEYS[id]);
           return (
             <Pressable
               key={id}
@@ -60,7 +76,7 @@ export function AppearanceSettingsCard() {
               }}
               accessibilityRole="button"
               accessibilityState={{ selected }}
-              accessibilityLabel={`Оформление: ${def.label}`}
+              accessibilityLabel={label}
               style={[
                 styles.themeCard,
                 {
@@ -71,9 +87,9 @@ export function AppearanceSettingsCard() {
               ]}>
               <ThemePreview def={def} />
               <View style={styles.themeText}>
-                <AppText variant="subtitle">{def.label}</AppText>
+                <AppText variant="subtitle">{label}</AppText>
                 <AppText color="textSecondary" variant="caption">
-                  {def.description}
+                  {t(THEME_DESC_KEYS[id])}
                 </AppText>
               </View>
               <Ionicons
@@ -87,10 +103,10 @@ export function AppearanceSettingsCard() {
       </View>
 
       <AppText color="textSecondary" variant="caption">
-        «Современный» выглядит нативно: Liquid Glass на iOS и Material Design на Android.
+        {t('settings.modernNote')}
       </AppText>
 
-      <AppText variant="subtitle">Цветовой режим</AppText>
+      <AppText variant="subtitle">{t('settings.colorMode')}</AppText>
       <View style={styles.modeRow}>
         {THEME_MODES.map((mode) => {
           const selected = themeMode === mode.value;
@@ -100,7 +116,7 @@ export function AppearanceSettingsCard() {
               onPress={() => updateSettings({ themeMode: mode.value })}
               accessibilityRole="button"
               accessibilityState={{ selected }}
-              accessibilityLabel={`Цветовой режим: ${mode.label}`}
+              accessibilityLabel={t(mode.key)}
               style={[
                 styles.modeChip,
                 {
@@ -111,7 +127,7 @@ export function AppearanceSettingsCard() {
               <AppText
                 variant="caption"
                 color={selected ? 'primaryText' : 'text'}>
-                {mode.label}
+                {t(mode.key)}
               </AppText>
             </Pressable>
           );

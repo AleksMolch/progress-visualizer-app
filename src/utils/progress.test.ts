@@ -30,18 +30,26 @@ describe('getDaysBetweenPhotos', () => {
 });
 
 describe('groupPhotosByMonth', () => {
-  it('группирует фото по месяцам, сохраняя порядок', () => {
-    const groups = groupPhotosByMonth([
-      photo('sep2', Date.UTC(2026, 8, 20)),
-      photo('sep1', Date.UTC(2026, 8, 5)),
-      photo('aug', Date.UTC(2026, 7, 15)),
-    ]);
+  it('группирует фото по месяцам, сохраняя порядок (ru)', () => {
+    const groups = groupPhotosByMonth(
+      [
+        photo('sep2', Date.UTC(2026, 8, 20)),
+        photo('sep1', Date.UTC(2026, 8, 5)),
+        photo('aug', Date.UTC(2026, 7, 15)),
+      ],
+      'ru',
+    );
 
     expect(groups).toHaveLength(2);
     expect(groups[0].label).toBe('Сентябрь 2026');
     expect(groups[0].photos.map((p) => p.id)).toEqual(['sep2', 'sep1']);
     expect(groups[1].label).toBe('Август 2026');
     expect(groups[1].photos.map((p) => p.id)).toEqual(['aug']);
+  });
+
+  it('по умолчанию использует английские названия месяцев', () => {
+    const groups = groupPhotosByMonth([photo('sep', Date.UTC(2026, 8, 1))]);
+    expect(groups[0].label).toBe('September 2026');
   });
 
   it('возвращает пустой массив для пустого входа', () => {

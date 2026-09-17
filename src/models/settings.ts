@@ -10,6 +10,9 @@
 /** Режим темы оформления. */
 export type ThemeMode = 'system' | 'light' | 'dark';
 
+/** Язык интерфейса приложения (id локали). */
+export type AppLanguage = 'ru' | 'en' | 'zh-Hans' | 'kk' | 'es';
+
 /**
  * Стабильные идентификаторы визуального оформления приложения.
  *
@@ -25,6 +28,8 @@ export interface AppSettings {
   designTheme: DesignThemeId;
   /** Режим темы: системная / светлая / тёмная. */
   themeMode: ThemeMode;
+  /** Язык интерфейса. */
+  language: AppLanguage;
   /** Включён ли тактильный отклик (haptics). */
   hapticsEnabled: boolean;
   /** Включён ли ghost overlay (показ последнего фото поверх камеры). */

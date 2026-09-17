@@ -12,6 +12,7 @@ import { Image } from 'expo-image';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/app-text';
+import { useI18n } from '@/i18n';
 
 interface CompareSideBySideProps {
   /** Путь к «предыдущему» фото. */
@@ -30,13 +31,15 @@ export function CompareSideBySide({
   beforeLabel,
   afterLabel,
 }: CompareSideBySideProps) {
+  const { t } = useI18n();
   return (
     <View style={styles.row}>
       <View style={styles.pane}>
         <Image source={{ uri: beforeUri }} style={styles.image} contentFit="cover" />
         <View style={styles.caption}>
           <AppText variant="caption" color="primaryText">
-            До{beforeLabel ? ` · ${beforeLabel}` : ''}
+            {t('compare.before')}
+            {beforeLabel ? ` · ${beforeLabel}` : ''}
           </AppText>
         </View>
       </View>
@@ -45,7 +48,8 @@ export function CompareSideBySide({
         <Image source={{ uri: afterUri }} style={styles.image} contentFit="cover" />
         <View style={styles.caption}>
           <AppText variant="caption" color="primaryText">
-            После{afterLabel ? ` · ${afterLabel}` : ''}
+            {t('compare.after')}
+            {afterLabel ? ` · ${afterLabel}` : ''}
           </AppText>
         </View>
       </View>

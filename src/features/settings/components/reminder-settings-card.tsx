@@ -16,6 +16,7 @@ import { Pressable, StyleSheet, Switch, View } from 'react-native';
 
 import { AppCard } from '@/components/ui/app-card';
 import { AppText } from '@/components/ui/app-text';
+import { useI18n } from '@/i18n';
 import {
   cancelDailyReminder,
   getNotificationPermission,
@@ -32,6 +33,7 @@ const REMINDER_TIME_PRESETS = ['09:00', '13:00', '18:00', '20:00'] as const;
 
 export function ReminderSettingsCard() {
   const { colors } = useAppTheme();
+  const { t } = useI18n();
   const remindersEnabled = useSettingsStore((s) => s.settings.remindersEnabled);
   const reminderTime = useSettingsStore((s) => s.settings.reminderTime);
   const updateSettings = useSettingsStore((s) => s.updateSettings);
@@ -86,9 +88,9 @@ export function ReminderSettingsCard() {
     <AppCard style={styles.card}>
       <View style={styles.row}>
         <View style={styles.rowText}>
-          <AppText variant="subtitle">Напоминания</AppText>
+          <AppText variant="subtitle">{t('settings.reminders')}</AppText>
           <AppText color="textSecondary" variant="caption">
-            Ежедневное напоминание сделать фото
+            {t('settings.remindersHint')}
           </AppText>
         </View>
         <Switch
@@ -127,7 +129,7 @@ export function ReminderSettingsCard() {
       {/* Подсказка, когда разрешение не выдано, но напоминания включены/включаются. */}
       {permissionGranted === false ? (
         <AppText color="textSecondary" variant="caption">
-          Уведомления запрещены. Включите их в настройках устройства.
+          {t('settings.remindersDenied')}
         </AppText>
       ) : null}
     </AppCard>

@@ -16,6 +16,7 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { BiometricsGate } from '@/features/privacy/components/biometrics-gate';
+import { useI18n } from '@/i18n';
 import { initializeStorage } from '@/storage/init';
 import { configureNotificationHandler } from '@/storage/notifications';
 import { ThemeProvider } from '@/theme/ThemeProvider';
@@ -28,6 +29,7 @@ configureNotificationHandler();
 
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
+  const { t } = useI18n();
 
   useEffect(() => {
     initializeStorage()
@@ -56,11 +58,11 @@ export default function RootLayout() {
               headerBackButtonDisplayMode: 'minimal',
             }}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="project/[id]/index" options={{ title: 'Проект' }} />
-            <Stack.Screen name="project/[id]/viewer/[photoId]" options={{ title: 'Фото' }} />
-            <Stack.Screen name="project/[id]/compare" options={{ title: 'Сравнение' }} />
-            <Stack.Screen name="project/[id]/timelapse" options={{ title: 'Timelapse' }} />
-            <Stack.Screen name="support" />
+            <Stack.Screen name="project/[id]/index" options={{ title: t('nav.project') }} />
+            <Stack.Screen name="project/[id]/viewer/[photoId]" options={{ title: t('nav.photo') }} />
+            <Stack.Screen name="project/[id]/compare" options={{ title: t('nav.compare') }} />
+            <Stack.Screen name="project/[id]/timelapse" options={{ title: t('nav.timelapse') }} />
+            <Stack.Screen name="support" options={{ title: t('nav.support') }} />
           </Stack>
         </BiometricsGate>
       </ThemeProvider>

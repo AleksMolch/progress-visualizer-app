@@ -2,12 +2,13 @@
  * Назначение: сравнение двух фото «до/после» перетаскиваемым разделителем.
  *
  * Функции:
- * - показывает «предыдущее» фото под «текущим»;
- * - вертикальный разделитель, который пользователь перетаскивает влево/вправо,
- *   чтобы увидеть нижнее фото;
- * - использует Reanimated + Gesture Handler (pan).
+ * - нижнее фото занимает всю область W × H;
+ * - верхнее фото отрисовано на всей области W × H (тот же масштаб и позиция);
+ * - разделитель меняет только ширину clipping-контейнера верхнего фото
+ *   (видимую область), НЕ масштаб и НЕ кадрирование верхнего изображения;
+ * - при повороте/изменении размера сохраняется относительная позиция разделителя.
  *
- * Слой: UI (/src/features/gallery/components). Файловую систему не трогает.
+ * Слой: UI (/src/features/gallery/components). Reanimated + Gesture Handler (pan).
  */
 
 import { Image } from 'expo-image';
@@ -28,31 +29,38 @@ interface CompareSliderProps {
 }
 
 export function CompareSlider({ beforeUri, afterUri }: CompareSliderProps) {
-  // Ширина контейнера (заполняется после layout).
-  const [width, setWidth] = useState(0);
+  // Фактический размер области сравнения (заполняется после layout).
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  // Относительная позиция разделителя (0..1), сохраняется при повороте/ресайзе.
+  const ratio = useSharedValue(0.5);
   // Позиция разделителя (shared value на UI-потоке).
   const dividerX = useSharedValue(0);
   const savedDividerX = useSharedValue(0);
 
-  // Устанавливаем начальную позицию разделителя по центру.
+  // При появлении/изменении области ставим разделитель по сохранённой доле.
   const onLayout = (event: LayoutChangeEvent) => {
-    const w = event.nativeEvent.layout.width;
-    setWidth(w);
-    dividerX.value = w / 2;
-    savedDividerX.value = w / 2;
+    const { width, height } = event.nativeEvent.layout;
+    setSize({ width, height });
+    dividerX.value = ratio.value * width;
+    savedDividerX.value = dividerX.value;
   };
 
-  // Pan: перетаскивание разделителя. runOnJS нужен, т.к. setWidth — JS-функция.
+  // Pan: перетаскивание разделителя. runOnJS не нужен — работаем на UI-потоке.
   const panGesture = Gesture.Pan()
     .onStart(() => {
       savedDividerX.value = dividerX.value;
     })
     .onUpdate((event) => {
-      dividerX.value = clamp(savedDividerX.value + event.translationX, 0, width);
+      dividerX.value = clamp(savedDividerX.value + event.translationX, 0, size.width);
+    })
+    .onEnd(() => {
+      if (size.width > 0) {
+        ratio.value = dividerX.value / size.width;
+      }
     });
 
-  // Верхнее фото обрезается по ширине до разделителя (левый край остаётся видимым).
-  const topStyle = useAnimatedStyle(() => ({
+  // Клип-контейнер верхнего фото: меняется только его ширина (видимая область).
+  const clipStyle = useAnimatedStyle(() => ({
     width: dividerX.value,
   }));
 
@@ -64,12 +72,17 @@ export function CompareSlider({ beforeUri, afterUri }: CompareSliderProps) {
   return (
     <GestureDetector gesture={panGesture}>
       <View style={styles.container} onLayout={onLayout}>
-        {/* Нижний слой — «до». */}
+        {/* Нижний слой — «до», на всю область. */}
         <Image source={{ uri: beforeUri }} style={StyleSheet.absoluteFill} contentFit="cover" />
 
-        {/* Верхний слой — «после», видимый слева от разделителя. */}
-        <Animated.View style={[styles.afterClip, topStyle]}>
-          <Image source={{ uri: afterUri }} style={styles.afterImage} contentFit="cover" />
+        {/* Клип верхнего слоя: полная высота, ширина = позиция разделителя. */}
+        <Animated.View style={[styles.afterClip, clipStyle]}>
+          {/* Верхнее фото отрисовано на всю область (width/height = size), не сжимается. */}
+          <Image
+            source={{ uri: afterUri }}
+            style={[styles.afterImage, { width: size.width, height: size.height }]}
+            contentFit="cover"
+          />
         </Animated.View>
 
         {/* Линия разделителя с ручкой. */}
@@ -88,12 +101,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
   },
   afterClip: {
-    ...StyleSheet.absoluteFill,
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
     overflow: 'hidden',
   },
-  // Верхнее фото фиксировано по размеру контейнера — обрезается только обёрткой.
+  // Верхнее фото фиксировано по размеру области — обрезается только обёрткой.
   afterImage: {
-    ...StyleSheet.absoluteFill,
+    position: 'absolute',
+    top: 0,
+    left: 0,
   },
   divider: {
     position: 'absolute',

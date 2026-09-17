@@ -6,7 +6,8 @@
  * - блок «Первое / Последнее» (сравнение первой и последней точки);
  * - блок «Быстрое сравнение» (Flow A): выбор двух снимков кружками 1/2;
  * - timeline фото с группировкой по месяцам и бейджами (эталон/избранное/скрытое);
- * - FAB «+» для нового снимка в текущем проекте.
+ * - FAB «+» для нового снимка в текущем проекте;
+ * - отдельные empty states: нет фото / все снимки скрыты / проект не найден.
  *
  * Слой: UI (/src/app). Фото отображаются через expo-image; файловую систему
  * не трогает напрямую — удаление идёт через useProjectStore.
@@ -22,12 +23,13 @@ import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppScreen } from '@/components/ui/app-screen';
 import { AppText } from '@/components/ui/app-text';
+import { useI18n } from '@/i18n';
 import { useAppStore } from '@/store/appStore';
 import { useProjectStore } from '@/store/projectStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { radii, spacing } from '@/theme';
 import { useAppTheme } from '@/theme/ThemeProvider';
-import { formatDate, formatDays } from '@/utils/dates';
+import { formatDate } from '@/utils/dates';
 import { advanceQuickCompare, getDaysBetweenPhotos, groupPhotosByMonth } from '@/utils/progress';
 import { getFirstVisiblePhoto, getLatestVisiblePhoto, getProjectPhotos } from '@/utils/photos';
 import { getReferenceMode, resolveReferencePhoto } from '@/utils/reference';
@@ -37,6 +39,7 @@ export default function ProjectScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useAppTheme();
+  const { t, locale } = useI18n();
 
   const project = useProjectStore((s) => s.projects.find((p) => p.id === id));
   const photos = useProjectStore((s) => s.photos);
@@ -54,19 +57,25 @@ export default function ProjectScreen() {
   // Все фото проекта, свежие сверху.
   const projectPhotos = useMemo(() => getProjectPhotos(photos, id), [photos, id]);
 
+  // Видимые и скрытые фото.
+  const visiblePhotos = useMemo(() => projectPhotos.filter((p) => !p.isHidden), [projectPhotos]);
+  const hiddenCount = projectPhotos.length - visiblePhotos.length;
+
   // Фото для timeline: видимые (или все, если включён показ скрытых).
   const timelinePhotos = useMemo(
-    () => (showHidden ? projectPhotos : projectPhotos.filter((p) => !p.isHidden)),
-    [projectPhotos, showHidden],
+    () => (showHidden ? projectPhotos : visiblePhotos),
+    [projectPhotos, visiblePhotos, showHidden],
   );
 
   // Группировка по месяцам (вход уже отсортирован свежие сверху).
-  const monthGroups = useMemo(() => groupPhotosByMonth(timelinePhotos), [timelinePhotos]);
-
-  // Секции для SectionList (MonthGroup → SectionListData).
   const sections = useMemo(
-    () => monthGroups.map((g) => ({ key: g.key, label: g.label, data: g.photos })),
-    [monthGroups],
+    () =>
+      groupPhotosByMonth(timelinePhotos, locale).map((g) => ({
+        key: g.key,
+        label: g.label,
+        data: g.photos,
+      })),
+    [timelinePhotos, locale],
   );
 
   // Первая и последняя видимые точки для блока «Первое / Последнее».
@@ -79,13 +88,17 @@ export default function ProjectScreen() {
   const referencePhoto = project ? resolveReferencePhoto(project, photos) : null;
   const referenceMode = project ? getReferenceMode(project) : 'latest';
   const referenceLabel =
-    referenceMode === 'first' ? 'Первое фото' : referenceMode === 'manual' ? 'Эталон вручную' : 'Последнее фото';
+    referenceMode === 'first'
+      ? t('project.sourceFirst')
+      : referenceMode === 'manual'
+        ? t('project.sourceManual')
+        : t('project.sourceLatest');
 
   // Удаление фото с подтверждением.
   const handleDeletePhoto = (photoId: string) => {
-    Alert.alert('Удалить фото?', 'Фотография будет удалена без возможности восстановления.', [
-      { text: 'Отмена', style: 'cancel' },
-      { text: 'Удалить', style: 'destructive', onPress: () => deletePhoto(photoId) },
+    Alert.alert(t('project.deletePhotoTitle'), t('project.deletePhotoMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: () => deletePhoto(photoId) },
     ]);
   };
 
@@ -108,7 +121,6 @@ export default function ProjectScreen() {
   const handleQuickSelect = (photoId: string) => {
     const next = advanceQuickCompare(selection, photoId);
     if (next.length === 2) {
-      // Выбраны два снимка: открываем сравнение (порядок 1 = До, 2 = После).
       openCompare(next[0], next[1]);
       setSelection([]);
       return;
@@ -116,7 +128,7 @@ export default function ProjectScreen() {
     setSelection(next);
   };
 
-  // Выход из режима выбора пары.
+  // Выход из режима выбора пары (снимает 1/2 и остаётся на экране).
   const cancelSelection = () => {
     setSelectionMode(false);
     setSelection([]);
@@ -136,112 +148,121 @@ export default function ProjectScreen() {
     return (
       <AppScreen>
         <View style={styles.empty}>
-          <AppText variant="title">Проект не найден</AppText>
-          <AppText color="textSecondary">Возможно, он был удалён.</AppText>
+          <AppText variant="title">{t('project.notFound')}</AppText>
+          <AppText color="textSecondary">{t('project.notFoundHint')}</AppText>
         </View>
       </AppScreen>
     );
   }
 
+  const headerRight = () =>
+    projectPhotos.length >= 2 ? (
+      <AppButton
+        label={t('nav.timelapse')}
+        variant="ghost"
+        onPress={() => router.push(`/project/${id}/timelapse`)}
+      />
+    ) : null;
+
   return (
     <AppScreen>
-      <Stack.Screen
-        options={{
-          title: project.name,
-          headerRight: () =>
-            projectPhotos.length >= 2 ? (
-              <AppButton
-                label="Timelapse"
-                variant="ghost"
-                onPress={() => router.push(`/project/${id}/timelapse`)}
-              />
-            ) : null,
-        }}
-      />
+      <Stack.Screen options={{ title: project.name, headerRight }} />
 
-      <SectionList
-        sections={sections}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.content}
-        stickySectionHeadersEnabled={false}
-        ListHeaderComponent={
-          <View style={styles.headerBlocks}>
-            <SummaryBlock
-              name={project.name}
-              visibleCount={firstPhoto ? timelinePhotos.length : 0}
-              firstTakenAt={firstPhoto?.takenAt}
-              lastTakenAt={lastPhoto?.takenAt}
-              daysBetween={daysBetween}
-              referenceLabel={referenceLabel}
-              onCapture={handleAddPhoto}
-            />
-
-            {firstPhoto && lastPhoto ? (
-              <FirstLastBlock
-                firstUri={firstPhoto.uri}
-                lastUri={lastPhoto.uri}
-                daysBetween={daysBetween}
-                onPress={() => openCompare(firstPhoto.id, lastPhoto.id)}
-              />
-            ) : null}
-
-            <QuickCompareBlock
-              enabled={timelinePhotos.length >= 2}
-              selectionMode={selectionMode}
-              selectionCount={selection.length}
-              onToggle={() => {
-                if (timelinePhotos.length < 2) {
-                  return;
-                }
-                setSelectionMode((v) => !v);
-                setSelection([]);
-              }}
-              onCancel={cancelSelection}
-            />
-
-            <View style={styles.toolbar}>
-              <AppText variant="subtitle">История</AppText>
-              <Pressable
-                onPress={() => setShowHidden((v) => !v)}
-                accessibilityRole="button"
-                accessibilityState={{ selected: showHidden }}
-                style={styles.hiddenToggle}>
-                <AppText variant="caption" color="primary">
-                  {showHidden ? 'Скрыть неудачные' : 'Показать скрытые'}
-                </AppText>
-              </Pressable>
-            </View>
-          </View>
-        }
-        renderSectionHeader={({ section }) => (
-          <AppText variant="subtitle" style={[styles.monthHeader, { color: colors.primary }]}>
-            {section.label}
+      {/* Empty state: нет фото вообще. */}
+      {projectPhotos.length === 0 ? (
+        <View style={styles.empty}>
+          <AppText variant="title">{t('project.noPhotosTitle')}</AppText>
+          <AppText color="textSecondary" style={styles.emptyText}>
+            {t('project.firstPhotoHint')}
           </AppText>
-        )}
-        renderItem={({ item }) => (
-          <PhotoRow
-            photo={item}
-            isReference={item.id === referencePhoto?.id}
-            selectionNumber={selectionMode ? selection.indexOf(item.id) + 1 : 0}
-            onPress={() => handlePhotoPress(item.id)}
-            onDelete={() => handleDeletePhoto(item.id)}
-          />
-        )}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <AppText variant="title">Пока нет фотографий</AppText>
-            <AppText color="textSecondary" style={styles.emptyText}>
-              Сделайте первый снимок на вкладке «Камера».
+          <AppButton label={t('project.firstShotButton')} onPress={handleAddPhoto} />
+        </View>
+      ) : (
+        <SectionList
+          sections={sections}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.content}
+          stickySectionHeadersEnabled={false}
+          ListHeaderComponent={
+            <View style={styles.headerBlocks}>
+              <SummaryBlock
+                name={project.name}
+                visibleCount={visiblePhotos.length}
+                firstTakenAt={firstPhoto?.takenAt}
+                lastTakenAt={lastPhoto?.takenAt}
+                daysBetween={daysBetween}
+                referenceLabel={referenceLabel}
+                onCapture={handleAddPhoto}
+              />
+
+              {firstPhoto && lastPhoto ? (
+                <FirstLastBlock
+                  firstUri={firstPhoto.uri}
+                  lastUri={lastPhoto.uri}
+                  daysBetween={daysBetween}
+                  onPress={() => openCompare(firstPhoto.id, lastPhoto.id)}
+                />
+              ) : null}
+
+              <QuickCompareBlock
+                visibleCount={visiblePhotos.length}
+                selectionMode={selectionMode}
+                selectionCount={selection.length}
+                onToggle={() => {
+                  setSelectionMode((v) => !v);
+                  setSelection([]);
+                }}
+                onCancel={cancelSelection}
+                onCapture={handleAddPhoto}
+              />
+
+              <View style={styles.toolbar}>
+                <AppText variant="subtitle">{t('project.history')}</AppText>
+                {hiddenCount > 0 ? (
+                  <Pressable
+                    onPress={() => setShowHidden((v) => !v)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: showHidden }}
+                    style={styles.hiddenToggle}>
+                    <AppText variant="caption" color="primary">
+                      {showHidden ? t('project.hideRejected') : t('project.showHidden')}
+                    </AppText>
+                  </Pressable>
+                ) : null}
+              </View>
+            </View>
+          }
+          renderSectionHeader={({ section }) => (
+            <AppText variant="subtitle" style={[styles.monthHeader, { color: colors.primary }]}>
+              {section.label}
             </AppText>
-          </View>
-        }
-      />
+          )}
+          renderItem={({ item }) => (
+            <PhotoRow
+              photo={item}
+              isReference={item.id === referencePhoto?.id}
+              selectionNumber={selectionMode ? selection.indexOf(item.id) + 1 : 0}
+              onPress={() => handlePhotoPress(item.id)}
+              onDelete={() => handleDeletePhoto(item.id)}
+            />
+          )}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <AppText variant="title">{t('project.noPhotosTitle')}</AppText>
+              <AppText color="textSecondary" style={styles.emptyText}>
+                {t('project.allHiddenHint')}
+              </AppText>
+              <AppButton label={t('project.showHidden')} variant="secondary" onPress={() => setShowHidden(true)} />
+            </View>
+          }
+        />
+      )}
 
       <Pressable
         onPress={handleAddPhoto}
         accessibilityRole="button"
-        accessibilityLabel="Сделать новый снимок в этом проекте"
-        accessibilityHint="Откроет камеру и выберет текущий проект"
+        accessibilityLabel={t('project.takeShot')}
+        accessibilityHint={t('project.firstPhotoHint')}
         style={[styles.fab, { backgroundColor: colors.primary }]}>
         <Ionicons name="add" size={28} color={colors.primaryText} />
       </Pressable>
@@ -269,22 +290,28 @@ function SummaryBlock({
   referenceLabel: string;
   onCapture: () => void;
 }) {
+  const { t, locale } = useI18n();
   return (
     <AppCard style={styles.summary}>
       <AppText variant="title">{name}</AppText>
       <AppText color="textSecondary">
-        {visibleCount === 0 ? 'Пока нет снимков' : `${visibleCount} фото`}
+        {visibleCount === 0
+          ? t('project.noSnapshots')
+          : t('projects.photoCount', { count: visibleCount })}
       </AppText>
       {firstTakenAt && lastTakenAt ? (
         <AppText color="textSecondary" variant="caption">
-          {formatDate(firstTakenAt)} → {formatDate(lastTakenAt)}
-          {daysBetween !== null ? ` · ${formatDays(daysBetween)}` : ''}
+          {t('project.period', {
+            from: formatDate(firstTakenAt, locale),
+            to: formatDate(lastTakenAt, locale),
+          })}
+          {daysBetween !== null ? ` · ${t('time.days', { count: daysBetween })}` : ''}
         </AppText>
       ) : null}
       <AppText color="textSecondary" variant="caption">
-        Источник призрака: {referenceLabel}
+        {t('project.sourceGhost', { source: referenceLabel })}
       </AppText>
-      <AppButton label="Сделать снимок" onPress={onCapture} />
+      <AppButton label={t('project.takeShot')} onPress={onCapture} />
     </AppCard>
   );
 }
@@ -304,15 +331,19 @@ function FirstLastBlock({
   onPress: () => void;
 }) {
   const { colors } = useAppTheme();
+  const { t } = useI18n();
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel="Сравнить первое и последнее фото">
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={t('project.compareFirstLast')}>
       <AppCard style={styles.firstLast}>
         <View style={styles.firstLastRow}>
           <View style={styles.firstLastPane}>
             <Image source={{ uri: firstUri }} style={styles.firstLastImage} contentFit="cover" />
             <View style={styles.caption}>
               <AppText variant="caption" color="primaryText">
-                Первое
+                {t('project.first')}
               </AppText>
             </View>
           </View>
@@ -321,13 +352,13 @@ function FirstLastBlock({
             <Image source={{ uri: lastUri }} style={styles.firstLastImage} contentFit="cover" />
             <View style={styles.caption}>
               <AppText variant="caption" color="primaryText">
-                Последнее
+                {t('project.last')}
               </AppText>
             </View>
           </View>
         </View>
         <AppText variant="caption" color="textSecondary" style={{ textAlign: 'center' }}>
-          {daysBetween !== null ? `${formatDays(daysBetween)} между снимками` : ''}
+          {daysBetween !== null ? t('project.daysBetween', { count: daysBetween }) : ''}
         </AppText>
       </AppCard>
     </Pressable>
@@ -335,54 +366,62 @@ function FirstLastBlock({
 }
 
 /**
- * Блок «Быстрое сравнение» (Flow A).
+ * Блок «Быстрое сравнение» (Flow A). Кнопка «Выбрать»/«Отмена» занимает одно
+ * место (правая сторона карточки), не выходя за её границы на узких экранах.
  */
 function QuickCompareBlock({
-  enabled,
+  visibleCount,
   selectionMode,
   selectionCount,
   onToggle,
   onCancel,
+  onCapture,
 }: {
-  enabled: boolean;
+  visibleCount: number;
   selectionMode: boolean;
   selectionCount: number;
   onToggle: () => void;
   onCancel: () => void;
+  onCapture: () => void;
 }) {
-  if (!enabled) {
+  const { t } = useI18n();
+
+  // Один снимок: предложить сделать следующий.
+  if (visibleCount === 1) {
     return (
       <AppCard style={styles.quickCompare}>
-        <AppText variant="subtitle">Быстрое сравнение</AppText>
-        <AppText color="textSecondary" variant="caption">
-          Сравнение появится после второго снимка.
-        </AppText>
+        <View style={styles.quickRow}>
+          <View style={styles.quickText}>
+            <AppText variant="subtitle">{t('project.quickCompare')}</AppText>
+            <AppText color="textSecondary" variant="caption">
+              {t('project.oneShotHint')}
+            </AppText>
+          </View>
+          <AppButton label={t('project.nextShot')} onPress={onCapture} />
+        </View>
       </AppCard>
     );
   }
 
   return (
     <AppCard style={styles.quickCompare}>
-      {selectionMode ? (
-        <View style={styles.selectionPrompt}>
-          <AppText variant="subtitle">
-            {selectionCount === 0
-              ? 'Выберите два снимка для сравнения'
-              : `Выбрано: ${selectionCount} из 2`}
+      <View style={styles.quickRow}>
+        <View style={styles.quickText}>
+          <AppText variant="subtitle">{t('project.quickCompare')}</AppText>
+          <AppText color="textSecondary" variant="caption">
+            {selectionMode
+              ? selectionCount === 0
+                ? t('project.selectTwo')
+                : t('project.selected', { count: selectionCount })
+              : t('project.quickCompareHint')}
           </AppText>
-          <AppButton label="Отмена" variant="secondary" onPress={onCancel} />
         </View>
-      ) : (
-        <View style={styles.selectionPrompt}>
-          <View style={styles.selectionText}>
-            <AppText variant="subtitle">Быстрое сравнение</AppText>
-            <AppText color="textSecondary" variant="caption">
-              Выберите два снимка, чтобы сравнить изменения.
-            </AppText>
-          </View>
-          <AppButton label="Выбрать" onPress={onToggle} />
-        </View>
-      )}
+        {selectionMode ? (
+          <AppButton label={t('project.cancelSelection')} variant="secondary" onPress={onCancel} />
+        ) : (
+          <AppButton label={t('project.choose')} onPress={onToggle} />
+        )}
+      </View>
     </AppCard>
   );
 }
@@ -404,6 +443,7 @@ function PhotoRow({
   onDelete: () => void;
 }) {
   const { colors } = useAppTheme();
+  const { t, locale } = useI18n();
 
   return (
     <AppCard style={styles.photoRow}>
@@ -413,7 +453,7 @@ function PhotoRow({
           {isReference ? (
             <View style={[styles.referenceBadge, { backgroundColor: colors.primary }]}>
               <AppText variant="caption" color="primaryText">
-                Эталон
+                {t('project.reference')}
               </AppText>
             </View>
           ) : null}
@@ -426,7 +466,7 @@ function PhotoRow({
           ) : null}
         </View>
         <View style={styles.photoRowText}>
-          <AppText variant="body">{formatDate(photo.takenAt)}</AppText>
+          <AppText variant="body">{formatDate(photo.takenAt, locale)}</AppText>
           {photo.note ? (
             <AppText color="textSecondary" variant="caption" numberOfLines={1}>
               {photo.note}
@@ -441,7 +481,7 @@ function PhotoRow({
       <Pressable
         onPress={onDelete}
         accessibilityRole="button"
-        accessibilityLabel="Удалить фото"
+        accessibilityLabel={t('common.delete')}
         hitSlop={8}
         style={styles.deleteButton}>
         <Ionicons name="trash-outline" size={18} color={colors.textSecondary} />
@@ -491,13 +531,13 @@ const styles = StyleSheet.create({
   quickCompare: {
     gap: spacing.sm,
   },
-  selectionPrompt: {
+  quickRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.sm,
   },
-  selectionText: {
+  quickText: {
     flex: 1,
     gap: spacing.xs,
   },
@@ -570,6 +610,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.md,
     padding: spacing.lg,
+    flexGrow: 1,
   },
   emptyText: {
     textAlign: 'center',

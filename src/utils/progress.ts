@@ -46,9 +46,10 @@ export interface MonthGroup {
  * Группирует фото по календарным месяцам, сохраняя исходный порядок.
  * Ожидается, что вход уже отсортирован (новые сверху).
  * @param photos — отсортированный список фото.
+ * @param locale — локаль для заголовка месяца.
  * @returns Массив групп по месяцам в порядке появления.
  */
-export function groupPhotosByMonth(photos: PhotoMetadata[]): MonthGroup[] {
+export function groupPhotosByMonth(photos: PhotoMetadata[], locale = 'en'): MonthGroup[] {
   const groups: MonthGroup[] = [];
   for (const photo of photos) {
     const date = new Date(photo.takenAt);
@@ -57,7 +58,7 @@ export function groupPhotosByMonth(photos: PhotoMetadata[]): MonthGroup[] {
     if (last && last.key === key) {
       last.photos.push(photo);
     } else {
-      groups.push({ key, label: formatMonthLabel(photo.takenAt), photos: [photo] });
+      groups.push({ key, label: formatMonthLabel(photo.takenAt, locale), photos: [photo] });
     }
   }
   return groups;
