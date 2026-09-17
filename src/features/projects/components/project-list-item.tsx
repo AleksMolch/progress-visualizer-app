@@ -101,23 +101,21 @@ function PhotoCard({
   onRename,
   onDelete,
 }: Omit<ProjectListItemProps, 'coverUri'> & { coverUri?: string }) {
-  const { colors, metrics, material, scheme } = useAppTheme();
+  const { colors, metrics, material } = useAppTheme();
   const { t, locale } = useI18n();
 
-  // Полупрозрачная заливка для frosted-карточек (Liquid Glass).
-  const surfaceBackground =
-    material.card === 'frosted'
-      ? scheme === 'dark'
-        ? 'rgba(255,255,255,0.06)'
-        : 'rgba(255,255,255,0.46)'
-      : colors.surface;
+  // Для «Современного» используем НЕпрозрачную поверхность + рамку, чтобы карточка
+  // чётко отличалась от фона страницы. Neumorphism сохраняет свой мягкий материал.
+  const isNeumorphic = material.card === 'neumorphic';
+  const surfaceMaterial = isNeumorphic ? 'neumorphic' : 'solid';
+  const surfaceBackground = colors.surface;
 
   return (
     <AdaptiveSurface
-      material={material.card}
+      material={surfaceMaterial}
       backgroundColor={surfaceBackground}
       borderRadius={metrics.cardRadius}
-      style={styles.photoCard}>
+      style={[styles.photoCard, !isNeumorphic && { borderWidth: 1, borderColor: colors.border }]}>
       <Pressable onPress={onOpen} accessibilityRole="button">
         {/* key перемонтирует обложку при смене URI, сбрасывая состояние ошибки. */}
         <ProjectCover key={coverUri} uri={coverUri} />
@@ -129,9 +127,17 @@ function PhotoCard({
         </View>
       </Pressable>
 
-      <View style={styles.actionsPadded}>
+      {/* Действия: кнопка «Переименовать» + иконка корзины в правом нижнем углу. */}
+      <View style={styles.photoFooter}>
         <AppButton label={t('projects.rename')} variant="secondary" onPress={onRename} />
-        <AppButton label={t('common.delete')} variant="danger" onPress={onDelete} />
+        <Pressable
+          onPress={onDelete}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.delete')}
+          hitSlop={8}
+          style={({ pressed }) => [styles.deleteIcon, pressed && styles.deleteIconPressed]}>
+          <Ionicons name="trash-outline" size={20} color={colors.danger} />
+        </Pressable>
       </View>
     </AdaptiveSurface>
   );
@@ -193,10 +199,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
   },
-  actionsPadded: {
+  photoFooter: {
     flexDirection: 'row',
-    gap: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.md,
+  },
+  deleteIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteIconPressed: {
+    opacity: 0.6,
   },
 });

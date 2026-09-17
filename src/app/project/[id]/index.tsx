@@ -393,7 +393,7 @@ function QuickCompareBlock({
         <View style={styles.quickRow}>
           <View style={styles.quickText}>
             <AppText variant="subtitle">{t('project.quickCompare')}</AppText>
-            <AppText color="textSecondary" variant="caption">
+            <AppText color="textSecondary" variant="caption" numberOfLines={1}>
               {t('project.oneShotHint')}
             </AppText>
           </View>
@@ -408,7 +408,7 @@ function QuickCompareBlock({
       <View style={styles.quickRow}>
         <View style={styles.quickText}>
           <AppText variant="subtitle">{t('project.quickCompare')}</AppText>
-          <AppText color="textSecondary" variant="caption">
+          <AppText color="textSecondary" variant="caption" numberOfLines={1}>
             {selectionMode
               ? selectionCount === 0
                 ? t('project.selectTwo')
@@ -530,6 +530,10 @@ const styles = StyleSheet.create({
   },
   quickCompare: {
     gap: spacing.sm,
+    // Фиксированная высота: блок не «прыгает» при смене кнопки «Выбрать»↔«Отмена»
+    // и текста подсказки (текст обрезается одной строкой).
+    minHeight: 96,
+    justifyContent: 'center',
   },
   quickRow: {
     flexDirection: 'row',
