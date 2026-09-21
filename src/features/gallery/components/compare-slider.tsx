@@ -21,6 +21,9 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated';
 
+import { AppText } from '@/components/ui/app-text';
+import { useI18n } from '@/i18n';
+
 interface CompareSliderProps {
   /** Путь к «предыдущему» (нижнему) фото. */
   beforeUri: string;
@@ -29,6 +32,7 @@ interface CompareSliderProps {
 }
 
 export function CompareSlider({ beforeUri, afterUri }: CompareSliderProps) {
+  const { t } = useI18n();
   // Фактический размер области сравнения (заполняется после layout).
   const [size, setSize] = useState({ width: 0, height: 0 });
   // Относительная позиция разделителя (0..1), сохраняется при повороте/ресайзе.
@@ -85,9 +89,25 @@ export function CompareSlider({ beforeUri, afterUri }: CompareSliderProps) {
           />
         </Animated.View>
 
+        {/* Подписи «До»/«После» поверх изображения. */}
+        <View pointerEvents="none" style={[styles.label, styles.labelBefore]}>
+          <AppText variant="caption" color="primaryText">
+            {t('compare.before')}
+          </AppText>
+        </View>
+        <View pointerEvents="none" style={[styles.label, styles.labelAfter]}>
+          <AppText variant="caption" color="primaryText">
+            {t('compare.after')}
+          </AppText>
+        </View>
+
         {/* Линия разделителя с ручкой. */}
         <Animated.View pointerEvents="none" style={[styles.divider, dividerStyle]}>
-          <View style={styles.handle} />
+          <View style={styles.handle}>
+            <AppText variant="caption" style={styles.handleGlyph}>
+              {'‹›'}
+            </AppText>
+          </View>
         </Animated.View>
       </View>
     </GestureDetector>
@@ -118,16 +138,38 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 2,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255,255,255,0.7)',
     marginLeft: -1,
   },
   handle: {
     position: 'absolute',
     top: '50%',
-    left: -9,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#FFFFFF',
+    left: -16,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(20,22,26,0.85)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: [{ offsetX: 0, offsetY: 2, color: 'rgba(0,0,0,0.35)', blurRadius: 6 }],
+  },
+  handleGlyph: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    letterSpacing: -1,
+  },
+  label: {
+    position: 'absolute',
+    top: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  labelBefore: {
+    left: 12,
+  },
+  labelAfter: {
+    right: 12,
   },
 });

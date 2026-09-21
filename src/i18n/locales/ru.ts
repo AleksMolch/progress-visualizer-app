@@ -58,6 +58,8 @@ export const ru: Record<MessageKey, Message> = {
   'project.period': '{from} → {to}',
   'project.first': 'Первое',
   'project.last': 'Последнее',
+  'project.firstLastTitle': 'Первое и последнее',
+  'project.firstLastHint': 'Посмотрите, что изменилось',
   'project.daysBetween': {
     one: '{count} день между снимками',
     few: '{count} дня между снимками',
@@ -185,6 +187,9 @@ export const ru: Record<MessageKey, Message> = {
   'settings.language': 'Язык',
   'language.change': 'Сменить язык',
   'settings.support': 'Поддержать разработчика',
+  'ads.label': 'Реклама',
+  'ads.placeholderDev': 'Тестовое место под рекламу',
+  'ads.placeholderSize': 'Место под рекламу · 50–64 dp',
 
   'support.title': 'Поддержка',
   'support.header': 'Поддержать разработчика',

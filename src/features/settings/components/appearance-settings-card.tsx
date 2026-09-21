@@ -80,7 +80,8 @@ export function AppearanceSettingsCard() {
               style={[
                 styles.themeCard,
                 {
-                  backgroundColor: colors.surface,
+                  // Выбранный стиль подсвечен мягким фоном акцента + рамкой.
+                  backgroundColor: selected ? `${colors.primary}14` : colors.surface,
                   borderRadius: metrics.cardRadius,
                   borderColor: selected ? colors.primary : colors.border,
                 },

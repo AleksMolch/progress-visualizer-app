@@ -62,6 +62,8 @@ export const en = {
   'project.period': '{from} → {to}',
   'project.first': 'First',
   'project.last': 'Last',
+  'project.firstLastTitle': 'First and last',
+  'project.firstLastHint': 'See what has changed',
   'project.daysBetween': {
     one: '{count} day between photos',
     other: '{count} days between photos',
@@ -192,6 +194,9 @@ export const en = {
   'settings.language': 'Language',
   'language.change': 'Change language',
   'settings.support': 'Support developer',
+  'ads.label': 'Ad',
+  'ads.placeholderDev': 'Test ad placeholder',
+  'ads.placeholderSize': 'Ad placeholder · 50–64 dp',
   // Поддержка.
   'support.title': 'Support',
   'support.header': 'Support the developer',

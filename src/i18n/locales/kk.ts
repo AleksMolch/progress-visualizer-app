@@ -53,6 +53,8 @@ export const kk: Record<MessageKey, Message> = {
   'project.period': '{from} → {to}',
   'project.first': 'Алғашқы',
   'project.last': 'Соңғы',
+  'project.firstLastTitle': 'Алғашқы және соңғы',
+  'project.firstLastHint': 'Не өзгергенін қараңыз',
   'project.daysBetween': {
     one: 'Суреттер арасында {count} күн',
     other: 'Суреттер арасында {count} күн',
@@ -177,6 +179,9 @@ export const kk: Record<MessageKey, Message> = {
   'settings.language': 'Тіл',
   'language.change': 'Тілді ауыстыру',
   'settings.support': 'Әзірлеушіні қолдау',
+  'ads.label': 'Жарнама',
+  'ads.placeholderDev': 'Жарнамаға арналған тест орны',
+  'ads.placeholderSize': 'Жарнама орны · 50–64 dp',
 
   'support.title': 'Қолдау',
   'support.header': 'Әзірлеушіні қолдау',

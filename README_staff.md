@@ -312,6 +312,21 @@ npx expo-doctor
 - Поддерживаемое управление — только `shutterSound: false` (полное отключение); громкость
   системного звука через API не регулируется. Принято: не отключать и не добавлять свой звук.
 
+### 11.6. Нижний отступ и рекламные placeholder-слоты
+
+- Единый нижний отступ — `getBottomInset(safeAreaBottom, adSlot)` в `src/theme/tab-bar.ts`
+  (safe area + `BOTTOM_NAV_HEIGHT` + `BOTTOM_NAV_OVERLAP` + `BOTTOM_BUFFER` + опц. `AD_SLOT_HEIGHT`).
+  Применён на Projects/Settings; на Project — отступ под FAB.
+- Ad placeholder — `src/features/ads/components/ad-placeholder.tsx`, флаг
+  `SHOW_AD_PLACEHOLDERS` в `src/features/ads/config.ts` (по умолчанию `true` для dev-превью;
+  перед публикацией без SDK поставить `false`). НЕ использует SDK, не грузит сеть, не кликабелен.
+- Размещён ТОЛЬКО: Projects (после первой карточки / под CTA пустого состояния),
+  Project (после «Быстрого сравнения»), Settings (near-bottom). Запрещён на
+  camera/compare/timelapse/viewer/модалках/выборе пары.
+- Neumorphism: тени снижены ~25–30% (`neu-surface.tsx`). Compare: плавающая капсула
+  режимов, полупрозрачный разделитель + handle `‹›`, подписи «До»/«После». Камера: тёмное
+  полупрозрачное нижнее меню (не ломает preview).
+
 ---
 
 ## 12. Что нельзя делать при поддержке

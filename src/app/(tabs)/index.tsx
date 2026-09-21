@@ -20,13 +20,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppButton } from '@/components/ui/app-button';
 import { AppScreen } from '@/components/ui/app-screen';
 import { AppText } from '@/components/ui/app-text';
+import { AdPlaceholder } from '@/features/ads/components/ad-placeholder';
 import { ProjectFormModal } from '@/features/projects/components/project-form-modal';
 import { ProjectListItem } from '@/features/projects/components/project-list-item';
 import { MainTabSwipeGesture } from '@/features/navigation/components/main-tab-swipe-gesture';
 import { useI18n } from '@/i18n';
 import { useProjectStore } from '@/store/projectStore';
 import { spacing } from '@/theme';
-import { MAIN_TAB_BAR_INSET } from '@/theme/tab-bar';
+import { getBottomInset } from '@/theme/tab-bar';
 import { getLatestVisiblePhoto } from '@/utils/photos';
 
 export default function ProjectsScreen() {
@@ -38,8 +39,8 @@ export default function ProjectsScreen() {
   const updateProject = useProjectStore((s) => s.updateProject);
   const deleteProject = useProjectStore((s) => s.deleteProject);
 
-  // Отступ контента под плавающую панель вкладок.
-  const bottomInset = insets.bottom + MAIN_TAB_BAR_INSET;
+  // Единый нижний отступ: safe area + меню + выступ кнопки + буфер.
+  const bottomInset = getBottomInset(insets.bottom);
 
   // Состояние модального окна: открыто ли, и какой проект редактируется (null — создание).
   const [modalVisible, setModalVisible] = useState(false);
@@ -98,6 +99,8 @@ export default function ProjectsScreen() {
             {t('projects.emptyDescription')}
           </AppText>
           <AppButton label={t('projects.emptyButton')} onPress={openCreateModal} />
+          {/* Рекламный placeholder — ниже CTA, не над основной кнопкой. */}
+          <AdPlaceholder style={styles.emptyAd} />
         </View>
       ) : (
         <FlatList
@@ -110,16 +113,20 @@ export default function ProjectsScreen() {
               <AppButton label={t('projects.create')} onPress={openCreateModal} />
             </View>
           }
-          renderItem={({ item }) => (
-            <ProjectListItem
-              name={item.name}
-              photoCount={photoCount(item.id)}
-              updatedAt={item.updatedAt}
-              coverUri={getLatestVisiblePhoto(photos, item.id)?.uri}
-              onOpen={() => router.push(`/project/${item.id}`)}
-              onRename={() => openEditModal(item.id)}
-              onDelete={() => handleDelete(item.id)}
-            />
+          renderItem={({ item, index }) => (
+            <View style={styles.itemWrap}>
+              <ProjectListItem
+                name={item.name}
+                photoCount={photoCount(item.id)}
+                updatedAt={item.updatedAt}
+                coverUri={getLatestVisiblePhoto(photos, item.id)?.uri}
+                onOpen={() => router.push(`/project/${item.id}`)}
+                onRename={() => openEditModal(item.id)}
+                onDelete={() => handleDelete(item.id)}
+              />
+              {/* Inline placeholder после первой карточки проекта. */}
+              {index === 0 ? <AdPlaceholder /> : null}
+            </View>
           )}
         />
       )}
@@ -147,12 +154,19 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     gap: spacing.md,
   },
+  itemWrap: {
+    gap: spacing.md,
+  },
   empty: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.md,
     padding: spacing.lg,
+  },
+  emptyAd: {
+    alignSelf: 'stretch',
+    marginTop: spacing.sm,
   },
   emptyText: {
     textAlign: 'center',

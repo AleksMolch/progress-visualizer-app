@@ -53,6 +53,8 @@ export const zhHans: Record<MessageKey, Message> = {
   'project.period': '{from} → {to}',
   'project.first': '第一张',
   'project.last': '最后一张',
+  'project.firstLastTitle': '第一张和最后一张',
+  'project.firstLastHint': '看看发生了什么变化',
   'project.daysBetween': { other: '两张照片相隔 {count} 天' },
   'project.compareFirstLast': '对比第一张和最后一张照片',
   'project.quickCompare': '快速对比',
@@ -174,6 +176,9 @@ export const zhHans: Record<MessageKey, Message> = {
   'settings.language': '语言',
   'language.change': '切换语言',
   'settings.support': '支持开发者',
+  'ads.label': '广告',
+  'ads.placeholderDev': '广告测试占位',
+  'ads.placeholderSize': '广告占位 · 50–64 dp',
 
   'support.title': '支持',
   'support.header': '支持开发者',

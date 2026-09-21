@@ -62,12 +62,18 @@ export function MainTabBar({ state, descriptors, navigation }: BottomTabBarProps
   const floating = metrics.tabBarRadius > 0;
 
   // Полупрозрачный тинт для glass-панели; иначе — обычный surface.
-  const barBackground =
-    material.tabBar === 'native-glass'
+  // На камере панель затемнена/полупрозрачна, чтобы не ломать camera preview.
+  const barBackground = isCameraFocused
+    ? 'rgba(18,20,24,0.55)'
+    : material.tabBar === 'native-glass'
       ? scheme === 'dark'
         ? 'rgba(18,20,24,0.26)'
         : 'rgba(255,255,255,0.20)'
       : colors.surface;
+
+  // Цвет текста/иконки боковых вкладок: на камере — светлый нейтральный.
+  const sideColor = (focused: boolean) =>
+    isCameraFocused ? 'rgba(255,255,255,0.75)' : focused ? colors.primary : colors.textSecondary;
 
   // Общий обработчик навигации по вкладке (с сохранением tabPress-события).
   const makePressHandler = (routeName: string, routeKey: string, isFocused: boolean) => () => {
@@ -89,7 +95,7 @@ export function MainTabBar({ state, descriptors, navigation }: BottomTabBarProps
     const focused = state.index === state.routes.indexOf(route);
     const options = descriptors[route.key].options;
     const fullLabel = options.title ?? label;
-    const color = focused ? colors.primary : colors.textSecondary;
+    const color = sideColor(focused);
 
     return (
       <Pressable

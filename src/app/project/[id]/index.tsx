@@ -23,6 +23,7 @@ import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppScreen } from '@/components/ui/app-screen';
 import { AppText } from '@/components/ui/app-text';
+import { AdPlaceholder } from '@/features/ads/components/ad-placeholder';
 import { useI18n } from '@/i18n';
 import { useAppStore } from '@/store/appStore';
 import { useProjectStore } from '@/store/projectStore';
@@ -199,6 +200,8 @@ export default function ProjectScreen() {
                 <FirstLastBlock
                   firstUri={firstPhoto.uri}
                   lastUri={lastPhoto.uri}
+                  firstDate={firstPhoto.takenAt}
+                  lastDate={lastPhoto.takenAt}
                   daysBetween={daysBetween}
                   onPress={() => openCompare(firstPhoto.id, lastPhoto.id)}
                 />
@@ -215,6 +218,9 @@ export default function ProjectScreen() {
                 onCancel={cancelSelection}
                 onCapture={handleAddPhoto}
               />
+
+              {/* Рекламный placeholder: после «Быстрого сравнения», перед «Историей». */}
+              <AdPlaceholder />
 
               <View style={styles.toolbar}>
                 <AppText variant="subtitle">{t('project.history')}</AppText>
@@ -317,27 +323,38 @@ function SummaryBlock({
 }
 
 /**
- * Блок «Первое / Последнее»: две крупные миниатюры и период между ними.
+ * Блок «Первое и последнее»: заголовок, две крупные миниатюры с датами и период.
  */
 function FirstLastBlock({
   firstUri,
   lastUri,
+  firstDate,
+  lastDate,
   daysBetween,
   onPress,
 }: {
   firstUri: string;
   lastUri: string;
+  firstDate: number;
+  lastDate: number;
   daysBetween: number | null;
   onPress: () => void;
 }) {
   const { colors } = useAppTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={t('project.compareFirstLast')}>
       <AppCard style={styles.firstLast}>
+        <View style={styles.firstLastHead}>
+          <AppText variant="subtitle">{t('project.firstLastTitle')}</AppText>
+          <AppText color="textSecondary" variant="caption">
+            {t('project.firstLastHint')}
+          </AppText>
+        </View>
+
         <View style={styles.firstLastRow}>
           <View style={styles.firstLastPane}>
             <Image source={{ uri: firstUri }} style={styles.firstLastImage} contentFit="cover" />
@@ -357,9 +374,18 @@ function FirstLastBlock({
             </View>
           </View>
         </View>
-        <AppText variant="caption" color="textSecondary" style={{ textAlign: 'center' }}>
-          {daysBetween !== null ? t('project.daysBetween', { count: daysBetween }) : ''}
-        </AppText>
+
+        <View style={styles.firstLastMeta}>
+          <AppText variant="caption" color="textSecondary">
+            {formatDate(firstDate, locale)}
+          </AppText>
+          <AppText variant="caption" color="textSecondary">
+            {daysBetween !== null ? t('project.daysBetween', { count: daysBetween }) : ''}
+          </AppText>
+          <AppText variant="caption" color="textSecondary" style={{ textAlign: 'right' }}>
+            {formatDate(lastDate, locale)}
+          </AppText>
+        </View>
       </AppCard>
     </Pressable>
   );
@@ -493,6 +519,8 @@ function PhotoRow({
 const styles = StyleSheet.create({
   content: {
     padding: spacing.lg,
+    // Отступ снизу, чтобы последние фото не прятались под FAB «+».
+    paddingBottom: 88,
     gap: spacing.md,
   },
   headerBlocks: {
@@ -504,9 +532,18 @@ const styles = StyleSheet.create({
   firstLast: {
     gap: spacing.sm,
   },
+  firstLastHead: {
+    gap: spacing.xs,
+  },
   firstLastRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.sm,
+  },
+  firstLastMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: spacing.sm,
   },
   firstLastPane: {

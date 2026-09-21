@@ -159,30 +159,28 @@ export default function CompareScreen() {
         </Pressable>
       </View>
 
-      {/* Segmented control режимов. */}
-      <View
-        style={[
-          styles.modeBar,
-          { backgroundColor: colors.surface, paddingBottom: insets.bottom + spacing.sm },
-        ]}>
-        {MODES.map((m) => {
-          const selected = mode === m.value;
-          return (
-            <Pressable
-              key={m.value}
-              onPress={() => setMode(m.value)}
-              accessibilityRole="button"
-              accessibilityState={{ selected }}
-              style={[
-                styles.modeChip,
-                { backgroundColor: selected ? colors.primary : 'transparent' },
-              ]}>
-              <AppText variant="caption" color={selected ? 'primaryText' : 'text'}>
-                {t(m.key)}
-              </AppText>
-            </Pressable>
-          );
-        })}
+      {/* Segmented control режимов — компактная плавающая капсула. */}
+      <View style={[styles.modeBar, { paddingBottom: insets.bottom + spacing.md }]}>
+        <View style={[styles.modeCapsule, { backgroundColor: colors.surface }]}>
+          {MODES.map((m) => {
+            const selected = mode === m.value;
+            return (
+              <Pressable
+                key={m.value}
+                onPress={() => setMode(m.value)}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                style={[
+                  styles.modeChip,
+                  { backgroundColor: selected ? colors.primary : 'transparent' },
+                ]}>
+                <AppText variant="caption" color={selected ? 'primaryText' : 'text'}>
+                  {t(m.key)}
+                </AppText>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
 
       <PhotoPickerSheet
@@ -222,15 +220,24 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
   },
   modeBar: {
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+  },
+  modeCapsule: {
+    alignSelf: 'stretch',
     flexDirection: 'row',
     gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
+    padding: spacing.xs,
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: 'rgba(128,128,128,0.18)',
+    boxShadow: [{ offsetX: 0, offsetY: 6, color: 'rgba(0,0,0,0.18)', blurRadius: 16 }],
   },
   modeChip: {
     flex: 1,
     alignItems: 'center',
     paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
     borderRadius: radii.full,
   },
   empty: {

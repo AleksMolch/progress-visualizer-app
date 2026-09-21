@@ -28,10 +28,11 @@ interface NeuSurfaceProps extends ViewProps {
 }
 
 // Смещения и радиусы теней (константы; цвета — из токенов темы).
-const RAISED_OFFSET = 6;
-const RAISED_BLUR = 12;
-const PRESSED_OFFSET = 4;
-const PRESSED_BLUR = 8;
+// Значения снижены ~25–30%, чтобы поверхность не выглядела «ватной».
+const RAISED_OFFSET = 4;
+const RAISED_BLUR = 8;
+const PRESSED_OFFSET = 3;
+const PRESSED_BLUR = 6;
 
 export function NeuSurface({
   variant = 'raised',

@@ -187,6 +187,18 @@ Material и Gallery отдельными темами — пользовател
 - НЕ возвращать `simple` на Android ни в UI, ни в миграции — иначе после перезапуска
   стиль восстановится и сломает контракт.
 
+### Нижний отступ и рекламные placeholder-слоты
+
+- Нижний отступ контента считается через `getBottomInset(safeAreaBottom, adSlot)`
+  (`src/theme/tab-bar.ts`), а не магическими числами в экранах.
+- Ad placeholder — `src/features/ads/components/ad-placeholder.tsx`; показ управляется
+  флагом `SHOW_AD_PLACEHOLDERS` (`src/features/ads/config.ts`). Это ТОЛЬКО заглушки под
+  будущий Yandex Mobile Ads SDK: без сети, без SDK, не кликабельны, `null` при `false`.
+- Перед публикацией без рекламы поставить `SHOW_AD_PLACEHOLDERS = false`.
+- Placeholder разрешён ТОЛЬКО на Projects / Project / Settings. НЕ добавлять на
+  camera / compare / timelapse / photo viewer / bottom sheets / редактирование заметки /
+  выбор пары. Будущий sticky banner потребует отдельного пересчёта navigation layout.
+
 ### Тактильный отклик
 
 - Единственное место импорта `expo-haptics` — `src/utils/haptics.ts`

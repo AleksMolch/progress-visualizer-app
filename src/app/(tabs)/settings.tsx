@@ -19,6 +19,7 @@ import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppScreen } from '@/components/ui/app-screen';
 import { AppText } from '@/components/ui/app-text';
+import { AdPlaceholder } from '@/features/ads/components/ad-placeholder';
 import { AppearanceSettingsCard } from '@/features/settings/components/appearance-settings-card';
 import { LanguageSwitcher } from '@/features/settings/components/language-switcher';
 import { ReminderSettingsCard } from '@/features/settings/components/reminder-settings-card';
@@ -28,7 +29,7 @@ import { LANGUAGE_NAMES } from '@/i18n/locale';
 import { isBiometricsAvailable } from '@/storage/biometrics';
 import { useSettingsStore } from '@/store/settingsStore';
 import { spacing } from '@/theme';
-import { MAIN_TAB_BAR_INSET } from '@/theme/tab-bar';
+import { getBottomInset } from '@/theme/tab-bar';
 import { useAppTheme } from '@/theme/ThemeProvider';
 
 export default function SettingsScreen() {
@@ -40,8 +41,8 @@ export default function SettingsScreen() {
   const language = useSettingsStore((s) => s.settings.language);
   const updateSettings = useSettingsStore((s) => s.updateSettings);
 
-  // Отступ контента под плавающую панель вкладок.
-  const bottomInset = insets.bottom + MAIN_TAB_BAR_INSET;
+  // Единый нижний отступ: safe area + меню + выступ кнопки + буфер.
+  const bottomInset = getBottomInset(insets.bottom);
 
   // null — ещё не определили доступность биометрии.
   const [available, setAvailable] = useState<boolean | null>(null);
@@ -116,6 +117,9 @@ export default function SettingsScreen() {
           variant="secondary"
           onPress={() => router.push('/support')}
         />
+
+        {/* Рекламный placeholder — near-bottom, после блока «Поддержать разработчика». */}
+        <AdPlaceholder />
       </View>
       </AppScreen>
     </MainTabSwipeGesture>

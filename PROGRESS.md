@@ -35,6 +35,41 @@
 
 ---
 
+### 2026-09-17 — Дизайн-полировка и рекламные placeholder-слоты
+
+- Что сделано: (1) единый нижний отступ `getBottomInset()` (safe area + меню + выступ
+  кнопки + буфер + опц. ad-слот), применён на Projects/Settings, отступ под FAB на Project;
+  (2) reusable `AdPlaceholder` (флаг `SHOW_AD_PLACEHOLDERS`, без SDK/сети, не кликабелен)
+  в разрешённых местах: Projects (после 1-й карточки / под CTA), Project (после quick
+  compare), Settings (near-bottom); (3) Neumorphism — тени снижены ~25–30%;
+  (4) compare — плавающая капсула режимов, полупрозрачный разделитель + handle `‹›`,
+  подписи «До/После»; (5) камера — тёмное полупрозрачное нижнее меню; (6) блок
+  «Первое и последнее» с заголовком, подписью, датами и периодом; (7) выбранный стиль
+  в настройках подсвечен мягким фоном.
+- Какие файлы созданы или изменены:
+  - созданы: `src/features/ads/config.ts`, `src/features/ads/components/ad-placeholder.tsx`,
+    `src/theme/tab-bar.test.ts`
+  - изменены: `src/theme/tab-bar.ts` (+getBottomInset), `src/app/(tabs)/{index,settings}.tsx`,
+    `src/app/project/[id]/{index,compare}.tsx`, `src/features/navigation/components/main-tab-bar.tsx`
+    (тёмное меню на камере), `src/features/gallery/components/compare-slider.tsx`,
+    `src/components/ui/neu-surface.tsx`, `src/features/settings/components/appearance-settings-card.tsx`,
+    `src/i18n/locales/*.ts` (+ads.*, +firstLast*), `DECISIONS.md`, `README_staff.md`,
+    `MAINTENANCE_AI.md`
+- Какие команды запускались:
+  - `npm run typecheck`, `npm run lint`, `npm test`, `npx expo export --platform ios`
+  - перезапуск Metro (`--clear`) + relaunch на симуляторе
+- Результат проверок:
+  - typecheck/lint: чисто; тесты: 174/174 (было 171); экспорт iOS: собран; запуск без
+    redbox/ошибок
+- Известные проблемы:
+  - Визуальная проверка (тени Neumorphism, капсула compare, handle, тёмное меню на камере,
+    placeholder-зоны) — ручная (модель не читает скриншоты).
+  - `SHOW_AD_PLACEHOLDERS` сейчас `true` для dev-превью; перед публикацией без SDK — `false`.
+- Следующий шаг: ручная визуальная приёмка трёх экранов (Projects/Project/Settings) и
+  проверка отсутствия placeholder на Camera/Compare/Timelapse; затем bundleIdentifier и публикация.
+
+---
+
 ### 2026-09-16 — UX-исправления: i18n, слайдер, клавиатура, звук, Android-темы
 
 - Что сделано: (1) i18n на 5 языков (ru/en/zh-Hans/kk/es) — собственный движок

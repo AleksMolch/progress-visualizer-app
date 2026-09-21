@@ -53,6 +53,8 @@ export const es: Record<MessageKey, Message> = {
   'project.period': '{from} → {to}',
   'project.first': 'Primera',
   'project.last': 'Última',
+  'project.firstLastTitle': 'Primera y última',
+  'project.firstLastHint': 'Mira lo que ha cambiado',
   'project.daysBetween': {
     one: '{count} día entre fotos',
     other: '{count} días entre fotos',
@@ -177,6 +179,9 @@ export const es: Record<MessageKey, Message> = {
   'settings.language': 'Idioma',
   'language.change': 'Cambiar idioma',
   'settings.support': 'Apoyar al desarrollador',
+  'ads.label': 'Publicidad',
+  'ads.placeholderDev': 'Espacio de prueba para publicidad',
+  'ads.placeholderSize': 'Espacio publicitario · 50–64 dp',
 
   'support.title': 'Soporte',
   'support.header': 'Apoyar al desarrollador',
