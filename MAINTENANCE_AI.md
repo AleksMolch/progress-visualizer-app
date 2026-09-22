@@ -199,6 +199,19 @@ Material и Gallery отдельными темами — пользовател
   camera / compare / timelapse / photo viewer / bottom sheets / редактирование заметки /
   выбор пары. Будущий sticky banner потребует отдельного пересчёта navigation layout.
 
+### Safe area и skeleton
+
+- `AppScreen` принимает проп `edges` (default `['top','left','right']`). Для стек-экранов
+  С нативным header передавай `edges={['left','right']}` — иначе верхний inset применяется
+  дважды. Compare/viewer не используют AppScreen (свой контейнер).
+- Skeleton — `src/components/ui/skeleton.tsx` (`SkeletonBlock`/`ProjectListSkeleton`/
+  `ProjectDetailsSkeleton`, Reanimated pulse, БЕЗ новых библиотек). Показывается по
+  `useProjectStore(s => s.hasHydrated)` (выставляется в `rehydrateStores`). Гидратация
+  блокирующая — скелет подключён к реальному сигналу, но на практике не «мигает»;
+  не добавляй искусственные задержки.
+- Вторичные действия проекта/фото — через `ActionSheet` за кнопкой `...`, а не постоянные
+  кнопки/корзины на карточке.
+
 ### Тактильный отклик
 
 - Единственное место импорта `expo-haptics` — `src/utils/haptics.ts`

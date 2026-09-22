@@ -12,7 +12,7 @@
 
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
 import { useAppTheme } from '@/theme/ThemeProvider';
 
@@ -22,9 +22,15 @@ interface AppScreenProps {
   scroll?: boolean;
   /** Дополнительные стили контейнера. */
   style?: ViewStyle;
+  /**
+   * Какие safe-area края учитывать. По умолчанию — top/left/right (для экранов
+   * без нативного header). Для стек-экранов с нативным header передайте
+   * `['left', 'right']`, чтобы не применять верхний inset дважды.
+   */
+  edges?: Edge[];
 }
 
-export function AppScreen({ children, scroll = false, style }: AppScreenProps) {
+export function AppScreen({ children, scroll = false, style, edges = ['top', 'left', 'right'] }: AppScreenProps) {
   const { colors } = useAppTheme();
 
   const content = scroll ? (
@@ -35,7 +41,7 @@ export function AppScreen({ children, scroll = false, style }: AppScreenProps) {
 
   return (
     <SafeAreaView
-      edges={['top', 'left', 'right']}
+      edges={edges}
       style={[styles.safeArea, { backgroundColor: colors.background }, style]}>
       {content}
     </SafeAreaView>

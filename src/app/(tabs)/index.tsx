@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppButton } from '@/components/ui/app-button';
 import { AppScreen } from '@/components/ui/app-screen';
 import { AppText } from '@/components/ui/app-text';
+import { ProjectListSkeleton } from '@/components/ui/skeleton';
 import { AdPlaceholder } from '@/features/ads/components/ad-placeholder';
 import { ProjectFormModal } from '@/features/projects/components/project-form-modal';
 import { ProjectListItem } from '@/features/projects/components/project-list-item';
@@ -35,6 +36,7 @@ export default function ProjectsScreen() {
   const { t } = useI18n();
   const projects = useProjectStore((s) => s.projects);
   const photos = useProjectStore((s) => s.photos);
+  const hasHydrated = useProjectStore((s) => s.hasHydrated);
   const createProject = useProjectStore((s) => s.createProject);
   const updateProject = useProjectStore((s) => s.updateProject);
   const deleteProject = useProjectStore((s) => s.deleteProject);
@@ -92,7 +94,9 @@ export default function ProjectsScreen() {
   return (
     <MainTabSwipeGesture tabIndex={0}>
       <AppScreen>
-      {projects.length === 0 ? (
+      {!hasHydrated ? (
+        <ProjectListSkeleton />
+      ) : projects.length === 0 ? (
         <View style={styles.empty}>
           <AppText variant="title">{t('projects.emptyTitle')}</AppText>
           <AppText color="textSecondary" style={styles.emptyText}>

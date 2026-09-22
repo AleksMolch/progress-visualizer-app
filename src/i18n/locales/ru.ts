@@ -23,6 +23,7 @@ export const ru: Record<MessageKey, Message> = {
   'common.delete': 'Удалить',
   'common.done': 'Готово',
   'common.back': 'Назад',
+  'common.moreActions': 'Дополнительные действия',
 
   'time.days': {
     one: '{count} день',
@@ -188,8 +189,7 @@ export const ru: Record<MessageKey, Message> = {
   'language.change': 'Сменить язык',
   'settings.support': 'Поддержать разработчика',
   'ads.label': 'Реклама',
-  'ads.placeholderDev': 'Тестовое место под рекламу',
-  'ads.placeholderSize': 'Место под рекламу · 50–64 dp',
+  'ads.placeholderText': 'Реклама, которая поможет поддерживать приложение',
 
   'support.title': 'Поддержка',
   'support.header': 'Поддержать разработчика',

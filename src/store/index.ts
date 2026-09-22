@@ -19,4 +19,6 @@ export async function rehydrateStores(): Promise<void> {
     useProjectStore.persist.rehydrate(),
     useSettingsStore.persist.rehydrate(),
   ]);
+  // Помечаем проекты гидратированными (для skeleton loading).
+  useProjectStore.setState({ hasHydrated: true });
 }

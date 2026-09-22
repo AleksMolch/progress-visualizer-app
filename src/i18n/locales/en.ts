@@ -25,6 +25,7 @@ export const en = {
   'common.delete': 'Delete',
   'common.done': 'Done',
   'common.back': 'Back',
+  'common.moreActions': 'More actions',
 
   // Время/даты.
   'time.days': {
@@ -195,8 +196,7 @@ export const en = {
   'language.change': 'Change language',
   'settings.support': 'Support developer',
   'ads.label': 'Ad',
-  'ads.placeholderDev': 'Test ad placeholder',
-  'ads.placeholderSize': 'Ad placeholder · 50–64 dp',
+  'ads.placeholderText': 'Ads that help support the app',
   // Поддержка.
   'support.title': 'Support',
   'support.header': 'Support the developer',

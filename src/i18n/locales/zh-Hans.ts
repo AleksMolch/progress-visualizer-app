@@ -23,6 +23,7 @@ export const zhHans: Record<MessageKey, Message> = {
   'common.delete': '删除',
   'common.done': '完成',
   'common.back': '返回',
+  'common.moreActions': '更多操作',
 
   'time.days': { other: '{count} 天' },
 
@@ -177,8 +178,7 @@ export const zhHans: Record<MessageKey, Message> = {
   'language.change': '切换语言',
   'settings.support': '支持开发者',
   'ads.label': '广告',
-  'ads.placeholderDev': '广告测试占位',
-  'ads.placeholderSize': '广告占位 · 50–64 dp',
+  'ads.placeholderText': '帮助支持应用发展的广告',
 
   'support.title': '支持',
   'support.header': '支持开发者',

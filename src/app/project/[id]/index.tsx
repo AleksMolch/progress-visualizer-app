@@ -23,7 +23,9 @@ import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppScreen } from '@/components/ui/app-screen';
 import { AppText } from '@/components/ui/app-text';
+import { ProjectDetailsSkeleton } from '@/components/ui/skeleton';
 import { AdPlaceholder } from '@/features/ads/components/ad-placeholder';
+import { ActionSheet, type ActionSheetAction } from '@/features/gallery/components/action-sheet';
 import { useI18n } from '@/i18n';
 import { useAppStore } from '@/store/appStore';
 import { useProjectStore } from '@/store/projectStore';
@@ -44,6 +46,7 @@ export default function ProjectScreen() {
 
   const project = useProjectStore((s) => s.projects.find((p) => p.id === id));
   const photos = useProjectStore((s) => s.photos);
+  const hasHydrated = useProjectStore((s) => s.hasHydrated);
   const deletePhoto = useProjectStore((s) => s.deletePhoto);
   const setActiveProjectId = useAppStore((s) => s.setActiveProjectId);
   const hapticsEnabled = useSettingsStore((s) => s.settings.hapticsEnabled);
@@ -105,7 +108,16 @@ export default function ProjectScreen() {
 
   // Открыть камеру с выбранным текущим проектом.
   const handleAddPhoto = () => {
-    if (!project) {
+  // Пока данные не гидратированы — skeleton вместо пустого экрана.
+  if (!hasHydrated) {
+    return (
+      <AppScreen edges={['left', 'right']}>
+        <ProjectDetailsSkeleton />
+      </AppScreen>
+    );
+  }
+
+  if (!project) {
       return;
     }
     setActiveProjectId(project.id);
@@ -147,7 +159,7 @@ export default function ProjectScreen() {
   // Проект не найден (например, после удаления или неверная ссылка).
   if (!project) {
     return (
-      <AppScreen>
+      <AppScreen edges={['left', 'right']}>
         <View style={styles.empty}>
           <AppText variant="title">{t('project.notFound')}</AppText>
           <AppText color="textSecondary">{t('project.notFoundHint')}</AppText>
@@ -166,7 +178,7 @@ export default function ProjectScreen() {
     ) : null;
 
   return (
-    <AppScreen>
+    <AppScreen edges={['left', 'right']}>
       <Stack.Screen options={{ title: project.name, headerRight }} />
 
       {/* Empty state: нет фото вообще. */}
@@ -202,6 +214,10 @@ export default function ProjectScreen() {
                   lastUri={lastPhoto.uri}
                   firstDate={firstPhoto.takenAt}
                   lastDate={lastPhoto.takenAt}
+                  firstIsReference={referencePhoto?.id === firstPhoto.id}
+                  lastIsReference={referencePhoto?.id === lastPhoto.id}
+                  firstIsFavorite={Boolean(firstPhoto.isFavorite)}
+                  lastIsFavorite={Boolean(lastPhoto.isFavorite)}
                   daysBetween={daysBetween}
                   onPress={() => openCompare(firstPhoto.id, lastPhoto.id)}
                 />
@@ -330,6 +346,10 @@ function FirstLastBlock({
   lastUri,
   firstDate,
   lastDate,
+  firstIsReference,
+  lastIsReference,
+  firstIsFavorite,
+  lastIsFavorite,
   daysBetween,
   onPress,
 }: {
@@ -337,6 +357,10 @@ function FirstLastBlock({
   lastUri: string;
   firstDate: number;
   lastDate: number;
+  firstIsReference: boolean;
+  lastIsReference: boolean;
+  firstIsFavorite: boolean;
+  lastIsFavorite: boolean;
   daysBetween: number | null;
   onPress: () => void;
 }) {
@@ -356,38 +380,74 @@ function FirstLastBlock({
         </View>
 
         <View style={styles.firstLastRow}>
-          <View style={styles.firstLastPane}>
-            <Image source={{ uri: firstUri }} style={styles.firstLastImage} contentFit="cover" />
-            <View style={styles.caption}>
-              <AppText variant="caption" color="primaryText">
-                {t('project.first')}
-              </AppText>
+          <View style={styles.firstLastCol}>
+            <View style={styles.firstLastPane}>
+              <Image source={{ uri: firstUri }} style={styles.firstLastImage} contentFit="cover" />
+              <View style={styles.caption}>
+                <AppText variant="caption" color="primaryText">
+                  {t('project.first')}
+                </AppText>
+              </View>
+              {firstIsReference || firstIsFavorite ? (
+                <View style={styles.badgeRow}>
+                  {firstIsReference ? <Badge label={t('project.reference')} /> : null}
+                  {firstIsFavorite ? (
+                    <Ionicons name="star" size={14} color="#FFD54F" />
+                  ) : null}
+                </View>
+              ) : null}
             </View>
+            <AppText variant="caption" color="textSecondary">
+              {formatDate(firstDate, locale)}
+            </AppText>
           </View>
+
           <Ionicons name="arrow-forward" size={20} color={colors.primary} />
-          <View style={styles.firstLastPane}>
-            <Image source={{ uri: lastUri }} style={styles.firstLastImage} contentFit="cover" />
-            <View style={styles.caption}>
-              <AppText variant="caption" color="primaryText">
-                {t('project.last')}
-              </AppText>
+
+          <View style={styles.firstLastCol}>
+            <View style={styles.firstLastPane}>
+              <Image source={{ uri: lastUri }} style={styles.firstLastImage} contentFit="cover" />
+              <View style={styles.caption}>
+                <AppText variant="caption" color="primaryText">
+                  {t('project.last')}
+                </AppText>
+              </View>
+              {lastIsReference || lastIsFavorite ? (
+                <View style={styles.badgeRow}>
+                  {lastIsReference ? <Badge label={t('project.reference')} /> : null}
+                  {lastIsFavorite ? (
+                    <Ionicons name="star" size={14} color="#FFD54F" />
+                  ) : null}
+                </View>
+              ) : null}
             </View>
+            <AppText variant="caption" color="textSecondary">
+              {formatDate(lastDate, locale)}
+            </AppText>
           </View>
         </View>
 
-        <View style={styles.firstLastMeta}>
-          <AppText variant="caption" color="textSecondary">
-            {formatDate(firstDate, locale)}
-          </AppText>
-          <AppText variant="caption" color="textSecondary">
-            {daysBetween !== null ? t('project.daysBetween', { count: daysBetween }) : ''}
-          </AppText>
-          <AppText variant="caption" color="textSecondary" style={{ textAlign: 'right' }}>
-            {formatDate(lastDate, locale)}
-          </AppText>
-        </View>
+        {daysBetween !== null ? (
+          <View style={styles.firstLastDays}>
+            <AppText variant="caption" color="textSecondary">
+              {t('project.daysBetween', { count: daysBetween })}
+            </AppText>
+          </View>
+        ) : null}
       </AppCard>
     </Pressable>
+  );
+}
+
+/** Маленький бейдж «Эталон» поверх миниатюры hero-блока. */
+function Badge({ label }: { label: string }) {
+  const { colors } = useAppTheme();
+  return (
+    <View style={[styles.badge, { backgroundColor: colors.primary }]}>
+      <AppText variant="caption" color="primaryText">
+        {label}
+      </AppText>
+    </View>
   );
 }
 
@@ -419,7 +479,7 @@ function QuickCompareBlock({
         <View style={styles.quickRow}>
           <View style={styles.quickText}>
             <AppText variant="subtitle">{t('project.quickCompare')}</AppText>
-            <AppText color="textSecondary" variant="caption" numberOfLines={1}>
+            <AppText color="textSecondary" variant="caption" numberOfLines={2}>
               {t('project.oneShotHint')}
             </AppText>
           </View>
@@ -434,7 +494,7 @@ function QuickCompareBlock({
       <View style={styles.quickRow}>
         <View style={styles.quickText}>
           <AppText variant="subtitle">{t('project.quickCompare')}</AppText>
-          <AppText color="textSecondary" variant="caption" numberOfLines={1}>
+          <AppText color="textSecondary" variant="caption" numberOfLines={2}>
             {selectionMode
               ? selectionCount === 0
                 ? t('project.selectTwo')
@@ -470,49 +530,73 @@ function PhotoRow({
 }) {
   const { colors } = useAppTheme();
   const { t, locale } = useI18n();
+  // Видимость action sheet со вторичными действиями строки.
+  const [sheetVisible, setSheetVisible] = useState(false);
+
+  const actions: ActionSheetAction[] = [
+    {
+      key: 'delete',
+      label: t('common.delete'),
+      icon: 'trash-outline',
+      destructive: true,
+      onPress: () => {
+        setSheetVisible(false);
+        onDelete();
+      },
+    },
+  ];
 
   return (
-    <AppCard style={styles.photoRow}>
-      <Pressable onPress={onPress} accessibilityRole="imagebutton" style={styles.photoRowBody}>
-        <View style={styles.thumbWrap}>
-          <Image source={{ uri: photo.uri }} style={styles.thumb} contentFit="cover" />
-          {isReference ? (
-            <View style={[styles.referenceBadge, { backgroundColor: colors.primary }]}>
-              <AppText variant="caption" color="primaryText">
-                {t('project.reference')}
-              </AppText>
-            </View>
-          ) : null}
-          {selectionNumber > 0 ? (
-            <View style={[styles.selectionCircle, { backgroundColor: colors.primary }]}>
-              <AppText variant="caption" color="primaryText">
-                {selectionNumber}
-              </AppText>
-            </View>
-          ) : null}
-        </View>
-        <View style={styles.photoRowText}>
-          <AppText variant="body">{formatDate(photo.takenAt, locale)}</AppText>
-          {photo.note ? (
-            <AppText color="textSecondary" variant="caption" numberOfLines={1}>
-              {photo.note}
-            </AppText>
-          ) : null}
-          <View style={styles.rowBadges}>
-            {photo.isFavorite ? <Ionicons name="star" size={14} color={colors.primary} /> : null}
-            {photo.isHidden ? <Ionicons name="eye-off" size={14} color={colors.textSecondary} /> : null}
+    <>
+      <AppCard style={styles.photoRow}>
+        <Pressable onPress={onPress} accessibilityRole="imagebutton" style={styles.photoRowBody}>
+          <View style={styles.thumbWrap}>
+            <Image source={{ uri: photo.uri }} style={styles.thumb} contentFit="cover" />
+            {isReference ? (
+              <View style={[styles.referenceBadge, { backgroundColor: colors.primary }]}>
+                <AppText variant="caption" color="primaryText">
+                  {t('project.reference')}
+                </AppText>
+              </View>
+            ) : null}
+            {selectionNumber > 0 ? (
+              <View style={[styles.selectionCircle, { backgroundColor: colors.primary }]}>
+                <AppText variant="caption" color="primaryText">
+                  {selectionNumber}
+                </AppText>
+              </View>
+            ) : null}
           </View>
-        </View>
-      </Pressable>
-      <Pressable
-        onPress={onDelete}
-        accessibilityRole="button"
-        accessibilityLabel={t('common.delete')}
-        hitSlop={8}
-        style={styles.deleteButton}>
-        <Ionicons name="trash-outline" size={18} color={colors.textSecondary} />
-      </Pressable>
-    </AppCard>
+          <View style={styles.photoRowText}>
+            <AppText variant="body">{formatDate(photo.takenAt, locale)}</AppText>
+            {photo.note ? (
+              <AppText color="textSecondary" variant="caption" numberOfLines={2}>
+                {photo.note}
+              </AppText>
+            ) : null}
+            <View style={styles.rowBadges}>
+              {photo.isFavorite ? <Ionicons name="star" size={14} color={colors.primary} /> : null}
+              {photo.isHidden ? <Ionicons name="eye-off" size={14} color={colors.textSecondary} /> : null}
+            </View>
+          </View>
+        </Pressable>
+        <Pressable
+          onPress={() => setSheetVisible(true)}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.moreActions')}
+          hitSlop={8}
+          style={({ pressed }) => [styles.moreButton, pressed && styles.moreButtonPressed]}>
+          <Ionicons name="ellipsis-horizontal" size={18} color={colors.textSecondary} />
+        </Pressable>
+      </AppCard>
+
+      <ActionSheet
+        visible={sheetVisible}
+        title={formatDate(photo.takenAt, locale)}
+        actions={actions}
+        onClose={() => setSheetVisible(false)}
+      />
+    </>
   );
 }
 
@@ -537,20 +621,37 @@ const styles = StyleSheet.create({
   },
   firstLastRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: spacing.sm,
   },
-  firstLastMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
+  firstLastCol: {
+    flex: 1,
+    gap: spacing.xs,
+  },
+  firstLastDays: {
+    alignSelf: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.full,
+    backgroundColor: 'rgba(128,128,128,0.12)',
   },
   firstLastPane: {
-    flex: 1,
     borderRadius: radii.md,
     overflow: 'hidden',
     aspectRatio: 1,
+  },
+  badgeRow: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  badge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 1,
+    borderRadius: radii.sm,
   },
   firstLastImage: {
     width: '100%',
@@ -567,9 +668,9 @@ const styles = StyleSheet.create({
   },
   quickCompare: {
     gap: spacing.sm,
-    // Фиксированная высота: блок не «прыгает» при смене кнопки «Выбрать»↔«Отмена»
-    // и текста подсказки (текст обрезается одной строкой).
-    minHeight: 96,
+    // Стабильная высота: minHeight удерживает блок без «прыжка» при смене
+    // «Выбрать»↔«Отмена» и подсказки (до двух строк).
+    minHeight: 104,
     justifyContent: 'center',
   },
   quickRow: {
@@ -643,8 +744,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.xs,
   },
-  deleteButton: {
-    padding: spacing.xs,
+  moreButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  moreButtonPressed: {
+    opacity: 0.6,
   },
   empty: {
     alignItems: 'center',

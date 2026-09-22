@@ -23,6 +23,7 @@ export const es: Record<MessageKey, Message> = {
   'common.delete': 'Eliminar',
   'common.done': 'Listo',
   'common.back': 'Atrás',
+  'common.moreActions': 'Más acciones',
 
   'time.days': { one: '{count} día', other: '{count} días' },
 
@@ -180,8 +181,7 @@ export const es: Record<MessageKey, Message> = {
   'language.change': 'Cambiar idioma',
   'settings.support': 'Apoyar al desarrollador',
   'ads.label': 'Publicidad',
-  'ads.placeholderDev': 'Espacio de prueba para publicidad',
-  'ads.placeholderSize': 'Espacio publicitario · 50–64 dp',
+  'ads.placeholderText': 'Publicidad que ayuda a mantener la aplicación',
 
   'support.title': 'Soporte',
   'support.header': 'Apoyar al desarrollador',

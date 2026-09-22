@@ -327,6 +327,21 @@ npx expo-doctor
   режимов, полупрозрачный разделитель + handle `‹›`, подписи «До»/«После». Камера: тёмное
   полупрозрачное нижнее меню (не ломает preview).
 
+### 11.7. Safe area, hero-блок, action sheet и skeleton
+
+- `AppScreen` получил проп `edges` (default `['top','left','right']`). Стек-экраны с
+  нативным header (project, timelapse) передают `edges={['left','right']}` — убран двойной
+  верхний inset. Compare/viewer не используют AppScreen (свой контейнер).
+- Hero «Первое и последнее» (`FirstLastBlock`): даты под миниатюрами, короткий элемент
+  с количеством дней, бейджи эталона/избранного.
+- Вторичные действия — в `ActionSheet` через кнопку `...` (карточка проекта: переименовать/
+  удалить; строка timeline: удалить). Постоянная красная корзина убрана.
+- Skeleton: `src/components/ui/skeleton.tsx` (`SkeletonBlock`/`ProjectListSkeleton`/
+  `ProjectDetailsSkeleton`, Reanimated pulse). Флаг `hasHydrated` в `projectStore`
+  (выставляется в `rehydrateStores`). Гидратация блокирующая — скелет подключён к реальному
+  сигналу, но на практике не «мигает».
+- Реклама: `ads.placeholderSize` удалён; пользовательский `ads.placeholderText`.
+
 ---
 
 ## 12. Что нельзя делать при поддержке

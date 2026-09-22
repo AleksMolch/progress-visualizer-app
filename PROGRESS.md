@@ -70,6 +70,40 @@
 
 ---
 
+### 2026-09-17 — Корректировка UI экрана проекта (safe area, hero, action sheet, skeleton)
+
+- Что сделано: (1) убран двойной верхний safe-area: `AppScreen` получил проп `edges`,
+  стек-экраны с header (project/timelapse) используют `edges={['left','right']}`;
+  (2) hero «Первое и последнее» — даты под миниатюрами, короткий элемент с днями,
+  бейджи эталона/избранного; (3) вторичные действия на карточке проекта и в timeline
+  перенесены в `...`/ActionSheet (постоянная корзина и кнопка «Переименовать» убраны);
+  (4) skeleton loading (`SkeletonBlock`/`ProjectListSkeleton`/`ProjectDetailsSkeleton` +
+  `hasHydrated` в projectStore); (5) рекламный текст — пользовательский
+  `ads.placeholderText`, технический `ads.placeholderSize` удалён; (6) Quick Compare —
+  подсказка до двух строк, `minHeight`.
+- Какие файлы созданы или изменены:
+  - создан: `src/components/ui/skeleton.tsx`
+  - изменены: `src/components/ui/app-screen.tsx` (+edges), `src/app/project/[id]/index.tsx`
+    (hero/skeleton/action sheet/2-line), `src/app/project/[id]/timelapse.tsx` (edges),
+    `src/app/(tabs)/index.tsx` (skeleton), `src/features/projects/components/project-list-item.tsx`
+    (переписан: `...` + ActionSheet), `src/store/projectStore.ts` (+hasHydrated),
+    `src/store/index.ts` (set hasHydrated), `src/features/ads/components/ad-placeholder.tsx`,
+    `src/i18n/locales/*.ts` (+ads.placeholderText, +common.moreActions, −ads.placeholderSize/Dev),
+    `src/i18n/i18n.test.ts`, `DECISIONS.md`, `README_staff.md`
+- Какие команды запускались:
+  - `npm run typecheck`, `npm run lint`, `npm test`, `npx expo export --platform ios`
+  - перезапуск Metro (`--clear`) + relaunch на симуляторе
+- Результат проверок:
+  - typecheck/lint: чисто; тесты: 176/176 (было 174); экспорт iOS: собран; запуск без
+    redbox/ошибок
+- Известные проблемы:
+  - Визуальная проверка (hero, action sheet, safe-area, skeleton-переходы) — ручная.
+  - Skeleton подключён к `hasHydrated`, но гидратация блокирующая (root возвращает null
+    до готовности), поэтому скелет на практике не «мигает» — задел на будущее.
+- Следующий шаг: ручная визуальная приёмка; затем bundleIdentifier и публикация.
+
+---
+
 ### 2026-09-16 — UX-исправления: i18n, слайдер, клавиатура, звук, Android-темы
 
 - Что сделано: (1) i18n на 5 языков (ru/en/zh-Hans/kk/es) — собственный движок

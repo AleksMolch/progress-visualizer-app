@@ -23,6 +23,7 @@ export const kk: Record<MessageKey, Message> = {
   'common.delete': 'Жою',
   'common.done': 'Дайын',
   'common.back': 'Артқа',
+  'common.moreActions': 'Қосымша әрекеттер',
 
   'time.days': { one: '{count} күн', other: '{count} күн' },
 
@@ -180,8 +181,7 @@ export const kk: Record<MessageKey, Message> = {
   'language.change': 'Тілді ауыстыру',
   'settings.support': 'Әзірлеушіні қолдау',
   'ads.label': 'Жарнама',
-  'ads.placeholderDev': 'Жарнамаға арналған тест орны',
-  'ads.placeholderSize': 'Жарнама орны · 50–64 dp',
+  'ads.placeholderText': 'Қосымшаға қолдау көрсетуге көмектесетін жарнама',
 
   'support.title': 'Қолдау',
   'support.header': 'Әзірлеушіні қолдау',

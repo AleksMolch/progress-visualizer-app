@@ -104,4 +104,17 @@ describe('полнота словарей', () => {
       expect(Object.keys(dict).sort()).toEqual(enKeys.slice().sort());
     }
   });
+
+  it('технический ключ ads.placeholderSize удалён из всех словарей', () => {
+    for (const dict of [en, ru, zhHans, kk, es]) {
+      expect('ads.placeholderSize' in dict).toBe(false);
+      expect('ads.placeholderDev' in dict).toBe(false);
+    }
+  });
+
+  it('пользовательский текст рекламы есть во всех пяти локалях', () => {
+    for (const dict of [en, ru, zhHans, kk, es]) {
+      expect(dict['ads.placeholderText' as keyof typeof en]).toBeTruthy();
+    }
+  });
 });

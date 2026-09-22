@@ -35,6 +35,8 @@ interface SaveCapturedPhotoInput {
 interface ProjectState {
   projects: Project[];
   photos: PhotoMetadata[];
+  /** Завершена ли гидратация из MMKV (для skeleton loading). Не персистится. */
+  hasHydrated: boolean;
   createProject: (name: string) => void;
   updateProject: (id: string, name: string) => void;
   deleteProject: (id: string) => void;
@@ -60,6 +62,8 @@ export const useProjectStore = create<ProjectState>()(
     (set, get) => ({
       projects: [],
       photos: [],
+      // Гидратация ещё не завершена (skeleton показывается, пока true не будет выставлено).
+      hasHydrated: false,
 
       // Создание проекта: добавляем в список.
       createProject: (name) =>

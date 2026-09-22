@@ -56,7 +56,7 @@ export default function TimelapseScreen() {
   const current = sequence[Math.min(index, Math.max(sequence.length - 1, 0))];
 
   return (
-    <AppScreen style={styles.screen}>
+    <AppScreen style={styles.screen} edges={['left', 'right']}>
       <Stack.Screen options={{ title: t('nav.timelapse') }} />
 
       {!current ? (

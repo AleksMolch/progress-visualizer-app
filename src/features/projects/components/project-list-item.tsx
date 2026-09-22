@@ -1,12 +1,12 @@
 /**
- * Назначение: строка проекта в списке (карточка с действиями).
+ * Назначение: строка проекта в списке (карточка с контекстным меню).
  *
  * Функции:
  * - показывает имя, дату обновления и количество фото;
  * - тап по карточке открывает проект (через prop onOpen);
- * - кнопки «Переименовать» и «Удалить» вызывают соответствующие действия;
- * - в оформлениях «Галерея» и «Liquid Glass» показывает cover-превью последнего
- *   фото (или нейтральную заглушку, если фото нет); «Минимализм» — текстовый вид.
+ * - вторичные действия («Переименовать», «Удалить») спрятаны в кнопку `...`
+ *   и action sheet, чтобы не создавать визуальный шум;
+ * - в «Простом» оформлении — компактный текстовый вид, иначе — cover-превью.
  *
  * Слой: UI (/src/features/projects/components). Данные получает через пропсы,
  * действия выполняет вызывающий код через store.
@@ -17,10 +17,10 @@ import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppText } from '@/components/ui/app-text';
 import { AdaptiveSurface } from '@/components/ui/adaptive-surface';
+import { ActionSheet, type ActionSheetAction } from '@/features/gallery/components/action-sheet';
 import { useI18n } from '@/i18n';
 import { spacing } from '@/theme';
 import { useAppTheme } from '@/theme/ThemeProvider';
@@ -39,7 +39,7 @@ interface ProjectListItemProps {
   onOpen: () => void;
   /** Начать переименование. */
   onRename: () => void;
-  /** Удалить проект. */
+  /** Удалить проект (с подтверждением у вызывающего кода). */
   onDelete: () => void;
 }
 
@@ -55,42 +55,70 @@ export function ProjectListItem({
   const { designTheme } = useAppTheme();
   const { t, locale } = useI18n();
 
-  // В «Простом» оформлении сохраняем компактный текстовый вид.
-  if (designTheme === 'simple') {
-    return (
-      <AppCard style={styles.card}>
-        <Pressable onPress={onOpen} accessibilityRole="button">
-          <AppText variant="subtitle">{name}</AppText>
-          <AppText color="textSecondary" variant="caption">
-            {t('projects.photoCount', { count: photoCount })} · {formatDate(updatedAt, locale)}
-          </AppText>
-        </Pressable>
+  // Видимость action sheet с вторичными действиями.
+  const [sheetVisible, setSheetVisible] = useState(false);
 
-        <View style={styles.actions}>
-          <AppButton label={t('projects.rename')} variant="secondary" onPress={onRename} />
-          <AppButton label={t('common.delete')} variant="danger" onPress={onDelete} />
-        </View>
-      </AppCard>
-    );
-  }
+  const actions: ActionSheetAction[] = [
+    {
+      key: 'rename',
+      label: t('projects.rename'),
+      icon: 'create-outline',
+      onPress: () => {
+        setSheetVisible(false);
+        onRename();
+      },
+    },
+    {
+      key: 'delete',
+      label: t('common.delete'),
+      icon: 'trash-outline',
+      destructive: true,
+      onPress: () => {
+        setSheetVisible(false);
+        onDelete();
+      },
+    },
+  ];
 
-  // Фото-карточка для «Галереи» и «Liquid Glass»: обложка + заголовок + метаданные.
+  const openSheet = () => setSheetVisible(true);
+
   return (
-    <PhotoCard
-      name={name}
-      photoCount={photoCount}
-      updatedAt={updatedAt}
-      coverUri={coverUri}
-      onOpen={onOpen}
-      onRename={onRename}
-      onDelete={onDelete}
-    />
+    <>
+      {designTheme === 'simple' ? (
+        <AppCard style={styles.card}>
+          <View style={styles.simpleRow}>
+            <Pressable onPress={onOpen} accessibilityRole="button" style={styles.simpleText}>
+              <AppText variant="subtitle">{name}</AppText>
+              <AppText color="textSecondary" variant="caption">
+                {t('projects.photoCount', { count: photoCount })} · {formatDate(updatedAt, locale)}
+              </AppText>
+            </Pressable>
+            <MoreButton onPress={openSheet} />
+          </View>
+        </AppCard>
+      ) : (
+        <PhotoCard
+          name={name}
+          photoCount={photoCount}
+          updatedAt={updatedAt}
+          coverUri={coverUri}
+          onOpen={onOpen}
+          onMore={openSheet}
+        />
+      )}
+
+      <ActionSheet
+        visible={sheetVisible}
+        title={name}
+        actions={actions}
+        onClose={() => setSheetVisible(false)}
+      />
+    </>
   );
 }
 
 /**
- * Карточка с cover-превью: изображение наверху, текст и действия под ним.
- * Поверхность, радиус и цвета берутся из токенов текущего оформления.
+ * Карточка с cover-превью: изображение и текст открывают проект, `...` — действия.
  */
 function PhotoCard({
   name,
@@ -98,9 +126,15 @@ function PhotoCard({
   updatedAt,
   coverUri,
   onOpen,
-  onRename,
-  onDelete,
-}: Omit<ProjectListItemProps, 'coverUri'> & { coverUri?: string }) {
+  onMore,
+}: {
+  name: string;
+  photoCount: number;
+  updatedAt: number;
+  coverUri?: string;
+  onOpen: () => void;
+  onMore: () => void;
+}) {
   const { colors, metrics, material } = useAppTheme();
   const { t, locale } = useI18n();
 
@@ -108,38 +142,46 @@ function PhotoCard({
   // чётко отличалась от фона страницы. Neumorphism сохраняет свой мягкий материал.
   const isNeumorphic = material.card === 'neumorphic';
   const surfaceMaterial = isNeumorphic ? 'neumorphic' : 'solid';
-  const surfaceBackground = colors.surface;
 
   return (
     <AdaptiveSurface
       material={surfaceMaterial}
-      backgroundColor={surfaceBackground}
+      backgroundColor={colors.surface}
       borderRadius={metrics.cardRadius}
       style={[styles.photoCard, !isNeumorphic && { borderWidth: 1, borderColor: colors.border }]}>
       <Pressable onPress={onOpen} accessibilityRole="button">
         {/* key перемонтирует обложку при смене URI, сбрасывая состояние ошибки. */}
         <ProjectCover key={coverUri} uri={coverUri} />
-        <View style={styles.photoBody}>
+      </Pressable>
+
+      <View style={styles.photoBody}>
+        <Pressable onPress={onOpen} accessibilityRole="button" style={styles.photoBodyText}>
           <AppText variant="subtitle">{name}</AppText>
           <AppText color="textSecondary" variant="caption">
             {t('projects.photoCount', { count: photoCount })} · {formatDate(updatedAt, locale)}
           </AppText>
-        </View>
-      </Pressable>
-
-      {/* Действия: кнопка «Переименовать» + иконка корзины в правом нижнем углу. */}
-      <View style={styles.photoFooter}>
-        <AppButton label={t('projects.rename')} variant="secondary" onPress={onRename} />
-        <Pressable
-          onPress={onDelete}
-          accessibilityRole="button"
-          accessibilityLabel={t('common.delete')}
-          hitSlop={8}
-          style={({ pressed }) => [styles.deleteIcon, pressed && styles.deleteIconPressed]}>
-          <Ionicons name="trash-outline" size={20} color={colors.danger} />
         </Pressable>
+        <MoreButton onPress={onMore} />
       </View>
     </AdaptiveSurface>
+  );
+}
+
+/**
+ * Компактная кнопка `...` с touch target не меньше 44×44.
+ */
+function MoreButton({ onPress }: { onPress: () => void }) {
+  const { colors } = useAppTheme();
+  const { t } = useI18n();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={t('common.moreActions')}
+      hitSlop={8}
+      style={({ pressed }) => [styles.moreButton, pressed && styles.moreButtonPressed]}>
+      <Ionicons name="ellipsis-horizontal" size={20} color={colors.textSecondary} />
+    </Pressable>
   );
 }
 
@@ -177,6 +219,15 @@ const styles = StyleSheet.create({
   card: {
     gap: spacing.sm,
   },
+  simpleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  simpleText: {
+    flex: 1,
+    gap: spacing.xs,
+  },
   photoCard: {
     overflow: 'hidden',
   },
@@ -192,29 +243,23 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   photoBody: {
-    padding: spacing.md,
-    gap: spacing.xs,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  photoFooter: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.md,
+    gap: spacing.sm,
+    padding: spacing.md,
   },
-  deleteIcon: {
+  photoBodyText: {
+    flex: 1,
+    gap: spacing.xs,
+  },
+  moreButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  deleteIconPressed: {
+  moreButtonPressed: {
     opacity: 0.6,
   },
 });

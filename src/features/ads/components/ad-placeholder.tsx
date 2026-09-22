@@ -44,7 +44,7 @@ export function AdPlaceholder({ variant = 'inlineCompact', style }: AdPlaceholde
   return (
     <View
       accessibilityRole="text"
-      accessibilityLabel={t('ads.placeholderDev')}
+      accessibilityLabel={t('ads.placeholderText')}
       style={[
         styles.card,
         {
@@ -57,11 +57,8 @@ export function AdPlaceholder({ variant = 'inlineCompact', style }: AdPlaceholde
       <AppText variant="caption" color="textSecondary">
         {t('ads.label')}
       </AppText>
-      <AppText variant="caption" color="textSecondary" numberOfLines={1}>
-        {t('ads.placeholderDev')}
-      </AppText>
-      <AppText variant="caption" color="textSecondary" style={styles.sizeHint}>
-        {t('ads.placeholderSize')}
+      <AppText variant="caption" color="textSecondary" numberOfLines={2}>
+        {t('ads.placeholderText')}
       </AppText>
     </View>
   );
@@ -74,8 +71,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     borderRadius: radii.lg,
     borderWidth: 1,
-  },
-  sizeHint: {
-    opacity: 0.6,
   },
 });
