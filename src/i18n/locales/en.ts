@@ -48,6 +48,8 @@ export const en = {
   'projects.newProject': 'New project',
   'projects.renameProject': 'Rename project',
   'projects.namePlaceholder': 'Project name',
+  'projects.importFirst': 'Choose photo from device',
+  'projects.addPhotoFromDevice': 'Add photo from device',
 
   // Экран проекта.
   'project.notFound': 'Project not found',
@@ -128,23 +130,21 @@ export const en = {
   'viewer.hide': 'Hide photo',
   'viewer.unhide': 'Show again',
   'viewer.makeReference': 'Set as reference',
-  'viewer.export': 'Export to gallery',
   'viewer.delete': 'Delete',
   'viewer.compareWith': 'Compare with',
   'viewer.withPrevious': 'With previous',
   'viewer.withFirst': 'With first',
   'viewer.withLast': 'With last',
   'viewer.pickCompare': 'Choose a photo to compare',
-  'viewer.exportTitle': 'Export to gallery?',
-  'viewer.exportMessage':
-    'The photo will be copied to the device gallery and leave the app’s protected storage.',
-  'viewer.exportAction': 'Export',
-  'viewer.exportDone': 'Done',
-  'viewer.exportSaved': 'Photo saved to gallery.',
-  'viewer.exportError': 'Error',
-  'viewer.exportFailed': 'Could not export the photo.',
-  'viewer.noGalleryAccess': 'No gallery access',
-  'viewer.galleryPermissionHint': 'Allow photo saving in device settings.',
+  'viewer.saveToGallery': 'Save to device',
+  'viewer.exportSuccess': 'Photo saved to gallery',
+  'viewer.exportError': 'Could not save the photo',
+  'viewer.exportDenied': 'Save permission not granted',
+  'export.confirmTitle': 'Save photo to the device gallery?',
+  'export.confirmMessage':
+    'After saving, the image will be available to other apps that have access to the gallery.',
+  'export.confirmButton': 'Save',
+  'export.cancelButton': 'Cancel',
 
   // Заметка.
   'note.title': 'Photo note',

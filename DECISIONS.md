@@ -769,3 +769,45 @@ action sheet, добавить skeleton loading и поправить адапт
 Статус:
 
 Принято (реализовано).
+
+---
+
+### 2026-09-22 — Импорт фото, экспорт с подтверждением, Predictive Back
+
+Контекст:
+
+Задание `AI_CODER_IMPORT_EXPORT_PREDICTIVE_BACK.md`: импорт первого/дополнительного фото
+с устройства, экспорт в галерею с явным подтверждением, включение predictive back,
+удаление BOOTSTRAP_PROMPT.md.
+
+Решение:
+
+1. **Импорт через системный picker.** `expo-image-picker` + `src/storage/imagePicker.ts`
+   (`pickImageFromDevice`). Широкое разрешение на чтение галереи НЕ запрашивается
+   (`photosPermission: false`) — системный photo picker (Android 13+/iOS 14+) даёт
+   временный доступ к выбранному файлу. Файл копируется в sandbox через существующий
+   `saveCapturedPhoto` (store-действие) — не остаётся ссылкой на внешнюю галерею.
+2. **Экспорт — подтверждающий модал + toast.** `ExportConfirmationModal` +
+   `ToastProvider`/`useToast` (`src/components/ui/toast.tsx`, без новых библиотек).
+   Экспорт строго по явному действию: подтверждение → write-only permission →
+   `exportPhotoToLibrary` → toast-результат.
+3. **Predictive Back включён.** `predictiveBackGestureEnabled: true`. Конфликтов на
+   симуляторе не выявлено; проверка на реальном Android 13+ — ручная (см. TESTING.md).
+4. **Очистка разрешений Android.** Убраны `READ_EXTERNAL_STORAGE` и
+   `READ_MEDIA_VISUAL_USER_SELECTED` (не нужны при системном picker); оставлен
+   `WRITE_EXTERNAL_STORAGE` для `MediaLibrary.Asset.create()`.
+5. **`createProject` возвращает Project** (id нужен для немедленного импорта первого фото).
+
+Альтернативы:
+
+- Запрос полного доступа к галерее для импорта — отклонено (системный picker, privacy).
+- Сторонняя toast-библиотека — отклонено (лёгкий собственный Animated-toast).
+
+Риски:
+
+- Predictive back и экспорт/импорт требуют ручной проверки на реальном Android 13+
+  (нет Android-эмулятора/устройства).
+
+Статус:
+
+Принято (реализовано).

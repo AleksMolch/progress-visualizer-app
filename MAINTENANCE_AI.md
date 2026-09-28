@@ -212,6 +212,15 @@ Material и Gallery отдельными темами — пользовател
 - Вторичные действия проекта/фото — через `ActionSheet` за кнопкой `...`, а не постоянные
   кнопки/корзины на карточке.
 
+### Импорт и экспорт фото (privacy)
+
+- Импорт — только через системный picker (`src/storage/imagePicker.ts`), БЕЗ широкого
+  доступа к галерее (`photosPermission: false`). Выбранный файл копируется в sandbox через
+  `saveCapturedPhoto` — НЕ оставляй ссылку на внешнюю галерею.
+- Экспорт — только по явному действию: `ExportConfirmationModal` → write-only permission →
+  `exportPhotoToLibrary` → toast. НЕ вызывай `exportPhotoToLibrary` без подтверждения.
+- Нативный API (`ImagePicker`, `MediaLibrary`) — ТОЛЬКО в `src/storage/`; UI не импортирует их напрямую.
+
 ### Тактильный отклик
 
 - Единственное место импорта `expo-haptics` — `src/utils/haptics.ts`

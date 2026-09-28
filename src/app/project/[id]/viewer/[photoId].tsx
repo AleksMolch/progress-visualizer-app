@@ -28,9 +28,11 @@ import {
 } from 'react-native';
 
 import { ActionSheet, type ActionSheetAction } from '@/features/gallery/components/action-sheet';
+import { ExportConfirmationModal } from '@/features/gallery/components/export-confirmation-modal';
 import { NoteEditorModal } from '@/features/gallery/components/note-editor-modal';
 import { PhotoPickerSheet } from '@/features/gallery/components/photo-picker-sheet';
 import { ZoomablePhoto } from '@/features/gallery/components/zoomable-photo';
+import { useToast } from '@/components/ui/toast';
 import { useI18n } from '@/i18n';
 import { exportPhotoToLibrary, requestMediaLibraryPermission } from '@/storage/mediaLibrary';
 import { useProjectStore } from '@/store/projectStore';
@@ -44,6 +46,7 @@ export default function PhotoViewerScreen() {
   const { width } = useWindowDimensions();
   const { colors } = useAppTheme();
   const { t } = useI18n();
+  const { show: showToast } = useToast();
   const router = useRouter();
 
   const photos = useProjectStore((s) => s.photos);
@@ -65,6 +68,7 @@ export default function PhotoViewerScreen() {
   const [compareVisible, setCompareVisible] = useState(false);
   const [manualPickerVisible, setManualPickerVisible] = useState(false);
   const [noteVisible, setNoteVisible] = useState(false);
+  const [exportConfirmVisible, setExportConfirmVisible] = useState(false);
 
   // Текущее фото по id.
   const currentPhoto = projectPhotos.find((p) => p.id === currentPhotoId);
@@ -107,35 +111,27 @@ export default function PhotoViewerScreen() {
     }
   };
 
-  // Экспорт в галерею.
-  const handleExport = () => {
+  // Экспорт в галерею: показываем подтверждение, затем разрешение + сохранение.
+  const openExportConfirm = () => {
+    setActionsVisible(false);
+    setExportConfirmVisible(true);
+  };
+
+  const handleExportConfirmed = async () => {
     if (!currentPhoto) {
       return;
     }
-    setActionsVisible(false);
-    Alert.alert(
-      t('viewer.exportTitle'),
-      t('viewer.exportMessage'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        { text: t('viewer.exportAction'), onPress: () => void exportCurrent(currentPhoto.uri) },
-      ],
-    );
-  };
+    setExportConfirmVisible(false);
 
-  async function exportCurrent(uri: string): Promise<void> {
     const granted = await requestMediaLibraryPermission();
     if (!granted) {
-      Alert.alert(t('viewer.noGalleryAccess'), t('viewer.galleryPermissionHint'));
+      showToast(t('viewer.exportDenied'));
       return;
     }
-    const ok = await exportPhotoToLibrary(uri);
-    if (ok) {
-      Alert.alert(t('viewer.exportDone'), t('viewer.exportSaved'));
-    } else {
-      Alert.alert(t('viewer.exportError'), t('viewer.exportFailed'));
-    }
-  }
+
+    const ok = await exportPhotoToLibrary(currentPhoto.uri);
+    showToast(ok ? t('viewer.exportSuccess') : t('viewer.exportError'));
+  };
 
   // Удаление фото с подтверждением.
   const handleDelete = () => {
@@ -218,9 +214,9 @@ export default function PhotoViewerScreen() {
     },
     {
       key: 'export',
-      label: t('viewer.export'),
+      label: t('viewer.saveToGallery'),
       icon: 'download-outline',
-      onPress: handleExport,
+      onPress: openExportConfirm,
     },
     {
       key: 'delete',
@@ -328,6 +324,12 @@ export default function PhotoViewerScreen() {
           updatePhoto(currentPhoto.id, { note: note.length > 0 ? note : undefined });
         }}
         onClose={() => setNoteVisible(false)}
+      />
+
+      <ExportConfirmationModal
+        visible={exportConfirmVisible}
+        onConfirm={handleExportConfirmed}
+        onCancel={() => setExportConfirmVisible(false)}
       />
     </View>
   );

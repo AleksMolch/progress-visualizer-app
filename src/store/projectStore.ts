@@ -37,7 +37,7 @@ interface ProjectState {
   photos: PhotoMetadata[];
   /** Завершена ли гидратация из MMKV (для skeleton loading). Не персистится. */
   hasHydrated: boolean;
-  createProject: (name: string) => void;
+  createProject: (name: string) => Project;
   updateProject: (id: string, name: string) => void;
   deleteProject: (id: string) => void;
   setProjectReference: (
@@ -65,9 +65,13 @@ export const useProjectStore = create<ProjectState>()(
       // Гидратация ещё не завершена (skeleton показывается, пока true не будет выставлено).
       hasHydrated: false,
 
-      // Создание проекта: добавляем в список.
-      createProject: (name) =>
-        set((state) => ({ projects: [...state.projects, buildProject(name)] })),
+      // Создание проекта: добавляем в список и возвращаем созданный проект
+      // (id нужен вызывающему коду для немедленной привязки, например фото импорта).
+      createProject: (name) => {
+        const project = buildProject(name);
+        set((state) => ({ projects: [...state.projects, project] }));
+        return project;
+      },
 
       // Обновление проекта: меняем имя и метку времени изменения.
       updateProject: (id, name) =>

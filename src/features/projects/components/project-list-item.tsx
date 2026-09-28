@@ -41,6 +41,8 @@ interface ProjectListItemProps {
   onRename: () => void;
   /** Удалить проект (с подтверждением у вызывающего кода). */
   onDelete: () => void;
+  /** Добавить фото с устройства. */
+  onAddPhoto: () => void;
 }
 
 export function ProjectListItem({
@@ -51,6 +53,7 @@ export function ProjectListItem({
   onOpen,
   onRename,
   onDelete,
+  onAddPhoto,
 }: ProjectListItemProps) {
   const { designTheme } = useAppTheme();
   const { t, locale } = useI18n();
@@ -66,6 +69,15 @@ export function ProjectListItem({
       onPress: () => {
         setSheetVisible(false);
         onRename();
+      },
+    },
+    {
+      key: 'add-photo',
+      label: t('projects.addPhotoFromDevice'),
+      icon: 'images-outline',
+      onPress: () => {
+        setSheetVisible(false);
+        onAddPhoto();
       },
     },
     {

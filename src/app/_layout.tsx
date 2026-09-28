@@ -17,6 +17,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { BiometricsGate } from '@/features/privacy/components/biometrics-gate';
 import { useI18n } from '@/i18n';
+import { ToastProvider } from '@/components/ui/toast';
 import { initializeStorage } from '@/storage/init';
 import { configureNotificationHandler } from '@/storage/notifications';
 import { ThemeProvider } from '@/theme/ThemeProvider';
@@ -51,20 +52,22 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>
         <StatusBar style="auto" />
-        <BiometricsGate>
-          <Stack
-            screenOptions={{
-              // Без текста на кнопке «назад» — иначе показывается имя группы «(tabs)».
-              headerBackButtonDisplayMode: 'minimal',
-            }}>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="project/[id]/index" options={{ title: t('nav.project') }} />
-            <Stack.Screen name="project/[id]/viewer/[photoId]" options={{ title: t('nav.photo') }} />
-            <Stack.Screen name="project/[id]/compare" options={{ title: t('nav.compare') }} />
-            <Stack.Screen name="project/[id]/timelapse" options={{ title: t('nav.timelapse') }} />
-            <Stack.Screen name="support" options={{ title: t('nav.support') }} />
-          </Stack>
-        </BiometricsGate>
+        <ToastProvider>
+          <BiometricsGate>
+            <Stack
+              screenOptions={{
+                // Без текста на кнопке «назад» — иначе показывается имя группы «(tabs)».
+                headerBackButtonDisplayMode: 'minimal',
+              }}>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="project/[id]/index" options={{ title: t('nav.project') }} />
+              <Stack.Screen name="project/[id]/viewer/[photoId]" options={{ title: t('nav.photo') }} />
+              <Stack.Screen name="project/[id]/compare" options={{ title: t('nav.compare') }} />
+              <Stack.Screen name="project/[id]/timelapse" options={{ title: t('nav.timelapse') }} />
+              <Stack.Screen name="support" options={{ title: t('nav.support') }} />
+            </Stack>
+          </BiometricsGate>
+        </ToastProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
   );

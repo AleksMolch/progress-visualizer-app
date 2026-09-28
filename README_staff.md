@@ -342,6 +342,19 @@ npx expo-doctor
   сигналу, но на практике не «мигает».
 - Реклама: `ads.placeholderSize` удалён; пользовательский `ads.placeholderText`.
 
+### 11.8. Импорт, экспорт и Predictive Back
+
+- Импорт — `src/storage/imagePicker.ts` (`pickImageFromDevice`, системный photo picker,
+  `photosPermission: false`). Файл копируется в sandbox через `saveCapturedPhoto` (store) —
+  не остаётся ссылкой на внешнюю галерею. `createProject` возвращает `Project` (id).
+- Экспорт — `ExportConfirmationModal` + `ToastProvider`/`useToast` (`src/components/ui/toast.tsx`).
+  Порядок: подтверждение → `requestMediaLibraryPermission` (write-only) →
+  `exportPhotoToLibrary` → toast-результат. Отмена не запрашивает разрешение и не сохраняет.
+- Android: убраны `READ_EXTERNAL_STORAGE`/`READ_MEDIA_VISUAL_USER_SELECTED`; оставлен
+  `WRITE_EXTERNAL_STORAGE` для `MediaLibrary.Asset.create()`.
+- Predictive Back: `predictiveBackGestureEnabled: true`. Конфликтов не выявлено; проверка
+  на реальном Android 13+ — ручная (см. TESTING.md).
+
 ---
 
 ## 12. Что нельзя делать при поддержке

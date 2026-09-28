@@ -26,6 +26,7 @@ import { ProjectFormModal } from '@/features/projects/components/project-form-mo
 import { ProjectListItem } from '@/features/projects/components/project-list-item';
 import { MainTabSwipeGesture } from '@/features/navigation/components/main-tab-swipe-gesture';
 import { useI18n } from '@/i18n';
+import { pickImageFromDevice } from '@/storage/imagePicker';
 import { useProjectStore } from '@/store/projectStore';
 import { spacing } from '@/theme';
 import { getBottomInset } from '@/theme/tab-bar';
@@ -40,6 +41,7 @@ export default function ProjectsScreen() {
   const createProject = useProjectStore((s) => s.createProject);
   const updateProject = useProjectStore((s) => s.updateProject);
   const deleteProject = useProjectStore((s) => s.deleteProject);
+  const saveCapturedPhoto = useProjectStore((s) => s.saveCapturedPhoto);
 
   // Единый нижний отступ: safe area + меню + выступ кнопки + буфер.
   const bottomInset = getBottomInset(insets.bottom);
@@ -47,6 +49,8 @@ export default function ProjectsScreen() {
   // Состояние модального окна: открыто ли, и какой проект редактируется (null — создание).
   const [modalVisible, setModalVisible] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  // uri выбранного с устройства фото, который импортируется после создания проекта.
+  const [pendingImportUri, setPendingImportUri] = useState<string | null>(null);
 
   // Имя проекта, который сейчас редактируется (для заголовка и начального значения).
   const editingProject = projects.find((p) => p.id === editingId) ?? null;
@@ -65,12 +69,38 @@ export default function ProjectsScreen() {
     setModalVisible(true);
   };
 
-  // Сохранение из модалки: создание или переименование.
-  const handleSave = (name: string) => {
+  // Импорт первого фото: выбрать на устройстве → открыть создание проекта.
+  const handleImportFirst = async () => {
+    const picked = await pickImageFromDevice();
+    if (!picked) {
+      return;
+    }
+    setPendingImportUri(picked.uri);
+    setEditingId(null);
+    setModalVisible(true);
+  };
+
+  // Добавить фото с устройства в существующий проект.
+  const handleAddPhotoFromDevice = async (projectId: string) => {
+    const picked = await pickImageFromDevice();
+    if (!picked) {
+      return;
+    }
+    await saveCapturedPhoto({ projectId, tempUri: picked.uri });
+  };
+
+  // Сохранение из модалки: создание (или переименование) + импорт первого фото.
+  const handleSave = async (name: string) => {
+    let projectId: string;
     if (editingId) {
       updateProject(editingId, name);
+      projectId = editingId;
     } else {
-      createProject(name);
+      projectId = createProject(name).id;
+    }
+    if (pendingImportUri) {
+      await saveCapturedPhoto({ projectId, tempUri: pendingImportUri });
+      setPendingImportUri(null);
     }
     setModalVisible(false);
   };
@@ -102,7 +132,14 @@ export default function ProjectsScreen() {
           <AppText color="textSecondary" style={styles.emptyText}>
             {t('projects.emptyDescription')}
           </AppText>
-          <AppButton label={t('projects.emptyButton')} onPress={openCreateModal} />
+          <View style={styles.emptyActions}>
+            <AppButton label={t('projects.emptyButton')} onPress={openCreateModal} />
+            <AppButton
+              label={t('projects.importFirst')}
+              variant="secondary"
+              onPress={handleImportFirst}
+            />
+          </View>
           {/* Рекламный placeholder — ниже CTA, не над основной кнопкой. */}
           <AdPlaceholder style={styles.emptyAd} />
         </View>
@@ -127,6 +164,7 @@ export default function ProjectsScreen() {
                 onOpen={() => router.push(`/project/${item.id}`)}
                 onRename={() => openEditModal(item.id)}
                 onDelete={() => handleDelete(item.id)}
+                onAddPhoto={() => handleAddPhotoFromDevice(item.id)}
               />
               {/* Inline placeholder после первой карточки проекта. */}
               {index === 0 ? <AdPlaceholder /> : null}
@@ -171,6 +209,12 @@ const styles = StyleSheet.create({
   emptyAd: {
     alignSelf: 'stretch',
     marginTop: spacing.sm,
+  },
+  emptyActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: spacing.sm,
   },
   emptyText: {
     textAlign: 'center',

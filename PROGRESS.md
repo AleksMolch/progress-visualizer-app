@@ -104,6 +104,43 @@
 
 ---
 
+### 2026-09-22 — Импорт фото, экспорт с подтверждением, Predictive Back
+
+- Что сделано: (1) импорт фото с устройства через системный picker (`expo-image-picker` +
+  `src/storage/imagePicker.ts`); кнопка «Выбрать фото с устройства» в empty state Проектов,
+  пункт «Добавить фото с устройства» в action sheet проекта; файл копируется в sandbox через
+  `saveCapturedPhoto`; (2) экспорт в галерею с подтверждающим модалом
+  (`ExportConfirmationModal`) и toast-результатом (`ToastProvider`/`useToast`); (3) включён
+  predictive back (`predictiveBackGestureEnabled: true`); (4) убраны избыточные
+  Android-разрешения на чтение; (5) удалён `BOOTSTRAP_PROMPT.md`; (6) `createProject`
+  возвращает Project (id).
+- Какие файлы созданы или изменены:
+  - созданы: `src/storage/imagePicker.ts`, `src/storage/imagePicker.test.ts`,
+    `__mocks__/expo-image-picker.ts`, `src/features/gallery/components/export-confirmation-modal.tsx`,
+    `src/components/ui/toast.tsx`
+  - удалён: `BOOTSTRAP_PROMPT.md`
+  - изменены: `app.json` (plugin image-picker, разрешения, predictive back),
+    `package.json` (+expo-image-picker), `src/store/projectStore.ts` (createProject → Project),
+    `src/app/(tabs)/index.tsx` (импорт), `src/features/projects/components/project-list-item.tsx`
+    (+добавить фото), `src/app/project/[id]/viewer/[photoId].tsx` (экспорт-модал+toast),
+    `src/app/_layout.tsx` (ToastProvider), `src/i18n/locales/*.ts` (+импорт/экспорт ключи,
+    −старые export-ключи), `DECISIONS.md`
+- Какие команды запускались:
+  - `npx expo install expo-image-picker`
+  - `npm run typecheck`, `npm run lint`, `npm test`, `npx expo-doctor`
+  - `npx expo export --platform ios`, `npx expo run:ios` (пересборка с нативным модулем)
+- Результат проверок:
+  - typecheck/lint: чисто; тесты: 180/180 (было 176); сборка iOS: Build Succeeded
+    (0 errors/0 warnings), expo-image-picker залинкован; запуск без краша
+  - expo-doctor: 20/21 (предсуществующий дрейф patch-версий expo/*, не связан с задачей)
+- Известные проблемы:
+  - Импорт/экспорт и predictive back требуют ручной проверки на реальном Android 13+
+    устройстве (нет Android-эмулятора/устройства; на симуляторе iOS picker тоже нативный).
+- Следующий шаг: ручная проверка импорта/экспорта/predictive back на устройствах; затем
+  bundleIdentifier и публикация.
+
+---
+
 ### 2026-09-16 — UX-исправления: i18n, слайдер, клавиатура, звук, Android-темы
 
 - Что сделано: (1) i18n на 5 языков (ru/en/zh-Hans/kk/es) — собственный движок
