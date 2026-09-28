@@ -94,6 +94,7 @@ export const es: Record<MessageKey, Message> = {
   'camera.referenceLabel': 'Referencia: {source}',
   'camera.visibility': 'Visibilidad del fantasma {percent}%',
   'camera.boosted': 'Fantasma intensificado. Toca el fondo de nuevo para volver a la visibilidad normal.',
+  'camera.boostedShort': 'Fantasma intensificado',
   'camera.ghostSourceTitle': 'Fuente del fantasma',
   'camera.latest': 'Última foto',
   'camera.latestHint': 'La foto más reciente del proyecto',
@@ -181,7 +182,7 @@ export const es: Record<MessageKey, Message> = {
   'language.change': 'Cambiar idioma',
   'settings.support': 'Apoyar al desarrollador',
   'ads.label': 'Publicidad',
-  'ads.placeholderText': 'Publicidad que ayuda a mantener la aplicación',
+  'ads.placeholderText': 'que apoyará a la aplicación en el futuro',
 
   'support.title': 'Soporte',
   'support.header': 'Apoyar al desarrollador',

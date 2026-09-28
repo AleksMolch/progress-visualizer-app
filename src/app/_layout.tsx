@@ -4,6 +4,8 @@
  * Функции:
  * - инициализирует локальное хранилище (SecureStore + MMKV) до отрисовки UI;
  * - оборачивает навигацию в ThemeProvider;
+ * - настраивает нативный header/статус-бар в цветах текущей темы (не «белое
+ *   верхнее меню» в тёмной/цветной теме);
  * - объявляет навигационный стек верхнего уровня (вкладки + экран проекта).
  *
  * Слой: UI (/src/app). Использует Stack из expo-router/stack.
@@ -20,7 +22,7 @@ import { useI18n } from '@/i18n';
 import { ToastProvider } from '@/components/ui/toast';
 import { initializeStorage } from '@/storage/init';
 import { configureNotificationHandler } from '@/storage/notifications';
-import { ThemeProvider } from '@/theme/ThemeProvider';
+import { ThemeProvider, useAppTheme } from '@/theme/ThemeProvider';
 
 // Держим splash-экран, пока не завершится инициализация хранилища.
 SplashScreen.preventAutoHideAsync();
@@ -30,7 +32,6 @@ configureNotificationHandler();
 
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
-  const { t } = useI18n();
 
   useEffect(() => {
     initializeStorage()
@@ -51,24 +52,43 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>
-        <StatusBar style="auto" />
-        <ToastProvider>
-          <BiometricsGate>
-            <Stack
-              screenOptions={{
-                // Без текста на кнопке «назад» — иначе показывается имя группы «(tabs)».
-                headerBackButtonDisplayMode: 'minimal',
-              }}>
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="project/[id]/index" options={{ title: t('nav.project') }} />
-              <Stack.Screen name="project/[id]/viewer/[photoId]" options={{ title: t('nav.photo') }} />
-              <Stack.Screen name="project/[id]/compare" options={{ title: t('nav.compare') }} />
-              <Stack.Screen name="project/[id]/timelapse" options={{ title: t('nav.timelapse') }} />
-              <Stack.Screen name="support" options={{ title: t('nav.support') }} />
-            </Stack>
-          </BiometricsGate>
-        </ToastProvider>
+        <AppRoot />
       </ThemeProvider>
     </GestureHandlerRootView>
+  );
+}
+
+/**
+ * Содержимое приложения после инициализации. Здесь доступна тема, поэтому
+ * нативный header, статус-бар и фон стека окрашиваются в цвета текущей темы.
+ */
+function AppRoot() {
+  const { t } = useI18n();
+  const { colors, scheme } = useAppTheme();
+
+  return (
+    <>
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+      <ToastProvider>
+        <BiometricsGate>
+          <Stack
+            screenOptions={{
+              // Без текста на кнопке «назад» — иначе показывается имя группы «(tabs)».
+              headerBackButtonDisplayMode: 'minimal',
+              // Нативный header и контент в цветах темы (не белый в тёмной теме).
+              headerStyle: { backgroundColor: colors.background },
+              headerTintColor: colors.text,
+              contentStyle: { backgroundColor: colors.background },
+            }}>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="project/[id]/index" options={{ title: t('nav.project') }} />
+            <Stack.Screen name="project/[id]/viewer/[photoId]" options={{ title: t('nav.photo') }} />
+            <Stack.Screen name="project/[id]/compare" options={{ title: t('nav.compare') }} />
+            <Stack.Screen name="project/[id]/timelapse" options={{ title: t('nav.timelapse') }} />
+            <Stack.Screen name="support" options={{ title: t('nav.support') }} />
+          </Stack>
+        </BiometricsGate>
+      </ToastProvider>
+    </>
   );
 }

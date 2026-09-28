@@ -104,6 +104,7 @@ export const en = {
   'camera.referenceLabel': 'Reference: {source}',
   'camera.visibility': 'Ghost visibility {percent}%',
   'camera.boosted': 'Ghost boosted. Tap the background again to return to normal visibility.',
+  'camera.boostedShort': 'Ghost boosted',
   'camera.ghostSourceTitle': 'Ghost source',
   'camera.latest': 'Latest photo',
   'camera.latestHint': 'The most recent photo of the project',
@@ -196,7 +197,7 @@ export const en = {
   'language.change': 'Change language',
   'settings.support': 'Support developer',
   'ads.label': 'Ad',
-  'ads.placeholderText': 'Ads that help support the app',
+  'ads.placeholderText': 'that will support the app in the future',
   // Поддержка.
   'support.title': 'Support',
   'support.header': 'Support the developer',

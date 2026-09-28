@@ -279,6 +279,7 @@ export default function CameraScreen() {
         <OverlayControls
           hasPhoto={referenceReady}
           isBoosted={isBoosted}
+          effectiveOpacity={ghostEffectiveOpacity}
           referenceLabel={referenceLabel}
           onOpenReference={() => setReferenceModalVisible(true)}
           onResetBoost={() => setBoosted(false)}
@@ -353,7 +354,7 @@ function ProjectSelector({
               accessibilityRole="button"
               accessibilityState={{ selected: isActive }}
               style={[styles.chip, isActive && styles.chipActive]}>
-              <AppText variant="caption" color={isActive ? 'primaryText' : 'text'}>
+              <AppText variant="caption" color="primaryText" numberOfLines={1}>
                 {project.name}
               </AppText>
             </Pressable>
@@ -390,10 +391,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radii.full,
-    backgroundColor: 'rgba(255,255,255,0.85)',
+    // Тёмная полупрозрачная подложка — не спорит с чёрным превью камеры
+    // и соответствует тёмному нижнему меню.
+    backgroundColor: 'rgba(20,22,26,0.55)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
   },
   chipActive: {
     backgroundColor: '#208AEF',
+    borderColor: '#208AEF',
   },
   errorBadge: {
     position: 'absolute',

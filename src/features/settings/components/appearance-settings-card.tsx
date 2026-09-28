@@ -40,11 +40,11 @@ const THEME_DESC_KEYS: Record<DesignThemeId, MessageKey> = {
   neumorphism: 'settings.neumorphismDesc',
 };
 
-// Варианты цветового режима с ключами подписей.
-const THEME_MODES: { value: ThemeMode; key: MessageKey }[] = [
-  { value: 'system', key: 'settings.system' },
-  { value: 'light', key: 'settings.light' },
-  { value: 'dark', key: 'settings.dark' },
+// Варианты цветового режима с ключами подписей и иконками.
+const THEME_MODES: { value: ThemeMode; key: MessageKey; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { value: 'system', key: 'settings.system', icon: 'phone-portrait-outline' },
+  { value: 'light', key: 'settings.light', icon: 'sunny-outline' },
+  { value: 'dark', key: 'settings.dark', icon: 'moon-outline' },
 ];
 
 export function AppearanceSettingsCard() {
@@ -111,6 +111,7 @@ export function AppearanceSettingsCard() {
       <View style={styles.modeRow}>
         {THEME_MODES.map((mode) => {
           const selected = themeMode === mode.value;
+          const iconColor = selected ? colors.primaryText : colors.text;
           return (
             <Pressable
               key={mode.value}
@@ -125,8 +126,10 @@ export function AppearanceSettingsCard() {
                   borderColor: selected ? colors.primary : colors.border,
                 },
               ]}>
+              <Ionicons name={mode.icon} size={16} color={iconColor} />
               <AppText
                 variant="caption"
+                numberOfLines={1}
                 color={selected ? 'primaryText' : 'text'}>
                 {t(mode.key)}
               </AppText>
@@ -240,8 +243,12 @@ const styles = StyleSheet.create({
   },
   modeChip: {
     flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
+    justifyContent: 'center',
+    gap: spacing.xs,
+    minHeight: 44,
+    paddingVertical: spacing.xs,
     paddingHorizontal: spacing.xs,
     borderRadius: radii.full,
     borderWidth: 1,

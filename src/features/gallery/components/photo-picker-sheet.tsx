@@ -55,7 +55,7 @@ export function PhotoPickerSheet({
   const insets = useSafeAreaInsets();
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
         {/* Внутренний Pressable гасит тап, чтобы клик по листу не закрывал его. */}
         <Pressable
