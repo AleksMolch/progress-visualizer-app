@@ -4,6 +4,7 @@
  * Функции:
  * - принимает пару через query-параметры (?before=&after=) и валидирует её;
  * - три режима: «Слайдер», «Рядом», «Наложение» (segmented control внизу);
+ * - показывает анимированное число дней между снимками (count-up);
  * - Flow C: кнопки «До»/«После» открывают лист выбора и меняют пару;
  * - пара упорядочивается по дате съёмки (более раннее = «До»).
  *
@@ -17,6 +18,7 @@ import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AnimatedNumber } from '@/components/ui/animated-number';
 import { AppText } from '@/components/ui/app-text';
 import { CompareOverlay } from '@/features/gallery/components/compare-overlay';
 import { CompareSideBySide } from '@/features/gallery/components/compare-side-by-side';
@@ -25,10 +27,10 @@ import { PhotoPickerSheet } from '@/features/gallery/components/photo-picker-she
 import { type MessageKey } from '@/i18n';
 import { useI18n } from '@/i18n';
 import { useProjectStore } from '@/store/projectStore';
-import { radii, spacing } from '@/theme';
+import { fontSize, radii, spacing } from '@/theme';
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { formatDate } from '@/utils/dates';
-import { validateComparePair } from '@/utils/progress';
+import { getDaysBetweenPhotos, validateComparePair } from '@/utils/progress';
 import { getVisiblePhotos } from '@/utils/photos';
 
 // Режимы сравнения.
@@ -116,6 +118,9 @@ export default function CompareScreen() {
     return null;
   }
 
+  // Дней между снимками пары (порядок «до/после» уже гарантирован).
+  const daysBetween = getDaysBetweenPhotos(beforePhoto, afterPhoto);
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Stack.Screen options={{ title: t('compare.title') }} />
@@ -157,6 +162,18 @@ export default function CompareScreen() {
           </AppText>
           <AppText variant="caption">{formatDate(afterPhoto.takenAt, locale)}</AppText>
         </Pressable>
+      </View>
+
+      {/* Статистика пары: анимированное число дней между снимками. */}
+      <View style={styles.daysRow}>
+        <AppText variant="caption" color="textSecondary">
+          {t('compare.daysBetweenLabel')}
+        </AppText>
+        <AnimatedNumber
+          value={daysBetween}
+          duration={600}
+          style={[styles.daysValue, { color: colors.text }]}
+        />
       </View>
 
       {/* Segmented control режимов — компактная плавающая капсула. */}
@@ -210,6 +227,17 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+  },
+  daysRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingBottom: spacing.xs,
+  },
+  daysValue: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
   },
   pairButton: {
     flexDirection: 'row',

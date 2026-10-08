@@ -6,7 +6,9 @@
  * - тап по карточке открывает проект (через prop onOpen);
  * - вторичные действия («Переименовать», «Удалить») спрятаны в кнопку `...`
  *   и action sheet, чтобы не создавать визуальный шум;
- * - в «Простом» оформлении — компактный текстовый вид, иначе — cover-превью.
+ * - в «Простом» оформлении — компактный текстовый вид, иначе — cover-превью;
+ * - каскадное появление карточки (opacity + translateY) с задержкой по индексу;
+ *   повторяется при возврате на экран через animationNonce.
  *
  * Слой: UI (/src/features/projects/components). Данные получает через пропсы,
  * действия выполняет вызывающий код через store.
@@ -14,8 +16,16 @@
 
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withDelay,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { AppCard } from '@/components/ui/app-card';
 import { AppText } from '@/components/ui/app-text';
@@ -25,6 +35,12 @@ import { useI18n } from '@/i18n';
 import { spacing } from '@/theme';
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { formatDate } from '@/utils/dates';
+import { getStaggerDelay } from '@/utils/stagger';
+
+// Параметры каскадного появления: мягкий fade + подъём снизу на пружине.
+const APPEAR_TIMING = { duration: 400 };
+const APPEAR_SPRING = { damping: 15, stiffness: 90 };
+const APPEAR_TRANSLATE_Y = 20;
 
 interface ProjectListItemProps {
   /** Название проекта. */
@@ -35,6 +51,12 @@ interface ProjectListItemProps {
   updatedAt: number;
   /** URI последнего фото (обложка) или undefined, если фото нет. */
   coverUri?: string;
+  /** Позиция карточки в списке — задаёт задержку каскадной анимации. */
+  index?: number;
+  /** Запускать ли анимацию появления (первый показ списка / возврат на экран). */
+  animateOnMount?: boolean;
+  /** Счётчик перезапуска анимации: меняется при возврате на экран. */
+  animationNonce?: number;
   /** Открыть проект. */
   onOpen: () => void;
   /** Начать переименование. */
@@ -50,6 +72,9 @@ export function ProjectListItem({
   photoCount,
   updatedAt,
   coverUri,
+  index = 0,
+  animateOnMount = false,
+  animationNonce = 0,
   onOpen,
   onRename,
   onDelete,
@@ -57,9 +82,36 @@ export function ProjectListItem({
 }: ProjectListItemProps) {
   const { designTheme } = useAppTheme();
   const { t, locale } = useI18n();
+  const reduceMotion = useReducedMotion();
 
   // Видимость action sheet с вторичными действиями.
   const [sheetVisible, setSheetVisible] = useState(false);
+
+  // Каскадное появление карточки: opacity 0→1 и translateY 20→0.
+  // Стартовые значения скрыты только если анимация действительно будет.
+  const delay = getStaggerDelay(index);
+  const willAnimate = animateOnMount && !reduceMotion && delay !== null;
+  const opacity = useSharedValue(willAnimate ? 0 : 1);
+  const translateY = useSharedValue(willAnimate ? APPEAR_TRANSLATE_Y : 0);
+
+  // Запуск/перезапуск анимации: первый mount и каждый новый animationNonce.
+  useEffect(() => {
+    if (!willAnimate || delay === null) {
+      // Reduced motion или элемент дальше лимита — показываем сразу.
+      opacity.value = 1;
+      translateY.value = 0;
+      return;
+    }
+    opacity.value = 0;
+    translateY.value = APPEAR_TRANSLATE_Y;
+    opacity.value = withDelay(delay, withTiming(1, APPEAR_TIMING));
+    translateY.value = withDelay(delay, withSpring(0, APPEAR_SPRING));
+  }, [animationNonce, delay, opacity, translateY, willAnimate]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
 
   const actions: ActionSheetAction[] = [
     {
@@ -96,28 +148,31 @@ export function ProjectListItem({
 
   return (
     <>
-      {designTheme === 'simple' ? (
-        <AppCard style={styles.card}>
-          <View style={styles.simpleRow}>
-            <Pressable onPress={onOpen} accessibilityRole="button" style={styles.simpleText}>
-              <AppText variant="subtitle">{name}</AppText>
-              <AppText color="textSecondary" variant="caption">
-                {t('projects.photoCount', { count: photoCount })} · {formatDate(updatedAt, locale)}
-              </AppText>
-            </Pressable>
-            <MoreButton onPress={openSheet} />
-          </View>
-        </AppCard>
-      ) : (
-        <PhotoCard
-          name={name}
-          photoCount={photoCount}
-          updatedAt={updatedAt}
-          coverUri={coverUri}
-          onOpen={onOpen}
-          onMore={openSheet}
-        />
-      )}
+      {/* Анимируем только карточку; action sheet (модалка) — без анимации. */}
+      <Animated.View style={animatedStyle}>
+        {designTheme === 'simple' ? (
+          <AppCard style={styles.card}>
+            <View style={styles.simpleRow}>
+              <Pressable onPress={onOpen} accessibilityRole="button" style={styles.simpleText}>
+                <AppText variant="subtitle">{name}</AppText>
+                <AppText color="textSecondary" variant="caption">
+                  {t('projects.photoCount', { count: photoCount })} · {formatDate(updatedAt, locale)}
+                </AppText>
+              </Pressable>
+              <MoreButton onPress={openSheet} />
+            </View>
+          </AppCard>
+        ) : (
+          <PhotoCard
+            name={name}
+            photoCount={photoCount}
+            updatedAt={updatedAt}
+            coverUri={coverUri}
+            onOpen={onOpen}
+            onMore={openSheet}
+          />
+        )}
+      </Animated.View>
 
       <ActionSheet
         visible={sheetVisible}

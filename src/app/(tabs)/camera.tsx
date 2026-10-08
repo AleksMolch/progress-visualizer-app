@@ -6,14 +6,15 @@
  * - выбирает активный проект для съёмки;
  * - показывает ghost overlay по эталонному фото проекта (latest / first / manual);
  * - tap по свободной зоне превью временно усиливает призрак (не сохраняется);
- * - делает снимок и сохраняет его в sandbox (через store, не напрямую);
+ * - делает снимок (штатный звук затвора отключён) и сохраняет его в sandbox
+ *   (через store, не напрямую);
  * - съёмка запускается центральной кнопкой нижней панели (shutter bridge).
  *
  * Слой: UI (/src/app). Файловую систему не трогает: захват идёт через
  * useProjectStore.saveCapturedPhoto, который сам работает со storage-слоем.
  */
 
-import { CameraView, useCameraPermissions } from 'expo-camera';
+import { CameraView, useCameraPermissions, type CameraPictureOptions } from 'expo-camera';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
@@ -48,6 +49,15 @@ import { getReferenceMode, isManualReferenceMissing, resolveReferencePhoto } fro
 
 /** Нижний отступ контролов от нижней панели вкладок. */
 const CONTROLS_BOTTOM_GAP = 16;
+
+/**
+ * Параметры съёмки. Штатный shutter sound Expo отключён: на Android
+ * `shutterSound: true` (значение по умолчанию) проигрывает системный
+ * MediaActionSound.SHUTTER_CLICK чрезмерно громко и мешает основной функции
+ * приложения. Подтверждение съёмки даёт визуальная анимация затвора и haptic
+ * (если включён в настройках); собственный звук не добавляем.
+ */
+const CAPTURE_OPTIONS: CameraPictureOptions = { shutterSound: false };
 
 export default function CameraScreen() {
   const { t } = useI18n();
@@ -120,7 +130,7 @@ export default function CameraScreen() {
     setCaptureError(null);
     void triggerHaptic('capture', settings.hapticsEnabled);
     try {
-      const picture = await cameraRef.current?.takePictureAsync();
+      const picture = await cameraRef.current?.takePictureAsync(CAPTURE_OPTIONS);
       if (!picture) {
         throw new Error('Камера ещё не готова');
       }

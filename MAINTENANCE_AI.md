@@ -140,7 +140,9 @@ Material и Gallery отдельными темами — пользовател
   селекторе проекта и модалках (они выше по z-index).
 - Pan-слайдер сравнения (`compare-slider.tsx`) — `Gesture.Pan` внутри
   `GestureDetector`; он живёт в стеке проекта, где нет свайпа вкладок, поэтому
-  конфликт исключён. НЕ добавлять на compare screen сохранение/экспорт изображения.
+  конфликт исключён. У разделителя есть intro 0%→100%→50% (прерывается жестом),
+  пружинная доводка и haptic у краёв. НЕ добавлять на compare screen
+  сохранение/экспорт изображения.
 - Нижнее меню (`main-tab-bar.tsx`) — центральная кнопка камеры/затвора; съёмка
   запускается через `camera-shutter-bridge.ts` (камера регистрирует обработчик),
   а не через проброс пропсов через навигацию.
@@ -202,7 +204,7 @@ Material и Gallery отдельными темами — пользовател
 ### Safe area и skeleton
 
 - `AppScreen` принимает проп `edges` (default `['top','left','right']`). Для стек-экранов
-  С нативным header передавай `edges={['left','right']}` — иначе верхний inset применяется
+  с нативным header передавай `edges={['left','right']}` — иначе верхний inset применяется
   дважды. Compare/viewer не используют AppScreen (свой контейнер).
 - Skeleton — `src/components/ui/skeleton.tsx` (`SkeletonBlock`/`ProjectListSkeleton`/
   `ProjectDetailsSkeleton`, Reanimated pulse, БЕЗ новых библиотек). Показывается по
@@ -211,6 +213,22 @@ Material и Gallery отдельными темами — пользовател
   не добавляй искусственные задержки.
 - Вторичные действия проекта/фото — через `ActionSheet` за кнопкой `...`, а не постоянные
   кнопки/корзины на карточке.
+
+### Анимации, reduced motion и звук затвора
+
+- Любая новая анимация (Reanimated) обязана уважать `useReducedMotion()`: при
+  reduced motion показывай конечное состояние без движения. Текущие примеры:
+  каскад `ProjectListItem`, intro `compare-slider`, `AnimatedNumber`.
+- `AnimatedNumber` (`src/components/ui/animated-number.tsx`) — count-up через
+  `createAnimatedComponent(TextInput)` + `useAnimatedProps({ text, defaultValue })`.
+  НЕ используй `Animated.addWhitelistedNativeProps` — в Reanimated 4 его нет.
+- Каскад списка: задержки только через `src/utils/stagger.ts` (`getStaggerDelay`),
+  не дублируй формулу в компонентах. Возврат на экран — `animationNonce` + `useFocusEffect`.
+- Градиенты без новой зависимости: встроенный RN `experimental_backgroundImage`
+  (пример — линия `compare-slider`). Не добавляй `expo-linear-gradient` без решения.
+- Звук затвора: `takePictureAsync(CAPTURE_OPTIONS)` с `shutterSound: false` — НЕ возвращать
+  штатный звук и НЕ добавлять кастомный без отдельной задачи. Громкость системы, `AudioManager`
+  и беззвучный режим не трогать; haptic — только при `settings.hapticsEnabled`.
 
 ### Импорт и экспорт фото (privacy)
 

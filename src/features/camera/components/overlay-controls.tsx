@@ -4,6 +4,7 @@
  * Функции:
  * - переключатель ghost overlay (on/off), сетки и выбор эталона в одном ряду;
  * - слайдер видимости overlay с подписью процента в одной компактной строке;
+ * - процент анимируется (count-up) при усилении призрака;
  * - слайдер и подпись показывают ОДНО значение — фактическую видимость
  *   (effectiveOpacity), а не сохранённую настройку (иначе «врёт» при усилении);
  * - компактный баннер «Призрак усилен» над панелью (не раздувает панель).
@@ -15,10 +16,11 @@
 import Slider from '@react-native-community/slider';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { AnimatedNumber } from '@/components/ui/animated-number';
 import { AppText } from '@/components/ui/app-text';
 import { useI18n } from '@/i18n';
 import { useSettingsStore } from '@/store/settingsStore';
-import { radii, spacing, type ThemeColors } from '@/theme';
+import { fontSize, radii, spacing, type ThemeColors } from '@/theme';
 import { useAppTheme } from '@/theme/ThemeProvider';
 
 interface OverlayControlsProps {
@@ -91,9 +93,12 @@ export function OverlayControls({
         </View>
 
         <View style={styles.sliderRow}>
-          <AppText variant="caption" color="textSecondary" style={styles.percentLabel}>
-            {percent}%
-          </AppText>
+          <AnimatedNumber
+            value={percent}
+            duration={300}
+            suffix="%"
+            style={[styles.percentLabel, { color: colors.textSecondary }]}
+          />
           <Slider
             style={styles.slider}
             minimumValue={0}
@@ -191,6 +196,7 @@ const styles = StyleSheet.create({
   percentLabel: {
     minWidth: 40,
     textAlign: 'right',
+    fontSize: fontSize.sm,
   },
   slider: {
     flex: 1,

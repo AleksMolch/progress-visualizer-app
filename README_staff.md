@@ -294,10 +294,15 @@ npx expo-doctor
 - `resolveDesignThemeId(value, platform)` мигрирует `simple`/`minimalism` → `modern` на
   Android; iOS/прочее сохраняют `simple`.
 
-### 11.3. Слайдер сравнения (геометрия)
+### 11.3. Слайдер сравнения (геометрия и анимации)
 
 - `compare-slider.tsx`: верхнее фото на всю область W×H, ширина меняется только у
   clipping-контейнера; позиция разделителя — shared value `ratio` (0..1) для поворота/ресайза.
+- Intro 0%→100%→50% при первом показе (1.5s + 0.3s + 0.6s), прерывается жестом;
+  отпускание — `withSpring` с учётом `velocityX`; при `reduce motion` intro не играет.
+- Handle 44pt с `chevron-back/forward`, линия с градиентным затуханием через встроенный
+  RN 0.86 `experimental_backgroundImage` (без `expo-linear-gradient`). Haptic у краёв —
+  через `triggerHaptic('impact', hapticsEnabled)`.
 
 ### 11.4. Редактор заметки и клавиатура
 
@@ -305,12 +310,16 @@ npx expo-doctor
   при отмене с изменениями — `Alert` подтверждения; `KeyboardAvoidingView` + `ScrollView`;
   Android Back (onRequestClose) учитывает несохранённые изменения.
 
-### 11.5. Звук затвора (ограничение)
+### 11.5. Звук затвора (отключён)
 
-- Источник: `expo-camera` `takePictureAsync()` с `shutterSound` (default `true`) — системный
-  звук камеры. Своего звука нет, двойного срабатывания нет (shutter bridge + guard `isCapturing`).
-- Поддерживаемое управление — только `shutterSound: false` (полное отключение); громкость
-  системного звука через API не регулируется. Принято: не отключать и не добавлять свой звук.
+- `takePictureAsync` вызывается с `{ shutterSound: false }` (типизированная константа
+  `CAPTURE_OPTIONS: CameraPictureOptions`) — штатный громкий
+  `MediaActionSound.SHUTTER_CLICK` на Android не проигрывается.
+- Свой звук НЕ добавлен: подтверждение съёмки — визуальная анимация затвора и haptic
+  (только при `settings.hapticsEnabled`). Системная громкость, `AudioManager` и
+  беззвучный режим не трогаются.
+- На региональных/OEM-прошивках с обязательным звуком затвора системный звук может
+  остаться — это ограничение платформы, обходить его нельзя (см. TESTING.md).
 
 ### 11.6. Нижний отступ и рекламные placeholder-слоты
 
@@ -354,6 +363,19 @@ npx expo-doctor
   `WRITE_EXTERNAL_STORAGE` для `MediaLibrary.Asset.create()`.
 - Predictive Back: `predictiveBackGestureEnabled: true`. Конфликтов не выявлено; проверка
   на реальном Android 13+ — ручная (см. TESTING.md).
+
+### 11.9. Анимации UI (список, слайдер, числа)
+
+- Каскадный список проектов: `ProjectListItem` (`index`/`animateOnMount`/`animationNonce`) —
+  `opacity 0→1` + `translateY 20→0`, задержка из `src/utils/stagger.ts`
+  (`getStaggerDelay`, шаг 60 мс, первые 10 элементов; дальше — мгновенно). Экран
+  перезапускает каскад при возврате через `useFocusEffect`. При `reduce motion` — без анимации.
+- `AnimatedNumber` (`src/components/ui/animated-number.tsx`) — count-up на
+  `createAnimatedComponent(TextInput)` + `useAnimatedProps` (паттерн Reanimated 4;
+  `addWhitelistedNativeProps` в 4.x отсутствует). Используется в статистике проекта
+  (фото/дни), проценте ghost overlay (25%↔85%) и в compare (дни между снимками).
+- Правило: анимации уважают `useReducedMotion()`; haptics — только через
+  `triggerHaptic(type, settings.hapticsEnabled)`, прямой импорт `expo-haptics` в UI запрещён.
 
 ---
 

@@ -7,13 +7,16 @@
 
 ## ⚠️ ВАЖНО ДЛЯ СЛЕДУЮЩЕЙ СЕССИИ (читай первым)
 
-- **Где мы сейчас**: выполнена продуктовая итерация UI + пакет UX-исправлений
-  (`AI_CODER_FIXES_EMPTY_SLIDER_NOTES_AUDIO_I18N.md`, см. запись 2026-09-16 ниже):
-  i18n на 5 языков (ru/en/zh-Hans/kk/es), empty states, фикс геометрии слайдера
-  сравнения, кнопка «Отмена», редактор заметки с клавиатурой, скрытие «Простого» на
-  Android, термин «Таймлапс». Все проверки зелёные (typecheck/lint/test/expo-doctor/export).
-- **Следующая задача**: ручная приёмка на реальных устройствах (звук затвора, слайдер,
-  клавиатура, жесты) + проверка переводов носителями; затем bundleIdentifier и публикация.
+- **Где мы сейчас**: выполнены задания `AI_CODER_ANDROID_CAMERA_SHUTTER_SOUND_FIX.md`
+  (штатный звук затвора Expo отключён через `shutterSound: false`) и
+  `TECHNICAL_SPEC_ALL_UI_ENHANCEMENTS.md` (каскад карточек проектов, усиленный слайдер
+  сравнения, AnimatedNumber; см. запись 2026-10-07 ниже). Все проверки зелёные
+  (typecheck/lint/test 185/185/export); expo-doctor 20/21 — предсуществующий дрейф
+  patch-версий expo/*. Попутно исправлен сломанный блок skeleton в project/[id].
+- **Следующая задача**: ручная приёмка на физическом Android (release/preview APK):
+  отсутствие штатного звука затвора при всех режимах громкости и OEM-ограничения;
+  визуальная приёмка анимаций (каскад, intro слайдера, count-up, reduced motion).
+  Затем bundleIdentifier и публикация.
 - **Рабочая папка проекта**: `/Users/aleks/dev/progress-visualizer-app` (ASCII-путь).
 - **Git remote**: origin = `https://github.com/AleksMolch/progress-visualizer-app.git`.
 - **PATH**: `pod`/`brew`/CocoaPods — в `/opt/homebrew/bin`; перед prebuild/run:ios/pod install
@@ -32,6 +35,66 @@
 - Результат проверок:
 - Известные проблемы:
 - Следующий шаг:
+
+---
+
+### 2026-10-07 — Звук затвора (Android) + UI-анимации: список, слайдер, числа
+
+- Что сделано:
+  - (1) **Фикс звука затвора**: `takePictureAsync` вызывается с типизированной
+    константой `CAPTURE_OPTIONS: CameraPictureOptions = { shutterSound: false }`
+    (`src/app/(tabs)/camera.tsx`). Штатный громкий Android-звук Expo отключён;
+    визуальная анимация затвора и haptic (по настройке) сохранены, свой звук не добавлен.
+  - (2) **Animated Grid List**: чистая утилита `src/utils/stagger.ts`
+    (`getStaggerDelay`: шаг 60 мс, первые 10 карточек, дальше мгновенно) + тесты;
+    `ProjectListItem` получил `index`/`animateOnMount`/`animationNonce` и анимацию
+    `opacity 0→1` + `translateY 20→0` с пружиной; каскад перезапускается при возврате
+    на вкладку (`useFocusEffect`); `useReducedMotion` отключает анимацию.
+  - (3) **Усиленный слайдер сравнения** (в `compare-slider.tsx`, без нового компонента):
+    handle 44pt с `chevron-back/forward`, intro 0%→100%→50% (прерывается жестом),
+    пружинная доводка с учётом `velocityX`, haptic у краёв через `triggerHaptic`
+    (только при `hapticsEnabled`), градиентная линия на встроенном RN
+    `experimental_backgroundImage` (без `expo-linear-gradient`), accessibility
+    (`adjustable` + проценты), reduced motion.
+  - (4) **AnimatedNumber** (`src/components/ui/animated-number.tsx`): count-up на
+    паттерне Reanimated 4 (`createAnimatedComponent(TextInput)` + `useAnimatedProps`,
+    т.к. `addWhitelistedNativeProps` в 4.x отсутствует). Интегрирован: статистика
+    проекта (фото/дни), процент ghost overlay камеры (25%↔85%), дни между снимками
+    в compare. Поддержка decimals/prefix/suffix, reduced motion.
+  - (5) **Попутный фикс**: в `project/[id]/index.tsx` проверка `hasHydrated`/skeleton
+    была ошибочно вставлена внутрь `handleAddPhoto` (с коммита cf7b03a) — вынесена
+    в ранний return тела экрана.
+  - (6) i18n: ключи `project.statPhotos`, `project.statDays`, `compare.daysBetweenLabel`,
+    `compare.sliderA11y` во все 5 локалей.
+- Какие файлы созданы или изменены:
+  - созданы: `src/components/ui/animated-number.tsx`, `src/utils/stagger.ts`,
+    `src/utils/stagger.test.ts`
+  - изменены: `src/app/(tabs)/camera.tsx`, `src/app/(tabs)/index.tsx`,
+    `src/app/project/[id]/index.tsx`, `src/app/project/[id]/compare.tsx`,
+    `src/features/projects/components/project-list-item.tsx`,
+    `src/features/gallery/components/compare-slider.tsx`,
+    `src/features/camera/components/overlay-controls.tsx`,
+    `src/i18n/locales/{en,ru,zh-Hans,kk,es}.ts`,
+    `DECISIONS.md`, `README_staff.md`, `MAINTENANCE_AI.md`, `TESTING.md`
+- Какие команды запускались:
+  - `npm run typecheck`, `npm run lint`, `npm test`, `npx expo-doctor`,
+    `npx expo export --platform ios`
+  - `npx expo run:ios` (iPhone 17 Pro Max) + `npx expo start` + запуск приложения:
+    iOS Bundled 807ms (2056 модулей), приложение живо, в логах Metro/симулятора
+    нет JS-ошибок/redbox
+- Результат проверок:
+  - typecheck/lint: чисто; тесты: 185/185 (было 180; +5 тестов stagger)
+  - expo-doctor: 20/21 — предсуществующий дрейф patch-версий expo/* (новых
+    зависимостей не добавлялось; сверять с STACK_RESOLVED.md)
+  - экспорт iOS: собран; запуск без runtime-ошибок
+- Известные проблемы:
+  - Звук затвора проверяется только вручную на **release/preview APK и физическом
+    Android** — в окружении нет устройства/эмулятора (см. TESTING.md, п. OEM).
+  - Визуальная приёмка анимаций (каскад, intro слайдера, count-up, reduced motion) —
+    ручная: модель не читает скриншоты.
+  - Переводы новых ключей zh-Hans/kk/es не проверены носителями (полнота — компилятор).
+- Следующий шаг: ручная приёмка на устройствах (звук затвора и OEM-регионы, анимации,
+  жесты); затем bundleIdentifier и публикация.
 
 ---
 

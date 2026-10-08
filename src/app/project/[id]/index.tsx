@@ -23,6 +23,7 @@ import { AppButton } from '@/components/ui/app-button';
 import { AppCard } from '@/components/ui/app-card';
 import { AppScreen } from '@/components/ui/app-screen';
 import { AppText } from '@/components/ui/app-text';
+import { AnimatedNumber } from '@/components/ui/animated-number';
 import { ProjectDetailsSkeleton } from '@/components/ui/skeleton';
 import { AdPlaceholder } from '@/features/ads/components/ad-placeholder';
 import { ActionSheet, type ActionSheetAction } from '@/features/gallery/components/action-sheet';
@@ -30,7 +31,7 @@ import { useI18n } from '@/i18n';
 import { useAppStore } from '@/store/appStore';
 import { useProjectStore } from '@/store/projectStore';
 import { useSettingsStore } from '@/store/settingsStore';
-import { radii, spacing } from '@/theme';
+import { fontSize, radii, spacing } from '@/theme';
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { formatDate } from '@/utils/dates';
 import { advanceQuickCompare, getDaysBetweenPhotos, groupPhotosByMonth } from '@/utils/progress';
@@ -108,16 +109,7 @@ export default function ProjectScreen() {
 
   // Открыть камеру с выбранным текущим проектом.
   const handleAddPhoto = () => {
-  // Пока данные не гидратированы — skeleton вместо пустого экрана.
-  if (!hasHydrated) {
-    return (
-      <AppScreen edges={['left', 'right']}>
-        <ProjectDetailsSkeleton />
-      </AppScreen>
-    );
-  }
-
-  if (!project) {
+    if (!project) {
       return;
     }
     setActiveProjectId(project.id);
@@ -155,6 +147,15 @@ export default function ProjectScreen() {
       router.push(`/project/${id}/viewer/${photoId}`);
     }
   };
+
+  // Пока данные не гидратированы — skeleton вместо пустого экрана.
+  if (!hasHydrated) {
+    return (
+      <AppScreen edges={['left', 'right']}>
+        <ProjectDetailsSkeleton />
+      </AppScreen>
+    );
+  }
 
   // Проект не найден (например, после удаления или неверная ссылка).
   if (!project) {
@@ -313,21 +314,47 @@ function SummaryBlock({
   onCapture: () => void;
 }) {
   const { t, locale } = useI18n();
+  const { colors } = useAppTheme();
   return (
     <AppCard style={styles.summary}>
       <AppText variant="title">{name}</AppText>
-      <AppText color="textSecondary">
-        {visibleCount === 0
-          ? t('project.noSnapshots')
-          : t('projects.photoCount', { count: visibleCount })}
-      </AppText>
+
+      {visibleCount === 0 ? (
+        <AppText color="textSecondary">{t('project.noSnapshots')}</AppText>
+      ) : (
+        // Анимированные ключевые числа проекта: фото и дни наблюдения.
+        <View style={styles.statsRow}>
+          <View style={styles.statItem}>
+            <AnimatedNumber
+              value={visibleCount}
+              duration={800}
+              style={[styles.statValue, { color: colors.text }]}
+            />
+            <AppText color="textSecondary" variant="caption">
+              {t('project.statPhotos')}
+            </AppText>
+          </View>
+          {daysBetween !== null ? (
+            <View style={styles.statItem}>
+              <AnimatedNumber
+                value={daysBetween}
+                duration={1000}
+                style={[styles.statValue, { color: colors.text }]}
+              />
+              <AppText color="textSecondary" variant="caption">
+                {t('project.statDays')}
+              </AppText>
+            </View>
+          ) : null}
+        </View>
+      )}
+
       {firstTakenAt && lastTakenAt ? (
         <AppText color="textSecondary" variant="caption">
           {t('project.period', {
             from: formatDate(firstTakenAt, locale),
             to: formatDate(lastTakenAt, locale),
           })}
-          {daysBetween !== null ? ` · ${t('time.days', { count: daysBetween })}` : ''}
         </AppText>
       ) : null}
       <AppText color="textSecondary" variant="caption">
@@ -612,6 +639,18 @@ const styles = StyleSheet.create({
   },
   summary: {
     gap: spacing.xs,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: spacing.xl,
+    marginVertical: spacing.xs,
+  },
+  statItem: {
+    gap: 2,
+  },
+  statValue: {
+    fontSize: fontSize.xl,
+    fontWeight: '700',
   },
   firstLast: {
     gap: spacing.sm,

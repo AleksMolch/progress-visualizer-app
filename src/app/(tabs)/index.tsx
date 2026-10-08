@@ -6,14 +6,15 @@
  * - создаёт проект через модальное окно;
  * - переименовывает проект через модальное окно;
  * - удаляет проект с подтверждением (Alert);
- * - открывает экран проекта по тапу на карточку.
+ * - открывает экран проекта по тапу на карточку;
+ * - перезапускает каскадную анимацию карточек при возврате на вкладку.
  *
  * Слой: UI (/src/app). Данные и действия — через useProjectStore,
  * навигация — через expo-router. Файловую систему не трогает напрямую.
  */
 
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
 import { Alert, FlatList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -51,6 +52,22 @@ export default function ProjectsScreen() {
   const [editingId, setEditingId] = useState<string | null>(null);
   // uri выбранного с устройства фото, который импортируется после создания проекта.
   const [pendingImportUri, setPendingImportUri] = useState<string | null>(null);
+
+  // Счётчик перезапуска каскадной анимации карточек: растёт при возврате на экран.
+  const [animationNonce, setAnimationNonce] = useState(0);
+  const isFirstFocusRef = useRef(true);
+
+  // Возврат на вкладку «Проекты» перезапускает каскад появления карточек.
+  // Первый фокус совпадает с mount — анимацию уже запустил первый рендер.
+  useFocusEffect(
+    useCallback(() => {
+      if (isFirstFocusRef.current) {
+        isFirstFocusRef.current = false;
+        return;
+      }
+      setAnimationNonce((nonce) => nonce + 1);
+    }, []),
+  );
 
   // Имя проекта, который сейчас редактируется (для заголовка и начального значения).
   const editingProject = projects.find((p) => p.id === editingId) ?? null;
@@ -161,6 +178,9 @@ export default function ProjectsScreen() {
                 photoCount={photoCount(item.id)}
                 updatedAt={item.updatedAt}
                 coverUri={getLatestVisiblePhoto(photos, item.id)?.uri}
+                index={index}
+                animateOnMount
+                animationNonce={animationNonce}
                 onOpen={() => router.push(`/project/${item.id}`)}
                 onRename={() => openEditModal(item.id)}
                 onDelete={() => handleDelete(item.id)}
