@@ -155,6 +155,27 @@ Material и Gallery отдельными темами — пользовател
 - Сбросы временного состояния обязательны на: съёмку, смену проекта, уход с экрана
   (`useFocusEffect` cleanup), фон (`AppState`), смену источника эталона, ползунок.
 
+### Разрешения и config plugins (app.json)
+
+- **НИКОГДА не ставить `cameraPermission: false` у `expo-image-picker`, пока в проекте
+  используется `expo-camera`.** Этот флаг означает «заблокировать CAMERA для всех
+  библиотек»: плагин добавляет `tools:node="remove"` в AndroidManifest, разрешение
+  исчезает из APK, и системный диалог камеры невозможен (инцидент 2026-10-12, APK
+  versionCode 1). Для image-picker правильно: `photosPermission: false` +
+  `microphonePermission: false`.
+- `microphonePermission: false` у image-picker обязателен: без него плагин добавляет
+  `android.permission.RECORD_AUDIO` (микрофон проекту не нужен). У `expo-camera`
+  держать `recordAudioAndroid: false` и `microphonePermission: false`.
+- Permission flow камеры: чистая функция `resolveCameraPermissionView`
+  (`src/utils/cameraPermission.ts`) — loading/request/blocked/granted; запрос только
+  по нажатию, постоянный отказ → `Linking.openSettings()`, перечитывание статуса —
+  одна подписка `AppState` при возврате в active. Не добавлять второй listener и не
+  запрашивать системный диалог автоматически.
+- Любая правка config plugins не применяется без новой native-сборки:
+  `npx expo prebuild --clean` → поднять `android.versionCode` → новый APK. Проверить
+  `android/app/src/main/AndroidManifest.xml`: нужные permissions есть, лишних
+  `tools:node="remove"` нет. Актуальный versionCode — 2.
+
 ### Работа с optional-полями фото и проекта
 
 - `PhotoMetadata.note/isFavorite/isHidden` и `Project.referenceMode/referencePhotoId`

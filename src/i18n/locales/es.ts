@@ -86,8 +86,14 @@ export const es: Record<MessageKey, Message> = {
 
   'camera.needPermission': 'Se requiere acceso a la cámara',
   'camera.permissionHint': 'Permite el acceso para tomar fotos de progreso.',
-  'camera.permissionDenied': 'Acceso denegado. Activa la cámara en los ajustes del dispositivo.',
-  'camera.allow': 'Permitir acceso',
+  'camera.allowCamera': 'Permitir cámara',
+  'camera.permissionRequesting': 'Solicitando permiso…',
+  'camera.permissionDeniedTitle': 'El acceso a la cámara está desactivado',
+  'camera.permissionSettingsHint':
+    'Abre los ajustes de la aplicación y permite el acceso a la cámara.',
+  'camera.openSettings': 'Abrir ajustes de la aplicación',
+  'camera.backToProjects': 'Volver a proyectos',
+  'camera.settingsError': 'No se pudieron abrir los ajustes',
   'camera.noProjects': 'Aún no hay proyectos',
   'camera.noProjectsHint': 'Crea un proyecto en la pestaña Proyectos para empezar a fotografiar.',
   'camera.captureError': 'No se pudo guardar la foto',

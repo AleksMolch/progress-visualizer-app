@@ -170,6 +170,8 @@ npx expo-doctor
 | После правки app.json разрешения не применились | Не выполнен prebuild | `npx expo prebuild --platform ios` |
 | Биометрия не запрашивается | На симуляторе нет биометрии (code -7) | Проверять на реальном устройстве |
 | expo-doctor ругается на версии | Ручная установка пакета | Ставить через `npx expo install` |
+| Камера не запрашивает разрешение, в App info нет «Камера» | У `expo-image-picker` в app.json стоит `cameraPermission: false` — плагин вырезает CAMERA из манифеста (`tools:node="remove"`) для всех библиотек | Убрать `cameraPermission: false` у image-picker, оставить `microphonePermission: false`, поднять versionCode и собрать новый APK (см. 11.10) |
+| В APK есть лишний `RECORD_AUDIO` | `expo-image-picker` добавляет его, если `microphonePermission` не `false` | Добавить `"microphonePermission": false` в конфиг image-picker |
 
 ---
 
@@ -376,6 +378,24 @@ npx expo-doctor
   (фото/дни), проценте ghost overlay (25%↔85%) и в compare (дни между снимками).
 - Правило: анимации уважают `useReducedMotion()`; haptics — только через
   `triggerHaptic(type, settings.hapticsEnabled)`, прямой импорт `expo-haptics` в UI запрещён.
+
+### 11.10. Разрешение камеры (permission flow)
+
+- Конфигурация (`app.json`): у `expo-image-picker` — `photosPermission: false`,
+  `microphonePermission: false`; `cameraPermission: false` НЕ ставить, иначе плагин
+  вырезает `android.permission.CAMERA` из манифеста (`tools:node="remove"`) и
+  системный запрос становится невозможен. CAMERA даёт плагин `expo-camera`
+  (`recordAudioAndroid: false`, `microphonePermission: false`).
+- После любой правки config plugins обязателен `npx expo prebuild --clean` + новый APK
+  и поднятый `android.versionCode` (изменения плагинов не применяются Metro/OTA).
+  Актуальная история: versionCode 2 (permission-фикс + тихий затвор).
+- Flow в `src/app/(tabs)/camera.tsx`: `resolveCameraPermissionView`
+  (`src/utils/cameraPermission.ts`) — loading / request / blocked / granted.
+  Запрос — только по нажатию (guard от повтора), постоянный отказ — `Linking.openSettings()`
+  с обработкой ошибки и повтором; единственная подписка `AppState` перечитывает
+  `getPermission()` при возврате в active (без автоматического диалога).
+- Permission-экраны используют semantic-цвета темы, safe area и `MAIN_TAB_BAR_INSET` —
+  контраст во всех оформлениях и отсутствие перекрытия нижним меню.
 
 ---
 

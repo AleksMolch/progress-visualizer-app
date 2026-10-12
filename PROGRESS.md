@@ -7,23 +7,24 @@
 
 ## ⚠️ ВАЖНО ДЛЯ СЛЕДУЮЩЕЙ СЕССИИ (читай первым)
 
-- **Где мы сейчас**: выполнены задания `AI_CODER_ANDROID_CAMERA_SHUTTER_SOUND_FIX.md`
-  (штатный звук затвора Expo отключён через `shutterSound: false`) и
-  `TECHNICAL_SPEC_ALL_UI_ENHANCEMENTS.md` (каскад карточек проектов, усиленный слайдер
-  сравнения, AnimatedNumber; см. запись 2026-10-07 ниже). Все проверки зелёные
-  (typecheck/lint/test 185/185/export); expo-doctor 20/21 — предсуществующий дрейф
-  patch-версий expo/*. Попутно исправлен сломанный блок skeleton в project/[id].
-- **Следующая задача**: ручная приёмка на физическом Android (release/preview APK):
-  отсутствие штатного звука затвора при всех режимах громкости и OEM-ограничения;
-  визуальная приёмка анимаций (каскад, intro слайдера, count-up, reduced motion).
-  Затем bundleIdentifier и публикация.
+- **Где мы сейчас**: выполнены `AI_CODER_ANDROID_CAMERA_SHUTTER_SOUND_FIX.md`
+  (тихий затвор) и `TECHNICAL_SPEC_ALL_UI_ENHANCEMENTS.md` (анимации) — коммит
+  `b277495`; затем `AI_CODER_CAMERA_FIX_AND_ANIMATED_GRID_LIST.md`, **задача 1**
+  (возврат разрешения CAMERA: у image-picker убран `cameraPermission: false`,
+  versionCode 2, полный permission flow, см. запись 2026-10-12). Все проверки
+  зелёные: typecheck/lint/test 189/189. Manifest проверен: CAMERA есть, remove нет.
+  **Задача 2 (Animated Grid List) НЕ начиналась** — по условию задания она делается
+  только после ручной проверки камеры на физическом Android.
+- **Следующая задача**: владелец ставит свежий EAS APK (versionCode 2) на Samsung:
+  permission flow + тихий затвор. После подтверждения — задача 2 (Grid/List morph).
 - **Рабочая папка проекта**: `/Users/aleks/dev/progress-visualizer-app` (ASCII-путь).
 - **Git remote**: origin = `https://github.com/AleksMolch/progress-visualizer-app.git`.
 - **PATH**: `pod`/`brew`/CocoaPods — в `/opt/homebrew/bin`; перед prebuild/run:ios/pod install
   выполни `export PATH="/opt/homebrew/bin:$PATH"`.
 - **Окружение**: Node v22.18.0, Xcode 26.6, CocoaPods 1.17.0, Apple M4.
 - **Запуск**: native-модули — только dev build (`npx expo run:ios`), НЕ Expo Go.
-  Metro на :8081 (`/tmp/metro.log`). EAS APK — см. запись 2026-09-16.
+  Metro на :8081 (`/tmp/metro.log`). EAS: `npx eas-cli build -p android --profile apk`
+  (токен в `~/.expo-token`, аккаунт alomium; НЕ коммитить).
 
 ## Шаблон записи
 
@@ -35,6 +36,54 @@
 - Результат проверок:
 - Известные проблемы:
 - Следующий шаг:
+
+---
+
+### 2026-10-12 — Задача 1: возврат разрешения CAMERA + полный permission flow
+
+- Что сделано:
+  - (1) **Причина найдена и исправлена**: у `expo-image-picker` в `app.json` стояло
+    `cameraPermission: false` — плагин вызывает `withBlockedPermissions(CAMERA)`
+    (`tools:node="remove"`), из-за чего разрешение камеры вырезалось из манифеста
+    и Samsung не показывал «Камера». Поле удалено; добавлен `microphonePermission: false`
+    (image-picker по умолчанию добавлял `RECORD_AUDIO` без необходимости);
+    `photosPermission: false` и `recordAudioAndroid: false` сохранены.
+  - (2) `android.versionCode` 1 → 2; выполнен `expo prebuild --platform android --clean`.
+    Проверено в `android/app/src/main/AndroidManifest.xml`: CAMERA присутствует,
+    правила `tools:node="remove"` для CAMERA нет, RECORD_AUDIO помечен remove.
+  - (3) **Полный permission flow** (`src/app/(tabs)/camera.tsx`): чистая функция
+    `resolveCameraPermissionView` (`src/utils/cameraPermission.ts`, TDD, 4 состояния);
+    состояние загрузки без диалога и CameraView; экран запроса с guard повторного
+    нажатия и текстом «Запрос разрешения…»; экран постоянного отказа с
+    `Linking.openSettings()`, обработкой ошибки и повтором; кнопка «Назад к проектам»;
+    одна подписка `AppState` перечитывает `getPermission()` при возврате в active.
+  - (4) Permission-экраны используют цвета темы, safe area и отступ под нижнее меню —
+    читаемость во всех оформлениях (фикс светлого текста на светлом фоне).
+  - (5) i18n: удалены устаревшие `camera.allow`/`camera.permissionDenied`, добавлены
+    `camera.allowCamera`, `camera.permissionRequesting`, `camera.permissionDeniedTitle`,
+    `camera.permissionSettingsHint`, `camera.openSettings`, `camera.backToProjects`,
+    `camera.settingsError` во все 5 локалей.
+  - Задача 2 (Animated Grid List) намеренно НЕ начиналась — по заданию только после
+    проверки камеры на физическом устройстве.
+- Какие файлы созданы или изменены:
+  - созданы: `src/utils/cameraPermission.ts`, `src/utils/cameraPermission.test.ts`
+  - изменены: `app.json` (plugins + versionCode 2), `src/app/(tabs)/camera.tsx`,
+    `src/i18n/locales/{en,ru,zh-Hans,kk,es}.ts`, `DECISIONS.md`, `README_staff.md`,
+    `MAINTENANCE_AI.md`, `TESTING.md`, `PROGRESS.md`
+- Какие команды запускались:
+  - `npm run typecheck`, `npm run lint`, `npm test` (189/189)
+  - `npx expo prebuild --platform android --clean --no-install` + проверка Manifest
+- Результат проверок:
+  - typecheck/lint: чисто; тесты: 189/189 (было 185; +4 теста permission-view)
+  - Manifest: `android.permission.CAMERA` есть, `tools:node="remove"` для CAMERA нет,
+    `RECORD_AUDIO` с remove; versionCode 2
+- Известные проблемы:
+  - Чистая установка, системный диалог и тихий затвор проверяются владельцем на
+    физическом Samsung по свежему EAS APK (в окружении нет Android-устройства).
+  - Итоговый объединённый манифест (после AGP merge) стоит дополнительно проверить
+    через `aapt dump badging` на скачанном APK — в отчёте по задаче.
+- Следующий шаг: EAS APK (versionCode 2) → ручная проверка камеры на Samsung →
+  только после этого задача 2 (Animated Grid List Grid/List morph).
 
 ---
 

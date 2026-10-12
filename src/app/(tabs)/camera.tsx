@@ -2,7 +2,9 @@
  * Назначение: экран съёмки с выбором активного проекта и эталонным призраком.
  *
  * Функции:
- * - запрашивает разрешение камеры и показывает превью (CameraView);
+ * - запрашивает разрешение камеры (полный flow: запрос / постоянный отказ
+ *   с открытием настроек / автоперечитывание статуса после возврата);
+ * - показывает превью (CameraView) при выданном разрешении;
  * - выбирает активный проект для съёмки;
  * - показывает ghost overlay по эталонному фото проекта (latest / first / manual);
  * - tap по свободной зоне превью временно усиливает призрак (не сохраняется);
@@ -15,11 +17,12 @@
  */
 
 import { CameraView, useCameraPermissions, type CameraPictureOptions } from 'expo-camera';
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   AppState,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -42,6 +45,8 @@ import { useProjectStore } from '@/store/projectStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { radii, spacing } from '@/theme';
 import { MAIN_TAB_BAR_INSET } from '@/theme/tab-bar';
+import { useAppTheme } from '@/theme/ThemeProvider';
+import { resolveCameraPermissionView } from '@/utils/cameraPermission';
 import { resolveGhostVisibility } from '@/utils/ghost';
 import { triggerHaptic } from '@/utils/haptics';
 import { getVisiblePhotos } from '@/utils/photos';
@@ -61,10 +66,15 @@ const CAPTURE_OPTIONS: CameraPictureOptions = { shutterSound: false };
 
 export default function CameraScreen() {
   const { t } = useI18n();
-  const [permission, requestPermission] = useCameraPermissions();
+  const [permission, requestPermission, getPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [captureError, setCaptureError] = useState<string | null>(null);
+
+  // Permission flow: занятость запроса и ошибка открытия системных настроек.
+  const [isRequestingPermission, setIsRequestingPermission] = useState(false);
+  const [settingsError, setSettingsError] = useState(false);
+  const permissionView = resolveCameraPermissionView(permission);
 
   // Временное усиление видимости призрака (tap по превью). Локальное состояние —
   // НЕ сохраняется в persist/MMKV.
@@ -147,6 +157,34 @@ export default function CameraScreen() {
     }
   }, [activeProject, isCapturing, settings.hapticsEnabled, saveCapturedPhoto, t]);
 
+  // Запрос разрешения: guard от повторного нажатия, результат приходит через hook.
+  const handleRequestPermission = useCallback(async () => {
+    if (isRequestingPermission) {
+      return;
+    }
+    setIsRequestingPermission(true);
+    setSettingsError(false);
+    try {
+      await requestPermission();
+    } catch {
+      // Системный диалог не открылся — статус не меняем, пользователь может
+      // повторить нажатие (кнопка снова станет активной).
+    } finally {
+      setIsRequestingPermission(false);
+    }
+  }, [isRequestingPermission, requestPermission]);
+
+  // Открытие системных настроек приложения (когда системный запрос недоступен).
+  // Ошибка открытия показывается на экране с возможностью повторить.
+  const handleOpenSettings = useCallback(async () => {
+    setSettingsError(false);
+    try {
+      await Linking.openSettings();
+    } catch {
+      setSettingsError(true);
+    }
+  }, []);
+
   // Регистрируем съёмку для центральной кнопки нижней панели (shutter bridge).
   useEffect(() => {
     setShutterHandler(() => {
@@ -171,15 +209,20 @@ export default function CameraScreen() {
     }, []),
   );
 
-  // Сброс временного усиления при уходе приложения в фон.
+  // Уход в фон сбрасывает временное усиление; возврат в active сбрасывает
+  // ошибку настроек и перечитывает статус разрешения камеры (например, после
+  // возврата из системных настроек). Подписка одна — без параллельных listener'ов.
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (state) => {
       if (state !== 'active') {
         setBoosted(false);
+        return;
       }
+      setSettingsError(false);
+      void getPermission();
     });
     return () => subscription.remove();
-  }, []);
+  }, [getPermission]);
 
   // Выбор источника эталона (latest/first).
   const handleSelectMode = (mode: 'latest' | 'first' | 'manual') => {
@@ -207,8 +250,8 @@ export default function CameraScreen() {
     setReferenceModalVisible(false);
   };
 
-  // Пока разрешение загружается — показываем индикатор.
-  if (!permission) {
+  // Состояние A: permission ещё загружается — индикатор, без диалога и без CameraView.
+  if (permissionView === 'loading') {
     return (
       <CenteredState>
         <ActivityIndicator />
@@ -216,18 +259,17 @@ export default function CameraScreen() {
     );
   }
 
-  // Разрешение не выдано — экран запроса.
-  if (!permission.granted) {
+  // Состояния B/C: запрос разрешения или постоянный отказ (открытие настроек).
+  if (permissionView === 'request' || permissionView === 'blocked') {
     return (
-      <CenteredState>
-        <AppText variant="subtitle">{t('camera.needPermission')}</AppText>
-        <AppText color="textSecondary">
-          {permission.canAskAgain ? t('camera.permissionHint') : t('camera.permissionDenied')}
-        </AppText>
-        {permission.canAskAgain ? (
-          <AppButton label={t('camera.allow')} onPress={requestPermission} />
-        ) : null}
-      </CenteredState>
+      <PermissionState
+        blocked={permissionView === 'blocked'}
+        isRequesting={isRequestingPermission}
+        settingsError={settingsError}
+        onRequest={handleRequestPermission}
+        onOpenSettings={handleOpenSettings}
+        onBackToProjects={() => router.navigate('/')}
+      />
     );
   }
 
@@ -321,18 +363,79 @@ export default function CameraScreen() {
 
 /**
  * Центрированный экран-состояние (загрузка / нет разрешения / нет проектов).
- * Использует safe area сверху, как остальные экраны.
+ * Фон и текст берутся из текущей темы — контраст не зависит от оформления;
+ * safe area и нижняя панель вкладок учтены, чтобы контент не перекрывался меню.
  */
 function CenteredState({ children }: { children: ReactNode }) {
   const insets = useSafeAreaInsets();
+  const { colors } = useAppTheme();
   return (
     <View
       style={[
         styles.centered,
-        { paddingTop: insets.top, paddingBottom: insets.bottom },
+        {
+          backgroundColor: colors.background,
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom + MAIN_TAB_BAR_INSET,
+        },
       ]}>
       {children}
     </View>
+  );
+}
+
+/**
+ * Экран разрешения камеры: запрос (canAskAgain) или постоянный отказ,
+ * при котором открываются системные настройки приложения.
+ */
+function PermissionState({
+  blocked,
+  isRequesting,
+  settingsError,
+  onRequest,
+  onOpenSettings,
+  onBackToProjects,
+}: {
+  /** true — системный запрос недоступен, нужны настройки. */
+  blocked: boolean;
+  /** Системный диалог запрашивается прямо сейчас. */
+  isRequesting: boolean;
+  /** Не удалось открыть системные настройки. */
+  settingsError: boolean;
+  /** Запросить разрешение. */
+  onRequest: () => void;
+  /** Открыть системные настройки приложения. */
+  onOpenSettings: () => void;
+  /** Вернуться на вкладку проектов. */
+  onBackToProjects: () => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <CenteredState>
+      <AppText variant="title" style={styles.permissionText}>
+        {blocked ? t('camera.permissionDeniedTitle') : t('camera.needPermission')}
+      </AppText>
+      <AppText color="textSecondary" style={styles.permissionText}>
+        {blocked ? t('camera.permissionSettingsHint') : t('camera.permissionHint')}
+      </AppText>
+
+      {settingsError ? (
+        <AppText color="danger" variant="caption" style={styles.permissionText}>
+          {t('camera.settingsError')}
+        </AppText>
+      ) : null}
+
+      {blocked ? (
+        <AppButton label={t('camera.openSettings')} onPress={onOpenSettings} />
+      ) : (
+        <AppButton
+          label={isRequesting ? t('camera.permissionRequesting') : t('camera.allowCamera')}
+          onPress={onRequest}
+          disabled={isRequesting}
+        />
+      )}
+      <AppButton label={t('camera.backToProjects')} variant="secondary" onPress={onBackToProjects} />
+    </CenteredState>
   );
 }
 
@@ -386,6 +489,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.md,
     padding: spacing.lg,
+  },
+  permissionText: {
+    textAlign: 'center',
   },
   selector: {
     position: 'absolute',

@@ -880,3 +880,59 @@ action sheet, добавить skeleton loading и поправить адапт
 Статус:
 
 Принято (реализовано; ручная приёмка на устройствах — за владельцем).
+
+---
+
+### 2026-10-12 — Возврат разрешения CAMERA и полный permission flow камеры
+
+Контекст:
+
+Задание `AI_CODER_CAMERA_FIX_AND_ANIMATED_GRID_LIST.md`, задача 1: на Samsung новый
+APK не запрашивал разрешение камеры; в системных настройках приложения отсутствовал
+пункт «Камера». Причина подтверждена исходником config plugin: в `app.json` у
+`expo-image-picker` стояло `cameraPermission: false`. Плагин трактует это как запрет
+разрешения для ВСЕХ библиотек и вызывает `withBlockedPermissions(['android.permission.CAMERA'])`
+— в манифест добавляется `tools:node="remove"` для CAMERA, который перебивает
+`android.permission.CAMERA` из `android.permissions` и от `expo-camera`
+(`node_modules/expo-image-picker/plugin/build/withImagePicker.js`).
+Дополнительно `expo-image-picker` по умолчанию (когда `microphonePermission` не задан)
+добавлял `android.permission.RECORD_AUDIO`, хотя микрофон приложению не нужен.
+
+Решение:
+
+1. **app.json:** у `expo-image-picker` удалён `cameraPermission: false`, добавлен
+   `microphonePermission: false`, сохранён `photosPermission: false`. CAMERA остаётся
+   в `android.permissions` и добавляется плагином `expo-camera`; `recordAudioAndroid: false`
+   у камеры сохранён. В итоговом манифесте: `android.permission.CAMERA` есть, правила
+   `tools:node="remove"` для CAMERA нет, `RECORD_AUDIO` помечен `tools:node="remove"`.
+2. **versionCode 1 → 2.** Изменение config plugin не применяется без native-сборки,
+   поэтому обязательна чистая генерация (`expo prebuild --clean`) и новый APK.
+3. **Полный permission flow** в `src/app/(tabs)/camera.tsx`: чистый резолвер
+   `resolveCameraPermissionView` в `src/utils/cameraPermission.ts` (loading / request /
+   blocked / granted, покрыт тестами) + экран разрешения: запрос с guard от повторного
+   нажатия и текстом «Запрос разрешения…», постоянный отказ → `Linking.openSettings()`
+   с обработкой ошибки и повтором, вторичная кнопка «Назад к проектам».
+   Автообновление статуса — единственная подписка `AppState`: возврат в `active` вызывает
+   `getPermission()` (без автоматического system-диалога). Экраны используют цвета темы,
+   safe area и отступ под нижнее меню — контраст и читаемость во всех оформлениях.
+4. **Звук затвора** остаётся отключённым (`shutterSound: false`), visual shutter,
+   haptic по настройке, `isCapturing` и shutter bridge не изменялись.
+
+Альтернативы:
+
+- Оставить `cameraPermission: false` и дорабатывать runtime-запрос — не поможет:
+  разрешение вырезано из манифеста, диалог невозможен.
+- Ручные Samsung-specific URI настроек — отклонено, стандартный `Linking.openSettings()`.
+- Запросить разрешение автоматически при входе — отклонено: диалог только по явному
+  действию пользователя.
+
+Риски:
+
+- Проверка выполняется вручную на физическом Android (Samsung): чистая установка,
+  системный диалог, отказ/повтор, возврат из Settings, 10 снимков, тихий затвор.
+  В окружении устройства нет — эти пункты остаются за владельцем.
+- OEM/региональные прошивки могут принудительно проигрывать звук затвора — не обходим.
+
+Статус:
+
+Принято (реализовано; EAS APK-сборка — отдельным шагом; ручная приёмка за владельцем).
