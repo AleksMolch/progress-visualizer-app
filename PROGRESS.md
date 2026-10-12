@@ -77,6 +77,13 @@
   - typecheck/lint: чисто; тесты: 189/189 (было 185; +4 теста permission-view)
   - Manifest: `android.permission.CAMERA` есть, `tools:node="remove"` для CAMERA нет,
     `RECORD_AUDIO` с remove; versionCode 2
+- EAS-сборка (2026-10-12):
+  - build `12d375a6-adc0-4a0d-adfd-e5c9a8939210`, profile `apk`, versionCode 2,
+    commit `0fb76c1`, статус FINISHED
+  - APK: https://expo.dev/artifacts/eas/-v4XAeebcRQllI3hJH74QnC4Jh6p7J3Do76dzN0d_g8.apk
+  - страница: https://expo.dev/accounts/alomium/projects/progress-visualizer-app/builds/12d375a6-adc0-4a0d-adfd-e5c9a8939210
+  - запрошенные разрешения установленного APK (парсер): CAMERA есть, RECORD_AUDIO нет,
+    versionCode 2 (примечание: INTERNET/READ_MEDIA_* — предсуществующие, от библиотек)
 - Известные проблемы:
   - Чистая установка, системный диалог и тихий затвор проверяются владельцем на
     физическом Samsung по свежему EAS APK (в окружении нет Android-устройства).
