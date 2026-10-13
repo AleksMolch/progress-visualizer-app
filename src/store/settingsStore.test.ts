@@ -61,6 +61,14 @@ describe('settingsStore', () => {
   it('hapticsEnabled по умолчанию включён', () => {
     expect(DEFAULT_SETTINGS.hapticsEnabled).toBe(true);
   });
+
+  it('онбординг по умолчанию не пройден и завершается обновлением', () => {
+    expect(DEFAULT_SETTINGS.hasCompletedOnboarding).toBe(false);
+
+    useSettingsStore.getState().updateSettings({ hasCompletedOnboarding: true });
+
+    expect(useSettingsStore.getState().settings.hasCompletedOnboarding).toBe(true);
+  });
 });
 
 describe('normalizeSettings (platform default + миграция)', () => {
@@ -121,6 +129,11 @@ describe('normalizeSettings (platform default + миграция)', () => {
 
   it('iOS: simple сохраняется (доступен)', () => {
     expect(normalizeSettings({ designTheme: 'simple' }, 'ios').designTheme).toBe('simple');
+  });
+
+  it('онбординг: старые записи без поля → false, пройденный сохраняется', () => {
+    expect(normalizeSettings({}, 'ios').hasCompletedOnboarding).toBe(false);
+    expect(normalizeSettings({ hasCompletedOnboarding: true }, 'ios').hasCompletedOnboarding).toBe(true);
   });
 });
 

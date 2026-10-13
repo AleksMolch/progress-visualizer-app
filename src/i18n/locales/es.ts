@@ -213,4 +213,22 @@ export const es: Record<MessageKey, Message> = {
   'timelapse.hint': 'Necesitas al menos una foto para ver el progreso.',
   'timelapse.pause': 'Pausa',
   'timelapse.resume': 'Reanudar',
+
+  // Enlace de privacidad y onboarding.
+  'settings.privacyPolicy': 'Política de privacidad',
+  'onboarding.skip': 'Omitir',
+  'onboarding.next': 'Siguiente',
+  'onboarding.start': 'Empezar',
+  'onboarding.stepLabel': 'Paso {current} de {total}',
+  'onboarding.progressTitle': 'Sigue tu progreso',
+  'onboarding.progressDesc': 'Crea proyectos y toma fotos para comparar visualmente los cambios.',
+  'onboarding.ghostTitle': 'Superposición fantasma',
+  'onboarding.ghostDesc':
+    'Usa una foto de referencia translúcida para alinear cada nueva toma con precisión.',
+  'onboarding.compareTitle': 'Compara resultados',
+  'onboarding.compareDesc':
+    'Tres modos de comparación: deslizador, lado a lado y superposición para un análisis detallado.',
+  'onboarding.timelapseTitle': 'Crea timelapses',
+  'onboarding.timelapseDesc':
+    'Reproduce tus fotos automáticamente para mostrar los cambios de un vistazo.',
 };

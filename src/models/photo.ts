@@ -15,6 +15,8 @@ export interface PhotoMetadata {
   projectId: string;
   /** Путь к файлу фото внутри sandbox приложения. */
   uri: string;
+  /** Путь к миниатюре (400px JPEG) для списков; отсутствует у старых фото. */
+  thumbnailUri?: string;
   /** Метка времени съёмки (epoch ms). */
   takenAt: number;
   /** Ширина изображения в пикселях (необязательно). */

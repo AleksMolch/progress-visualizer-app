@@ -231,6 +231,22 @@ export const en = {
   'timelapse.hint': 'You need at least one photo to view progress.',
   'timelapse.pause': 'Pause',
   'timelapse.resume': 'Resume',
+
+  // Privacy policy link and onboarding.
+  'settings.privacyPolicy': 'Privacy policy',
+  'onboarding.skip': 'Skip',
+  'onboarding.next': 'Next',
+  'onboarding.start': 'Get started',
+  'onboarding.stepLabel': 'Step {current} of {total}',
+  'onboarding.progressTitle': 'Track your progress',
+  'onboarding.progressDesc': 'Create projects and take photos to visually compare the changes.',
+  'onboarding.ghostTitle': 'Ghost overlay',
+  'onboarding.ghostDesc': 'Use a translucent reference photo to align each new shot precisely.',
+  'onboarding.compareTitle': 'Compare results',
+  'onboarding.compareDesc':
+    'Three comparison modes — slider, side by side, and overlay — for a detailed look at progress.',
+  'onboarding.timelapseTitle': 'Create timelapses',
+  'onboarding.timelapseDesc': 'Play your photos automatically to show the changes at a glance.',
 } as const;
 
 /** Ключ перевода — имя поля словаря. */

@@ -44,4 +44,6 @@ export interface AppSettings {
   remindersEnabled: boolean;
   /** Время ежедневного напоминания в формате «HH:MM» (24 часа). */
   reminderTime: string;
+  /** Пройден ли стартовый онбординг (показывается один раз). */
+  hasCompletedOnboarding: boolean;
 }

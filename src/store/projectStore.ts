@@ -18,6 +18,7 @@ import { type PhotoMetadata } from '@/models/photo';
 import { type Project, type ProjectReferenceMode } from '@/models/project';
 import { mmkvStorage } from '@/storage/mmkv';
 import {
+  createPhotoThumbnail,
   deletePhotoFile,
   deleteProjectPhotoDirectory,
   savePhotoToProject,
@@ -49,6 +50,8 @@ interface ProjectState {
   updatePhoto: (id: string, partial: Partial<PhotoMetadata>) => void;
   deletePhoto: (id: string) => void;
   saveCapturedPhoto: (input: SaveCapturedPhotoInput) => Promise<void>;
+  /** Досоздаёт миниатюры для фото, сохранённых до их внедрения (миграция). */
+  ensureThumbnails: () => Promise<void>;
 }
 
 // Создаёт объект проекта с идентификатором и метками времени.
@@ -131,15 +134,44 @@ export const useProjectStore = create<ProjectState>()(
       // UI не трогает файловую систему — вся работа с файлами здесь, через storage-слой.
       saveCapturedPhoto: async ({ projectId, tempUri, width, height }) => {
         const uri = await savePhotoToProject(projectId, tempUri);
+        // Миниатюра не критична: при ошибке фото сохраняется без неё,
+        // а списки покажут оригинал (getPhotoPreviewUri).
+        const thumbnailUri = await createPhotoThumbnail(uri);
         const photo: PhotoMetadata = {
           id: generateId(),
           projectId,
           uri,
+          thumbnailUri: thumbnailUri ?? undefined,
           takenAt: Date.now(),
           width,
           height,
         };
         set((state) => ({ photos: [...state.photos, photo] }));
+      },
+
+      // Миграция старых фото: создаём недостающие миниатюры последовательно
+      // и обновляем метаданные ОДНИМ set — без персиста на каждое фото.
+      ensureThumbnails: async () => {
+        const missing = get().photos.filter((photo) => !photo.thumbnailUri);
+        if (missing.length === 0) {
+          return;
+        }
+        const generated = new Map<string, string>();
+        for (const photo of missing) {
+          const thumbnailUri = await createPhotoThumbnail(photo.uri);
+          if (thumbnailUri) {
+            generated.set(photo.id, thumbnailUri);
+          }
+        }
+        if (generated.size === 0) {
+          return;
+        }
+        set((state) => ({
+          photos: state.photos.map((photo) => {
+            const thumbnailUri = generated.get(photo.id);
+            return thumbnailUri ? { ...photo, thumbnailUri } : photo;
+          }),
+        }));
       },
     }),
     {

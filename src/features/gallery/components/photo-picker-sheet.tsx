@@ -23,6 +23,7 @@ import { type PhotoMetadata } from '@/models/photo';
 import { radii, spacing } from '@/theme';
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { formatDate } from '@/utils/dates';
+import { getPhotoPreviewUri } from '@/utils/photos';
 
 interface PhotoPickerSheetProps {
   /** Виден ли лист. */
@@ -84,7 +85,7 @@ export function PhotoPickerSheet({
                       { borderColor: selected ? colors.primary : colors.border },
                     ]}>
                     <Image
-                      source={{ uri: photo.uri }}
+                      source={{ uri: getPhotoPreviewUri(photo) }}
                       style={styles.thumb}
                       contentFit="cover"
                     />

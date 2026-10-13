@@ -397,6 +397,38 @@ npx expo-doctor
 - Permission-экраны используют semantic-цвета темы, safe area и `MAIN_TAB_BAR_INSET` —
   контраст во всех оформлениях и отсутствие перекрытия нижним меню.
 
+### 11.11. iPad, онбординг и политика конфиденциальности
+
+- iPad: `ios.supportsTablet: true` (ориентация — portrait). После изменения нужна
+  native-сборка; макеты проверяются вручную на iPad-симуляторе/устройстве.
+- Онбординг: 4 шага (`src/app/onboarding.tsx` +
+  `src/features/onboarding/components/onboarding-screen.tsx`). Флаг —
+  `settings.hasCompletedOnboarding` (persist в MMKV, старые записи → `false`,
+  показывается один раз). Гейтинг — `Stack.Protected` в `src/app/_layout.tsx`:
+  без флага доступен только `/onboarding`, после — основные экраны; ручных
+  redirect нет. «Пропустить»/«Начать» просто выставляют флаг.
+- Политика: магазинная EN-версия — `PRIVACY_POLICY.md`, русская — `PRIVACY.md`.
+  `docs/privacy-policy.html` — для GitHub Pages (включается вручную). Ссылка
+  приложения — `app.json extra.privacyPolicyUrl`, кнопка в Настройках открывает
+  её через `Linking.openURL`. Не отправлять фото/метаданные по этой ссылке.
+
+### 11.12. Миниатюры timeline
+
+- Генерация: `createPhotoThumbnail` в `src/storage/photoFiles.ts` (единственное
+  место работы с ФС) — 400px JPEG 0.7, файл `<оригинал>_thumb.jpg` рядом с фото.
+  `PhotoMetadata.thumbnailUri` — optional: старые фото без него показывают оригинал.
+- Выбор URI в UI — только через `getPhotoPreviewUri(photo)` (`src/utils/photos.ts`):
+  списки (обложка проекта, timeline, hero «Первое/Последнее», лист выбора) берут
+  миниатюру; viewer, compare, ghost/камера — полный размер.
+- Сохранение фото генерирует миниатюру в `saveCapturedPhoto`; ошибка генерации НЕ
+  ломает сохранение (фото пишется без миниатюры). Удаление фото удаляет миниатюру
+  (`deletePhotoFile`), удаление проекта — всю папку.
+- Миграция старых фото: `ensureThumbnails()` (projectStore) вызывается из root
+  layout после гидратации, последовательно, с одним batched `set`. Повторный
+  запуск досоздаёт только недостающие миниатюры.
+- `expo-image-manipulator` — native-модуль: после его добавления/обновления нужна
+  native-пересборка (старый dev build/APK без модуля упадёт при старте).
+
 ---
 
 ## 12. Что нельзя делать при поддержке

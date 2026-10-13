@@ -5,6 +5,7 @@ import { File } from 'expo-file-system';
 
 import { type PhotoMetadata } from '@/models/photo';
 import { initMmkv } from '@/storage/mmkv';
+import { savePhotoToProject } from '@/storage/photoFiles';
 import { useProjectStore } from './projectStore';
 
 // Тестовый ключ шифрования (32 символа — как AES-256).
@@ -174,6 +175,27 @@ describe('projectStore', () => {
     expect(photos[0].uri).toContain('file:///document/photos/project-1/');
     // Файл реально записан в (замоканную) файловую систему.
     expect(new File(photos[0].uri).exists).toBe(true);
+    // Миниатюра 400px сгенерирована рядом с оригиналом.
+    expect(photos[0].thumbnailUri).toContain('_thumb.jpg');
+    expect(new File(photos[0].thumbnailUri as string).exists).toBe(true);
+  });
+
+  it('досоздаёт миниатюры для старых фото (ensureThumbnails)', async () => {
+    // Фото без thumbnailUri (как до внедрения миниатюр), файл существует.
+    useProjectStore.getState().createProject('Проект');
+    const { id: projectId } = useProjectStore.getState().projects[0];
+    const tempFile = new File('file:///tmp/legacy.jpg');
+    tempFile.create();
+    tempFile.write('image-bytes');
+    const uri = await savePhotoToProject(projectId, tempFile.uri);
+    useProjectStore.getState().addPhoto({ id: 'legacy', projectId, uri, takenAt: 1 });
+    expect(useProjectStore.getState().photos[0].thumbnailUri).toBeUndefined();
+
+    await useProjectStore.getState().ensureThumbnails();
+
+    const photo = useProjectStore.getState().photos[0];
+    expect(photo.thumbnailUri).toContain('_thumb.jpg');
+    expect(new File(photo.thumbnailUri as string).exists).toBe(true);
   });
 
   it('удаляет файл фото из sandbox при удалении метаданных', async () => {
@@ -186,13 +208,18 @@ describe('projectStore', () => {
       tempUri: tempFile.uri,
     });
     const { uri, id } = useProjectStore.getState().photos[0];
+    const thumbnailUri = useProjectStore.getState().photos[0].thumbnailUri as string;
     expect(new File(uri).exists).toBe(true);
+    expect(thumbnailUri).toContain('_thumb.jpg');
+    expect(new File(thumbnailUri).exists).toBe(true);
 
     useProjectStore.getState().deletePhoto(id);
 
     expect(useProjectStore.getState().photos).toHaveLength(0);
     // Файл фото должен быть удалён из sandbox.
     expect(new File(uri).exists).toBe(false);
+    // Миниатюра удаляется вместе с оригиналом.
+    expect(new File(thumbnailUri).exists).toBe(false);
   });
 
   it('удаляет папку фото проекта из sandbox при удалении проекта', async () => {

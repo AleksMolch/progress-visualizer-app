@@ -64,6 +64,8 @@
 - expo-glass-effect: ~57.0.3 (native Liquid Glass, оформление «Liquid Glass»)
 - expo-blur: ~57.0.3 (frosted-fallback материала)
 - expo-haptics: ~57.0.3 (тактильный отклик, post-MVP)
+- expo-image-manipulator: ~57.0.21 (миниатюры timeline 400px JPEG; требует
+  native-пересборку — добавлен 2026-10-12 вместе с iPad/онбордингом)
 
 Примечание (Фаза 15): из прямых зависимостей удалены неиспользуемые пакеты
 шаблона — `expo-device`, `expo-web-browser` (удалены полностью), а `@expo/ui`,

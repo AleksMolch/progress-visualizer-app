@@ -31,7 +31,7 @@ import { pickImageFromDevice } from '@/storage/imagePicker';
 import { useProjectStore } from '@/store/projectStore';
 import { spacing } from '@/theme';
 import { getBottomInset } from '@/theme/tab-bar';
-import { getLatestVisiblePhoto } from '@/utils/photos';
+import { getLatestVisiblePhoto, getPhotoPreviewUri } from '@/utils/photos';
 
 export default function ProjectsScreen() {
   const insets = useSafeAreaInsets();
@@ -171,25 +171,29 @@ export default function ProjectsScreen() {
               <AppButton label={t('projects.create')} onPress={openCreateModal} />
             </View>
           }
-          renderItem={({ item, index }) => (
-            <View style={styles.itemWrap}>
-              <ProjectListItem
-                name={item.name}
-                photoCount={photoCount(item.id)}
-                updatedAt={item.updatedAt}
-                coverUri={getLatestVisiblePhoto(photos, item.id)?.uri}
-                index={index}
-                animateOnMount
-                animationNonce={animationNonce}
-                onOpen={() => router.push(`/project/${item.id}`)}
-                onRename={() => openEditModal(item.id)}
-                onDelete={() => handleDelete(item.id)}
-                onAddPhoto={() => handleAddPhotoFromDevice(item.id)}
-              />
-              {/* Inline placeholder после первой карточки проекта. */}
-              {index === 0 ? <AdPlaceholder /> : null}
-            </View>
-          )}
+          renderItem={({ item, index }) => {
+            // Обложка списка — миниатюра последнего видимого фото (fallback — оригинал).
+            const coverPhoto = getLatestVisiblePhoto(photos, item.id);
+            return (
+              <View style={styles.itemWrap}>
+                <ProjectListItem
+                  name={item.name}
+                  photoCount={photoCount(item.id)}
+                  updatedAt={item.updatedAt}
+                  coverUri={coverPhoto ? getPhotoPreviewUri(coverPhoto) : undefined}
+                  index={index}
+                  animateOnMount
+                  animationNonce={animationNonce}
+                  onOpen={() => router.push(`/project/${item.id}`)}
+                  onRename={() => openEditModal(item.id)}
+                  onDelete={() => handleDelete(item.id)}
+                  onAddPhoto={() => handleAddPhotoFromDevice(item.id)}
+                />
+                {/* Inline placeholder после первой карточки проекта. */}
+                {index === 0 ? <AdPlaceholder /> : null}
+              </View>
+            );
+          }}
         />
       )}
 

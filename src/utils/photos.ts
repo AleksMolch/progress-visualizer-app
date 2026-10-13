@@ -5,12 +5,24 @@
  * - getProjectPhotos(): фото проекта, свежие сверху;
  * - getChronologicalPhotos(): фото проекта от ранних к поздним;
  * - getVisiblePhotos(): НЕ скрытые фото проекта;
- * - getFirstVisiblePhoto() / getLatestVisiblePhoto(): первая/последняя видимая точка.
+ * - getFirstVisiblePhoto() / getLatestVisiblePhoto(): первая/последняя видимая точка;
+ * - getPhotoPreviewUri(): URI для превью в списках (миниатюра или оригинал).
  *
  * Слой: util (/src/utils). Чистые функции без внешних зависимостей.
  */
 
 import { type PhotoMetadata } from '@/models/photo';
+
+/**
+ * Возвращает URI для показа фото в списках/превью: миниатюру, если она есть,
+ * иначе оригинал (например, для фото, сохранённых до внедрения миниатюр).
+ * Полноразмерные URI остаются для viewer и режимов сравнения.
+ * @param photo — метаданные фото (достаточно uri и thumbnailUri).
+ * @returns URI миниатюры или оригинала.
+ */
+export function getPhotoPreviewUri(photo: { uri: string; thumbnailUri?: string }): string {
+  return photo.thumbnailUri ?? photo.uri;
+}
 
 /**
  * Возвращает фото проекта, отсортированные по времени съёмки (свежие сверху).

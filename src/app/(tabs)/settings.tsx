@@ -4,14 +4,16 @@
  * Функции:
  * - переключатель биометрической защиты (requireBiometrics);
  * - при недоступной биометрии — показывает подсказку и отключает переключатель;
- * - карточка локальных напоминаний (ReminderSettingsCard).
+ * - карточка локальных напоминаний (ReminderSettingsCard);
+ * - ссылка на политику конфиденциальности (внешний браузер).
  *
  * Слой: UI (/src/app). Данные — useSettingsStore, доступность биометрии —
  * через storage-слой (isBiometricsAvailable).
  */
 
+import Constants from 'expo-constants';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Switch, View } from 'react-native';
+import { Linking, StyleSheet, Switch, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -31,6 +33,11 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { spacing } from '@/theme';
 import { getBottomInset } from '@/theme/tab-bar';
 import { useAppTheme } from '@/theme/ThemeProvider';
+
+// URL политики конфиденциальности из app.json extra (открывается во внешнем браузере).
+const PRIVACY_POLICY_URL =
+  (Constants.expoConfig?.extra as { privacyPolicyUrl?: string } | undefined)?.privacyPolicyUrl ??
+  '';
 
 export default function SettingsScreen() {
   const { colors } = useAppTheme();
@@ -116,6 +123,19 @@ export default function SettingsScreen() {
           label={t('settings.support')}
           variant="secondary"
           onPress={() => router.push('/support')}
+        />
+
+        {/* Ссылка на политику — внешний браузер; пустая ссылка ничего не делает. */}
+        <AppButton
+          label={t('settings.privacyPolicy')}
+          variant="ghost"
+          onPress={() => {
+            if (PRIVACY_POLICY_URL) {
+              void Linking.openURL(PRIVACY_POLICY_URL).catch(() => {
+                // Ссылка недоступна (например, на web без браузера) — без падения.
+              });
+            }
+          }}
         />
 
         {/* Рекламный placeholder — near-bottom, после блока «Поддержать разработчика». */}

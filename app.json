@@ -9,7 +9,8 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/images/icon.png",
-      "bundleIdentifier": "com.anonymous.progress-visualizer-app"
+      "bundleIdentifier": "com.anonymous.progress-visualizer-app",
+      "supportsTablet": true
     },
     "android": {
       "package": "com.anonymous.progressvisualizerapp",
@@ -80,7 +81,8 @@
       "router": {},
       "eas": {
         "projectId": "af2e8419-a900-4483-b5d3-1ab27d411f6b"
-      }
+      },
+      "privacyPolicyUrl": "https://github.com/AleksMolch/progress-visualizer-app/blob/main/PRIVACY_POLICY.md"
     },
     "owner": "alomium"
   }

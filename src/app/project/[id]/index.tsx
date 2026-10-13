@@ -35,7 +35,7 @@ import { fontSize, radii, spacing } from '@/theme';
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { formatDate } from '@/utils/dates';
 import { advanceQuickCompare, getDaysBetweenPhotos, groupPhotosByMonth } from '@/utils/progress';
-import { getFirstVisiblePhoto, getLatestVisiblePhoto, getProjectPhotos } from '@/utils/photos';
+import { getFirstVisiblePhoto, getLatestVisiblePhoto, getPhotoPreviewUri, getProjectPhotos } from '@/utils/photos';
 import { getReferenceMode, resolveReferencePhoto } from '@/utils/reference';
 import { triggerHaptic } from '@/utils/haptics';
 
@@ -211,8 +211,8 @@ export default function ProjectScreen() {
 
               {firstPhoto && lastPhoto ? (
                 <FirstLastBlock
-                  firstUri={firstPhoto.uri}
-                  lastUri={lastPhoto.uri}
+                  firstUri={getPhotoPreviewUri(firstPhoto)}
+                  lastUri={getPhotoPreviewUri(lastPhoto)}
                   firstDate={firstPhoto.takenAt}
                   lastDate={lastPhoto.takenAt}
                   firstIsReference={referencePhoto?.id === firstPhoto.id}
@@ -549,7 +549,15 @@ function PhotoRow({
   onPress,
   onDelete,
 }: {
-  photo: { id: string; uri: string; takenAt: number; note?: string; isFavorite?: boolean; isHidden?: boolean };
+  photo: {
+    id: string;
+    uri: string;
+    thumbnailUri?: string;
+    takenAt: number;
+    note?: string;
+    isFavorite?: boolean;
+    isHidden?: boolean;
+  };
   isReference: boolean;
   selectionNumber: number;
   onPress: () => void;
@@ -578,7 +586,7 @@ function PhotoRow({
       <AppCard style={styles.photoRow}>
         <Pressable onPress={onPress} accessibilityRole="imagebutton" style={styles.photoRowBody}>
           <View style={styles.thumbWrap}>
-            <Image source={{ uri: photo.uri }} style={styles.thumb} contentFit="cover" />
+            <Image source={{ uri: getPhotoPreviewUri(photo) }} style={styles.thumb} contentFit="cover" />
             {isReference ? (
               <View style={[styles.referenceBadge, { backgroundColor: colors.primary }]}>
                 <AppText variant="caption" color="primaryText">

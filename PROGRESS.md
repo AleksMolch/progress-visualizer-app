@@ -7,16 +7,20 @@
 
 ## ⚠️ ВАЖНО ДЛЯ СЛЕДУЮЩЕЙ СЕССИИ (читай первым)
 
-- **Где мы сейчас**: выполнены `AI_CODER_ANDROID_CAMERA_SHUTTER_SOUND_FIX.md`
-  (тихий затвор) и `TECHNICAL_SPEC_ALL_UI_ENHANCEMENTS.md` (анимации) — коммит
-  `b277495`; затем `AI_CODER_CAMERA_FIX_AND_ANIMATED_GRID_LIST.md`, **задача 1**
-  (возврат разрешения CAMERA: у image-picker убран `cameraPermission: false`,
-  versionCode 2, полный permission flow, см. запись 2026-10-12). Все проверки
-  зелёные: typecheck/lint/test 189/189. Manifest проверен: CAMERA есть, remove нет.
-  **Задача 2 (Animated Grid List) НЕ начиналась** — по условию задания она делается
-  только после ручной проверки камеры на физическом Android.
-- **Следующая задача**: владелец ставит свежий EAS APK (versionCode 2) на Samsung:
-  permission flow + тихий затвор. После подтверждения — задача 2 (Grid/List morph).
+- **Где мы сейчас**: выполнены `AI_CODER_ANDROID_CAMERA_SHUTTER_SOUND_FIX.md` и
+  `TECHNICAL_SPEC_ALL_UI_ENHANCEMENTS.md` (коммит `b277495`),
+  `AI_CODER_CAMERA_FIX_AND_ANIMATED_GRID_LIST.md` задача 1 (коммит `0fb76c1`,
+  EAS APK v2: https://expo.dev/accounts/alomium/projects/progress-visualizer-app/builds/12d375a6-adc0-4a0d-adfd-e5c9a8939210),
+  затем `IMPLEMENTATION_IPAD_ONBOARDING_PRIVACY_THUMBNAILS.md` (iPad, онбординг,
+  политика, миниатюры; см. запись 2026-10-12 ниже). Все проверки зелёные:
+  typecheck/lint, тесты 197/197, expo export iOS.
+- **ВАЖНО**: добавлена native-зависимость `expo-image-manipulator` — старый dev
+  build и APK v2 без пересборки запускать нельзя (native-модуля в них нет).
+  Перед проверкой нужна native-сборка (`npx expo run:ios` / EAS).
+- **Следующая задача**: владелец проверяет на Samsung камеру по APK v2, затем
+  `AI_CODER_CAMERA_FIX_AND_ANIMATED_GRID_LIST.md` задача 2 (Animated Grid List
+  Grid/List morph). Отдельно: включить GitHub Pages для docs/privacy-policy.html
+  (вручную), новая native-сборка для iPad/онбординга/миниатюр.
 - **Рабочая папка проекта**: `/Users/aleks/dev/progress-visualizer-app` (ASCII-путь).
 - **Git remote**: origin = `https://github.com/AleksMolch/progress-visualizer-app.git`.
 - **PATH**: `pod`/`brew`/CocoaPods — в `/opt/homebrew/bin`; перед prebuild/run:ios/pod install
@@ -36,6 +40,67 @@
 - Результат проверок:
 - Известные проблемы:
 - Следующий шаг:
+
+---
+
+### 2026-10-12 — iPad, онбординг, политика конфиденциальности, миниатюры
+
+- Что сделано (по `IMPLEMENTATION_IPAD_ONBOARDING_PRIVACY_THUMBNAILS.md` +
+  `ALTERNATIVE_STORES_REQUIREMENTS.md`, с адаптацией под фактический код):
+  - (1) **iPad**: `ios.supportsTablet: true` в app.json.
+  - (2) **Онбординг**: 4 шага (`src/app/onboarding.tsx` +
+    `onboarding-screen.tsx`), флаг `hasCompletedOnboarding` в AppSettings/MMKV,
+    гейтинг через `Stack.Protected` (без ручных redirect), тексты в 5 локалях,
+    «Пропустить» на каждом шаге, индикаторы прогресса, accessibility-метки.
+  - (3) **Политика**: `PRIVACY_POLICY.md` (EN для магазинов), ссылка из `PRIVACY.md`
+    (RU), `docs/privacy-policy.html` под GitHub Pages, `extra.privacyPolicyUrl`
+    в app.json (сейчас GitHub-rendered markdown), кнопка «Политика
+    конфиденциальности» в Настройках (`Linking.openURL`).
+  - (4) **Миниатюры**: `expo-image-manipulator` ~57.0.21 (SDK-pinned);
+    `PhotoMetadata.thumbnailUri`; `createPhotoThumbnail`/`getPhotoThumbnailUri`
+    в storage-слое (400px JPEG 0.7, `<имя>_thumb.jpg`); сохранение генерирует
+    миниатюру (сбой — не критичен); удаление фото удаляет и миниатюру;
+    `ensureThumbnails()` в root layout — фоновая миграция старых фото (один
+    batched set); списки/превью (обложка проекта, timeline, hero, лист выбора)
+    используют `getPhotoPreviewUri` (миниатюра → fallback оригинал),
+    viewer/compare/камера — полный размер.
+- Какие файлы созданы или изменены:
+  - созданы: `src/app/onboarding.tsx`,
+    `src/features/onboarding/components/onboarding-screen.tsx`,
+    `PRIVACY_POLICY.md`, `docs/privacy-policy.html`,
+    `__mocks__/expo-image-manipulator.ts`
+  - изменены: `app.json` (supportsTablet, extra.privacyPolicyUrl),
+    `package.json` (+expo-image-manipulator), `src/models/settings.ts`,
+    `src/models/photo.ts`, `src/store/settingsStore.ts`, `src/store/projectStore.ts`,
+    `src/storage/photoFiles.ts`, `src/utils/photos.ts`, `src/app/_layout.tsx`,
+    `src/app/(tabs)/settings.tsx`, `src/app/(tabs)/index.tsx`,
+    `src/app/project/[id]/index.tsx`,
+    `src/features/gallery/components/photo-picker-sheet.tsx`,
+    `src/i18n/locales/*.ts` (+onboarding.*, +settings.privacyPolicy),
+    `__mocks__/expo-file-system.ts` (+move), тесты (photoFiles/projectStore/photos/
+    settingsStore), `PRIVACY.md`, `STACK_RESOLVED.md`, `DECISIONS.md`,
+    `README_staff.md`, `MAINTENANCE_AI.md`, `TESTING.md`
+- Какие команды запускались:
+  - `npx expo install expo-image-manipulator`
+  - `npm run typecheck`, `npm run lint`, `npm test`, `npx expo-doctor`,
+    `npx expo export --platform ios`
+- Результат проверок:
+  - typecheck/lint: чисто; тесты: 197/197 (было 189; +8: миниатюры, preview-uri,
+    онбординг-флаг)
+  - экспорт iOS: собран (новый модуль бандлится без ошибок)
+  - expo-doctor: 19/21 — предсуществующий patch-дрейф expo/* + временная
+    сетевая ошибка проверки React Native Directory (не связаны с задачей)
+- Известные проблемы:
+  - **Нужна native-пересборка**: `expo-image-manipulator` — новый native-модуль;
+    старый dev build/APK v2 без пересборки запускать нельзя (краш при импорте).
+  - GitHub Pages для `docs/privacy-policy.html` включается вручную в настройках
+    репозитория; до этого ссылка ведёт на GitHub-rendered `PRIVACY_POLICY.md`.
+  - Ручные проверки: макеты/ландшафт iPad, показ онбординга один раз, скорость
+    генерации миниатюр на большом архиве, ссылка политики.
+  - Из action items магазинов остаются организационные шаги владельца (аккаунты,
+    feature graphic, IARC, RuStore-документы) — кода не требуют.
+- Следующий шаг: native-сборка (EAS/run:ios) → ручная приёмка iPad/онбординга/
+  миниатюр; далее задача 2 — Animated Grid List (Grid/List morph).
 
 ---
 

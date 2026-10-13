@@ -209,4 +209,19 @@ export const zhHans: Record<MessageKey, Message> = {
   'timelapse.hint': '至少需要一张照片才能查看进度。',
   'timelapse.pause': '暂停',
   'timelapse.resume': '继续',
+
+  // 隐私链接与引导页。
+  'settings.privacyPolicy': '隐私政策',
+  'onboarding.skip': '跳过',
+  'onboarding.next': '下一步',
+  'onboarding.start': '开始',
+  'onboarding.stepLabel': '第 {current} 步，共 {total} 步',
+  'onboarding.progressTitle': '跟踪您的进展',
+  'onboarding.progressDesc': '创建项目并拍摄照片，直观对比变化。',
+  'onboarding.ghostTitle': '残影参考',
+  'onboarding.ghostDesc': '使用半透明的参考照片，精确对齐每次拍摄。',
+  'onboarding.compareTitle': '对比结果',
+  'onboarding.compareDesc': '三种对比模式：滑块、并排和叠加，详细分析进展。',
+  'onboarding.timelapseTitle': '创建延时播放',
+  'onboarding.timelapseDesc': '自动播放您的照片，一眼看清变化。',
 };

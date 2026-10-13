@@ -5,6 +5,7 @@ import {
   getChronologicalPhotos,
   getFirstVisiblePhoto,
   getLatestVisiblePhoto,
+  getPhotoPreviewUri,
   getProjectPhotos,
   getVisiblePhotos,
 } from './photos';
@@ -88,5 +89,21 @@ describe('getFirstVisiblePhoto / getLatestVisiblePhoto', () => {
   it('возвращает null, если видимых фото нет', () => {
     expect(getFirstVisiblePhoto([photo('h', 'p1', 100, { isHidden: true })], 'p1')).toBeNull();
     expect(getLatestVisiblePhoto([], 'p1')).toBeNull();
+  });
+});
+
+describe('getPhotoPreviewUri', () => {
+  it('возвращает миниатюру, если она есть', () => {
+    const withThumbnail = photo('a', 'p1', 100, {
+      thumbnailUri: 'file:///thumbs/a_thumb.jpg',
+    });
+
+    expect(getPhotoPreviewUri(withThumbnail)).toBe('file:///thumbs/a_thumb.jpg');
+  });
+
+  it('возвращает оригинал, если миниатюры нет (старые фото)', () => {
+    const withoutThumbnail = photo('b', 'p1', 100);
+
+    expect(getPhotoPreviewUri(withoutThumbnail)).toBe('file:///b.jpg');
   });
 });

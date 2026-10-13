@@ -251,6 +251,34 @@ Material и Gallery отдельными темами — пользовател
   штатный звук и НЕ добавлять кастомный без отдельной задачи. Громкость системы, `AudioManager`
   и беззвучный режим не трогать; haptic — только при `settings.hapticsEnabled`.
 
+### Онбординг и гейтинг первых экранов
+
+- Онбординг — `src/app/onboarding.tsx` (4 шага, тексты `onboarding.*` в 5 локалях).
+  Флаг прохождения — `settings.hasCompletedOnboarding` в settingsStore (persist MMKV);
+  НЕ создавай отдельный store/хранилище для него.
+- Гейтинг — `Stack.Protected` в `src/app/_layout.tsx`: без флага доступен только
+  `/onboarding`, с флагом — основные экраны. Не добавляй ручные `router.replace`
+  эффекты поверх Protected (получишь гонки навигации). Завершение онбординга —
+  только запись флага.
+- Новые обязательные при первом запуске экраны добавляй в Protected-группу, а не
+  в `(tabs)`.
+
+### Миниатюры (thumbnails)
+
+- Генерация миниатюр — ТОЛЬКО в storage-слое (`src/storage/photoFiles.ts`:
+  `createPhotoThumbnail`, `getPhotoThumbnailUri`); UI не вызывает
+  `expo-image-manipulator` напрямую. Формат: 400px, JPEG 0.7, `<оригинал>_thumb.jpg`.
+- `PhotoMetadata.thumbnailUri` — optional; отсутствие = старое фото, списки
+  показывают оригинал. В UI всегда выбирай URI через `getPhotoPreviewUri(photo)`
+  для списков/превью; viewer/compare/камера — полный размер.
+- Сохранение фото: миниатюра не критична — при ошибке фото сохраняется без неё.
+  Удаление: `deletePhotoFile` удаляет оригинал и миниатюру; удаление проекта —
+  всю папку (миниатюры внутри неё).
+- Миграция старых фото — `ensureThumbnails()` (projectStore) из root layout после
+  гидратации: последовательно, ОДИН batched `set` (не персистить на каждое фото).
+- `expo-image-manipulator` — native-модуль: любое изменение/добавление требует
+  native-пересборки; не пытайся проверить на старом dev build.
+
 ### Импорт и экспорт фото (privacy)
 
 - Импорт — только через системный picker (`src/storage/imagePicker.ts`), БЕЗ широкого

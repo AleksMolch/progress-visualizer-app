@@ -222,4 +222,23 @@ export const ru: Record<MessageKey, Message> = {
   'timelapse.hint': 'Для просмотра прогресса нужно хотя бы одно фото.',
   'timelapse.pause': 'Пауза',
   'timelapse.resume': 'Продолжить',
+
+  // Ссылка на политику и онбординг.
+  'settings.privacyPolicy': 'Политика конфиденциальности',
+  'onboarding.skip': 'Пропустить',
+  'onboarding.next': 'Далее',
+  'onboarding.start': 'Начать',
+  'onboarding.stepLabel': 'Шаг {current} из {total}',
+  'onboarding.progressTitle': 'Отслеживайте прогресс',
+  'onboarding.progressDesc':
+    'Создавайте проекты и делайте фотографии для визуального сравнения изменений.',
+  'onboarding.ghostTitle': 'Призрак эталона',
+  'onboarding.ghostDesc':
+    'Используйте полупрозрачное эталонное фото для точного выравнивания новых снимков.',
+  'onboarding.compareTitle': 'Сравнивайте результаты',
+  'onboarding.compareDesc':
+    'Три режима сравнения: слайдер, рядом и наложение — для детального анализа прогресса.',
+  'onboarding.timelapseTitle': 'Создавайте таймлапсы',
+  'onboarding.timelapseDesc':
+    'Автоматическое воспроизведение ваших фото для наглядной демонстрации изменений.',
 };

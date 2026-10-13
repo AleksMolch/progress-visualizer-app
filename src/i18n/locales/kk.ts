@@ -212,4 +212,23 @@ export const kk: Record<MessageKey, Message> = {
   'timelapse.hint': 'Прогресті көру үшін кемінде бір фото қажет.',
   'timelapse.pause': 'Кідірту',
   'timelapse.resume': 'Жалғастыру',
+
+  // Құпиялылық сілтемесі және онбординг.
+  'settings.privacyPolicy': 'Құпиялылық саясаты',
+  'onboarding.skip': 'Өткізіп жіберу',
+  'onboarding.next': 'Келесі',
+  'onboarding.start': 'Бастау',
+  'onboarding.stepLabel': '{total} қадамның {current}-і',
+  'onboarding.progressTitle': 'Прогрессті бақылаңыз',
+  'onboarding.progressDesc':
+    'Өзгерістерді көзбен салыстыру үшін жобалар құрып, суретке түсіріңіз.',
+  'onboarding.ghostTitle': 'Эталон елесі',
+  'onboarding.ghostDesc':
+    'Әр жаңа суретті дәл туралау үшін жартылай мөлдір эталон фотоны пайдаланыңыз.',
+  'onboarding.compareTitle': 'Нәтижелерді салыстырыңыз',
+  'onboarding.compareDesc':
+    'Үш салыстыру режимі: слайдер, қатар және қабаттасу — прогресті толық талдау үшін.',
+  'onboarding.timelapseTitle': 'Таймлапс жасаңыз',
+  'onboarding.timelapseDesc':
+    'Өзгерістерді бірден көрсету үшін суреттеріңіз автоматты түрде ойнатылады.',
 };

@@ -1,14 +1,16 @@
 // Тесты storage-слоя фотографий.
-// Проверяем создание папок, сохранение снимка в sandbox и удаление файлов.
+// Проверяем создание папок, сохранение снимка в sandbox, миниатюры и удаление.
 // expo-file-system замокан in-memory (см. __mocks__/expo-file-system.ts).
 
 import { Directory, File } from 'expo-file-system';
 
 import {
+  createPhotoThumbnail,
   createProjectPhotoDirectory,
   deletePhotoFile,
   deleteProjectPhotoDirectory,
   ensureAppPhotoDirectory,
+  getPhotoThumbnailUri,
   savePhotoToProject,
 } from './photoFiles';
 
@@ -80,6 +82,44 @@ describe('photoFiles', () => {
     deletePhotoFile(uri);
 
     expect(new File(uri).exists).toBe(false);
+  });
+
+  it('вычисляет путь миниатюры рядом с оригиналом', () => {
+    expect(getPhotoThumbnailUri('file:///document/photos/p/photo.jpg')).toBe(
+      'file:///document/photos/p/photo_thumb.jpg',
+    );
+    expect(getPhotoThumbnailUri('file:///document/photos/p/photo.png')).toBe(
+      'file:///document/photos/p/photo_thumb.jpg',
+    );
+    // Без расширения: суффикс добавляется к концу имени.
+    expect(getPhotoThumbnailUri('file:///document/photos/p/photo')).toBe(
+      'file:///document/photos/p/photo_thumb.jpg',
+    );
+  });
+
+  it('создаёт миниатюру в папке проекта', async () => {
+    const tempUri = 'file:///tmp/capture.jpg';
+    seedTempFile(tempUri, 'image-bytes');
+    const uri = await savePhotoToProject('project-a', tempUri);
+
+    const thumbnailUri = await createPhotoThumbnail(uri);
+
+    expect(thumbnailUri).toBe(getPhotoThumbnailUri(uri));
+    expect(new File(thumbnailUri as string).exists).toBe(true);
+  });
+
+  it('удаляет миниатюру вместе с оригиналом', async () => {
+    const tempUri = 'file:///tmp/capture.jpg';
+    seedTempFile(tempUri, 'image-bytes');
+    const uri = await savePhotoToProject('project-a', tempUri);
+    await createPhotoThumbnail(uri);
+    const thumbnailUri = getPhotoThumbnailUri(uri);
+    expect(new File(thumbnailUri).exists).toBe(true);
+
+    deletePhotoFile(uri);
+
+    expect(new File(uri).exists).toBe(false);
+    expect(new File(thumbnailUri).exists).toBe(false);
   });
 
   it('удаление несуществующего файла не падает', () => {

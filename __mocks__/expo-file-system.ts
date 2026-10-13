@@ -102,6 +102,15 @@ export class File {
     fs.set(destination.uri, { ...source });
   }
 
+  async move(destination: Directory | File): Promise<void> {
+    const source = fs.get(this.uri);
+    if (!source) {
+      throw new Error(`Исходный файл не найден: ${this.uri}`);
+    }
+    fs.set(destination.uri, { ...source });
+    fs.delete(this.uri);
+  }
+
   delete(): void {
     fs.delete(this.uri);
   }

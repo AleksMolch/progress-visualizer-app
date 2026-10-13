@@ -31,6 +31,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   requireBiometrics: false,
   remindersEnabled: false,
   reminderTime: '20:00',
+  // Онбординг показывается один раз на новой установке; старые установки
+  // (без сохранённого поля) тоже увидят его один раз после обновления.
+  hasCompletedOnboarding: false,
 };
 
 /**

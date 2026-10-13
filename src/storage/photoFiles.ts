@@ -5,7 +5,9 @@
  * - ensureAppPhotoDirectory(): гарантирует существование корневой папки фото.
  * - createProjectPhotoDirectory(projectId): создаёт папку конкретного проекта.
  * - savePhotoToProject(projectId, tempUri): копирует снимок в папку проекта.
- * - deletePhotoFile(uri): удаляет один файл фото.
+ * - createPhotoThumbnail(photoUri): создаёт миниатюру 400px JPEG рядом с оригиналом.
+ * - getPhotoThumbnailUri(photoUri): детерминированный путь миниатюры.
+ * - deletePhotoFile(uri): удаляет один файл фото вместе с миниатюрой.
  * - deleteProjectPhotoDirectory(projectId): удаляет папку проекта со всеми фото.
  *
  * Слой: storage (/src/storage). Единственное место работы с файловой системой
@@ -17,6 +19,7 @@
  */
 
 import { Directory, File, Paths } from 'expo-file-system';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 
 import { generateId } from '@/utils/ids';
 
@@ -25,6 +28,11 @@ const PHOTOS_ROOT_DIR_NAME = 'photos';
 
 // Расширение по умолчанию, если у исходного файла его не удалось определить.
 const DEFAULT_PHOTO_EXTENSION = '.jpg';
+
+// Параметры миниатюр для списков: ширина 400px и JPEG-качество 0.7.
+const THUMBNAIL_WIDTH = 400;
+const THUMBNAIL_QUALITY = 0.7;
+const THUMBNAIL_SUFFIX = '_thumb';
 
 // Возвращает объект корневой папки фото (не создаёт её на диске).
 function rootDirectory(): Directory {
@@ -86,12 +94,61 @@ export async function savePhotoToProject(
 }
 
 /**
- * Удаляет один файл фото по его uri (если файл существует).
+ * Вычисляет детерминированный путь миниатюры для фото: суффикс `_thumb.jpg`.
+ * Чистая функция — используется и при создании, и при удалении миниатюры.
+ * @param photoUri — URI оригинального фото.
+ * @returns URI миниатюры (всегда с расширением .jpg).
+ */
+export function getPhotoThumbnailUri(photoUri: string): string {
+  const slashIndex = photoUri.lastIndexOf('/');
+  const dotIndex = photoUri.lastIndexOf('.');
+  const hasExtension = dotIndex > slashIndex;
+  const base = hasExtension ? photoUri.slice(0, dotIndex) : photoUri;
+  return `${base}${THUMBNAIL_SUFFIX}.jpg`;
+}
+
+/**
+ * Создаёт миниатюру фото (400px, JPEG 0.7) рядом с оригиналом в sandbox.
+ *
+ * @param photoUri — URI оригинала в sandbox приложения.
+ * @returns URI миниатюры или null, если сжать не удалось — вызывающий код
+ *   показывает оригинал (миниатюра не критична для сохранения фото).
+ */
+export async function createPhotoThumbnail(photoUri: string): Promise<string | null> {
+  try {
+    const context = ImageManipulator.manipulate(photoUri);
+    context.resize({ width: THUMBNAIL_WIDTH });
+    const rendered = await context.renderAsync();
+    const saved = await rendered.saveAsync({
+      compress: THUMBNAIL_QUALITY,
+      format: SaveFormat.JPEG,
+    });
+
+    const target = new File(getPhotoThumbnailUri(photoUri));
+    // Повторная генерация: перезаписываем существующую миниатюру.
+    if (target.exists) {
+      target.delete();
+    }
+    await new File(saved.uri).move(target);
+    return target.uri;
+  } catch (error) {
+    console.warn('Не удалось создать миниатюру фото:', error);
+    return null;
+  }
+}
+
+/**
+ * Удаляет один файл фото по его uri (если файл существует) вместе
+ * со связанной миниатюрой (если она была создана).
  */
 export function deletePhotoFile(uri: string): void {
   const file = new File(uri);
   if (file.exists) {
     file.delete();
+  }
+  const thumbnail = new File(getPhotoThumbnailUri(uri));
+  if (thumbnail.exists) {
+    thumbnail.delete();
   }
 }
 
