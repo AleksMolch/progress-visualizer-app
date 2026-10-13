@@ -124,6 +124,14 @@ peerOptional `@react-native/jest-preset@0.86.3`, а в дереве был `0.86
   кириллицу (см. раздел «Runtime окружение»). Проект перенесён на ASCII-путь.
 - Системный Ruby 2.6.10 слишком старый для CocoaPods, но на этой машине
   CocoaPods установлен через Homebrew (собственный Ruby 4.0.6) — rbenv не нужен.
+- ⚠ `pod install` может падать на скачивании prebuilt-артефактов RN
+  (`reactnative-dependencies-*` / `reactnative-core-*`) с `repo1.maven.org`
+  (редирект на `repo.reactnative.dev`; соединение виснет/рвётся — 2026-10-13).
+  Рабочее решение: запускать с зеркалом Maven Central от Google
+  `ENTERPRISE_REPOSITORY=https://maven-central.storage-download.googleapis.com/maven2`
+  и при необходимости заранее скачать tarball'ы (debug+release, сверить SHA1
+  с `*.sha1` на зеркале) в `~/Library/Caches/ReactNative/` и
+  `ios/Pods/ReactNativeDependencies-artifacts/`, `ios/Pods/ReactNativeCore-artifacts/`.
 
 ## Перенос на новую машину
 

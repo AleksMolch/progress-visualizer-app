@@ -167,6 +167,7 @@ npx expo-doctor
 | Краш при старте на MMKV | Запуск в Expo Go | Использовать development build |
 | `pod install` падает с encoding-ошибкой | Кириллица в пути проекта | Перенести проект на ASCII-путь |
 | pod: «could not find compatible versions for pod ExpoModulesCore» | Изменилась версия expo-modules-core | Удалить `ios/Pods` и `ios/Podfile.lock`, перезапустить `pod install` |
+| pod install: «Failed to download reactnative-dependencies/reactnative-core … from repo1.maven.org» | Редирект Maven на `repo.reactnative.dev` виснет/рвётся | Запускать `pod install` с `ENTERPRISE_REPOSITORY=https://maven-central.storage-download.googleapis.com/maven2`; при необходимости заранее скачать tarball'ы в `~/Library/Caches/ReactNative` и `ios/Pods/*-artifacts` (подробности — STACK_RESOLVED.md) |
 | После правки app.json разрешения не применились | Не выполнен prebuild | `npx expo prebuild --platform ios` |
 | Биометрия не запрашивается | На симуляторе нет биометрии (code -7) | Проверять на реальном устройстве |
 | expo-doctor ругается на версии | Ручная установка пакета | Ставить через `npx expo install` |

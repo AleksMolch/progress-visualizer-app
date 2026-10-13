@@ -21,6 +21,7 @@ import {
   createPhotoThumbnail,
   deletePhotoFile,
   deleteProjectPhotoDirectory,
+  photoFileExists,
   savePhotoToProject,
 } from '@/storage/photoFiles';
 import { generateId } from '@/utils/ids';
@@ -151,8 +152,11 @@ export const useProjectStore = create<ProjectState>()(
 
       // Миграция старых фото: создаём недостающие миниатюры последовательно
       // и обновляем метаданные ОДНИМ set — без персиста на каждое фото.
+      // Фото с отсутствующим файлом пропускаем (битые/stale записи).
       ensureThumbnails: async () => {
-        const missing = get().photos.filter((photo) => !photo.thumbnailUri);
+        const missing = get().photos.filter(
+          (photo) => !photo.thumbnailUri && photoFileExists(photo.uri),
+        );
         if (missing.length === 0) {
           return;
         }

@@ -14,9 +14,11 @@
   затем `IMPLEMENTATION_IPAD_ONBOARDING_PRIVACY_THUMBNAILS.md` (iPad, онбординг,
   политика, миниатюры; см. запись 2026-10-12 ниже). Все проверки зелёные:
   typecheck/lint, тесты 197/197, expo export iOS.
-- **ВАЖНО**: добавлена native-зависимость `expo-image-manipulator` — старый dev
-  build и APK v2 без пересборки запускать нельзя (native-модуля в них нет).
-  Перед проверкой нужна native-сборка (`npx expo run:ios` / EAS).
+- **Native-пересборка iOS выполнена (2026-10-13)**: dev build с
+  `expo-image-manipulator` собран и запущен на симуляторе (см. запись ниже).
+  APK v2 (Android) — БЕЗ нового модуля; перед проверкой iPad/онбординга/миниатюр
+  на Android нужна новая EAS-сборка. Для pod install может потребоваться
+  `ENTERPRISE_REPOSITORY` (зеркало Maven) — см. STACK_RESOLVED.md.
 - **Следующая задача**: владелец проверяет на Samsung камеру по APK v2, затем
   `AI_CODER_CAMERA_FIX_AND_ANIMATED_GRID_LIST.md` задача 2 (Animated Grid List
   Grid/List morph). Отдельно: включить GitHub Pages для docs/privacy-policy.html
@@ -40,6 +42,48 @@
 - Результат проверок:
 - Известные проблемы:
 - Следующий шаг:
+
+---
+
+### 2026-10-13 — Native-пересборка iOS (expo-image-manipulator, iPad) + фикс миграции
+
+- Что сделано:
+  - `expo prebuild --platform ios --clean` + `pod install` + `npx expo run:ios`
+    (iPhone 17 Pro Max): сборка успешна (0 errors/0 warnings), приложение
+    установлено, запущено, JS-бандл загружен (2064 модуля), native-модуль
+    `expo-image-manipulator` доступен, крашей нет.
+  - **Побочная проблема окружения**: `pod install` падал на скачивании
+    `reactnative-dependencies`/`reactnative-core` с `repo1.maven.org` →
+    `repo.reactnative.dev` (соединение виснет/рвётся). Решение: зеркало
+    `ENTERPRISE_REPOSITORY=https://maven-central.storage-download.googleapis.com/maven2`
+    + ручная загрузка обоих tarball'ов (debug/release) в
+    `~/Library/Caches/ReactNative/` и `ios/Pods/*-artifacts/` (SHA1 сверены).
+    После этого pod install и сборка прошли. Зафиксировано в STACK_RESOLVED.md
+    и README_staff.md (раздел 9).
+  - **Фикс по итогам smoke-теста**: миграция миниатюр пыталась сжимать фото,
+    чьи файлы отсутствуют (stale-пути из старого контейнера симулятора) и
+    писала WARN-цикл. В `ensureThumbnails` добавлена проверка
+    `photoFileExists(photo.uri)` (новый helper в storage-слое); битые записи
+    пропускаются. Проверено: после перезапуска новых предупреждений нет.
+- Какие файлы созданы или изменены:
+  - изменены: `src/storage/photoFiles.ts` (+photoFileExists),
+    `src/store/projectStore.ts` (ensureThumbnails пропускает missing),
+    `src/store/projectStore.test.ts` (+1 тест), `STACK_RESOLVED.md`,
+    `README_staff.md`, `PROGRESS.md`
+- Какие команды запускались:
+  - `npx expo prebuild --platform ios --clean`
+  - `ENTERPRISE_REPOSITORY=... pod install` (в `ios/`)
+  - `npx expo run:ios --device "iPhone 17 Pro Max"`
+  - `npm run typecheck`, `npm run lint`, `npm test` (198/198)
+- Результат проверок:
+  - сборка iOS: Build Succeeded (0 errors/0 warnings); запуск без redbox
+  - typecheck/lint: чисто; тесты: 198/198 (было 197)
+  - после перезапуска: новых WARN миграции нет
+- Известные проблемы:
+  - Ошибка `osascript ... Simulator` при run:ios — некритична (активация окна).
+  - iPad-макеты и онбординг визуально не проверялись (ручная приёмка).
+- Следующий шаг: ручная визуальная приёмка (онбординг при первом запуске,
+  миниатюры, iPad); далее задача 2 — Animated Grid List (Grid/List morph).
 
 ---
 

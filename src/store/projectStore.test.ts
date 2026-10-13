@@ -198,6 +198,20 @@ describe('projectStore', () => {
     expect(new File(photo.thumbnailUri as string).exists).toBe(true);
   });
 
+  it('пропускает фото с отсутствующим файлом при миграции миниатюр', async () => {
+    // Запись есть, но файла в sandbox нет (например, stale-данные контейнера).
+    useProjectStore.getState().addPhoto({
+      id: 'gone',
+      projectId: 'project-1',
+      uri: 'file:///document/photos/project-1/nowhere.jpg',
+      takenAt: 1,
+    });
+
+    await useProjectStore.getState().ensureThumbnails();
+
+    expect(useProjectStore.getState().photos[0].thumbnailUri).toBeUndefined();
+  });
+
   it('удаляет файл фото из sandbox при удалении метаданных', async () => {
     const tempFile = new File('file:///tmp/capture.jpg');
     tempFile.create();
