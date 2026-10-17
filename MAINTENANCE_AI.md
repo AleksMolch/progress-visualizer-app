@@ -221,6 +221,15 @@ Material и Gallery отдельными темами — пользовател
 - Placeholder разрешён ТОЛЬКО на Projects / Project / Settings. НЕ добавлять на
   camera / compare / timelapse / photo viewer / bottom sheets / редактирование заметки /
   выбор пары. Будущий sticky banner потребует отдельного пересчёта navigation layout.
+- Верстка слота: НЕ возвращать фиксированный `height`. Только `minHeight` (64 compact /
+  88 medium) + `paddingVertical`; описание — `numberOfLines={2}`, `flexShrink: 1`,
+  `includeFontPadding: false` локально; на карточке `overflow: 'hidden'`. Причина:
+  локализованный текст и крупный системный шрифт не помещаются в 56 dp и рисовались
+  за рамкой (Android).
+- Каскад: inline-слот в списке Проектов — `animated` + `animationIndex=1`; перезапуск
+  при возврате на вкладку — key на основе `animationNonce`. Empty state и слоты на
+  Project/Settings остаются статичными. Reduced Motion отключает анимацию
+  (`useReducedMotion`). Не менять `stagger.ts` ради слота.
 
 ### Safe area и skeleton
 

@@ -332,6 +332,12 @@ npx expo-doctor
 - Ad placeholder — `src/features/ads/components/ad-placeholder.tsx`, флаг
   `SHOW_AD_PLACEHOLDERS` в `src/features/ads/config.ts` (по умолчанию `true` для dev-превью;
   перед публикацией без SDK поставить `false`). НЕ использует SDK, не грузит сеть, не кликабелен.
+- Верстка: `minHeight` (64 compact / 88 medium) + `paddingVertical`, `overflow: 'hidden'`;
+  описание — `numberOfLines={2}`, `flexShrink: 1`, `includeFontPadding: false` (локально).
+  Карточка растёт под длинные локали и крупный системный шрифт, текст не выходит за рамку.
+- Inline-слот в списке Проектов участвует в каскаде (`animated`, `animationIndex=1`);
+  перезапуск при возврате на вкладку — через key на основе `animationNonce`. Reduced Motion
+  отключает анимацию. Empty state / Project / Settings — статичные (`animated=false`).
 - Размещён ТОЛЬКО: Projects (после первой карточки / под CTA пустого состояния),
   Project (после «Быстрого сравнения»), Settings (near-bottom). Запрещён на
   camera/compare/timelapse/viewer/модалках/выборе пары.

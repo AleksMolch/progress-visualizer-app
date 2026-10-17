@@ -191,7 +191,7 @@ export const kk: Record<MessageKey, Message> = {
   'language.change': 'Тілді ауыстыру',
   'settings.support': 'Әзірлеушіні қолдау',
   'ads.label': 'Жарнама',
-  'ads.placeholderText': 'болашақта қосымшаны қолдайтын',
+  'ads.placeholderText': 'Мұнда жарнама болады — ол қосымшаны қолдайды',
 
   'support.title': 'Қолдау',
   'support.header': 'Әзірлеушіні қолдау',

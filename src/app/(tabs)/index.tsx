@@ -189,8 +189,12 @@ export default function ProjectsScreen() {
                   onDelete={() => handleDelete(item.id)}
                   onAddPhoto={() => handleAddPhotoFromDevice(item.id)}
                 />
-                {/* Inline placeholder после первой карточки проекта. */}
-                {index === 0 ? <AdPlaceholder /> : null}
+                {/* Inline placeholder после первой карточки проекта.
+                    key по animationNonce перезапускает каскад при возврате
+                    на вкладку вместе с карточками. */}
+                {index === 0 ? (
+                  <AdPlaceholder key={`ad-${animationNonce}`} animated animationIndex={1} />
+                ) : null}
               </View>
             );
           }}

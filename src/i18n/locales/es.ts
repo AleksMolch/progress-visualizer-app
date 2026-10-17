@@ -192,7 +192,7 @@ export const es: Record<MessageKey, Message> = {
   'language.change': 'Cambiar idioma',
   'settings.support': 'Apoyar al desarrollador',
   'ads.label': 'Publicidad',
-  'ads.placeholderText': 'que apoyará a la aplicación en el futuro',
+  'ads.placeholderText': 'Espacio publicitario — apoyará la app',
 
   'support.title': 'Soporte',
   'support.header': 'Apoyar al desarrollador',

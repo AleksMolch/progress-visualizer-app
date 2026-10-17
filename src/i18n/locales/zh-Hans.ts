@@ -188,7 +188,7 @@ export const zhHans: Record<MessageKey, Message> = {
   'language.change': '切换语言',
   'settings.support': '支持开发者',
   'ads.label': '广告',
-  'ads.placeholderText': '将在未来支持应用发展',
+  'ads.placeholderText': '广告位 — 用于支持应用',
 
   'support.title': '支持',
   'support.header': '支持开发者',

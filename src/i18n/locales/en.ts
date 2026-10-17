@@ -206,7 +206,7 @@ export const en = {
   'language.change': 'Change language',
   'settings.support': 'Support developer',
   'ads.label': 'Ad',
-  'ads.placeholderText': 'that will support the app in the future',
+  'ads.placeholderText': 'Ad space — it will support the app',
   // Поддержка.
   'support.title': 'Support',
   'support.header': 'Support the developer',

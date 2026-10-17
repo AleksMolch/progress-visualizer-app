@@ -16,9 +16,10 @@
   typecheck/lint, тесты 197/197, expo export iOS.
 - **Native-пересборка iOS выполнена (2026-10-13)**: dev build с
   `expo-image-manipulator` собран и запущен на симуляторе (см. запись ниже).
-  APK v2 (Android) — БЕЗ нового модуля; перед проверкой iPad/онбординга/миниатюр
-  на Android нужна новая EAS-сборка. Для pod install может потребоваться
-  `ENTERPRISE_REPOSITORY` (зеркало Maven) — см. STACK_RESOLVED.md.
+  APK v3 (EAS) собран от коммита `b436557`, но НЕ включает правки ad-placeholder
+  от 2026-10-13 — для проверки слота на Android нужна новая сборка.
+  Для pod install может потребоваться `ENTERPRISE_REPOSITORY` (зеркало Maven) —
+  см. STACK_RESOLVED.md.
 - **Следующая задача**: владелец проверяет на Samsung камеру по APK v2, затем
   `AI_CODER_CAMERA_FIX_AND_ANIMATED_GRID_LIST.md` задача 2 (Animated Grid List
   Grid/List morph). Отдельно: включить GitHub Pages для docs/privacy-policy.html
@@ -42,6 +43,46 @@
 - Результат проверок:
 - Известные проблемы:
 - Следующий шаг:
+
+---
+
+### 2026-10-13 — Ad placeholder: переполнение текста + каскадное появление
+
+- Что сделано (по `AI_CODER_AD_PLACEHOLDER_OVERFLOW_AND_STAGGER.md`):
+  - (1) **Переполнение**: в `ad-placeholder.tsx` жёсткий `height` заменён на
+    `minHeight` (64 compact / 88 medium), добавлены `paddingVertical`, `overflow:
+    'hidden'`; описанию — `numberOfLines={2}`, `flexShrink: 1`,
+    `includeFontPadding: false` (локально, не в AppText); label — `numberOfLines={1}`.
+  - (2) **Текст-обрывок исправлен** во всех 5 локалях: `ads.placeholderText` теперь
+    цельная фраза («Здесь будет реклама — она поддержит приложение» и т.д.),
+    ключи не менялись.
+  - (3) **Каскад**: `AdPlaceholder` получил `animated`/`animationIndex` (default
+    false/1), анимация по `getStaggerDelay` (opacity + translateY, spring),
+    `useReducedMotion` отключает; inline-слот в списке Проектов передаёт
+    `animated animationIndex={1}`, перезапуск при возврате — key от
+    `animationNonce`. Empty state / Project / Settings остаются статичными.
+  - (4) Индексы карточек НЕ сдвигались (по заданию — только после визуальной
+    проверки); слот и вторая карточка появляются одновременно на 60 мс.
+  - `stagger.ts` и его тесты не менялись; новых зависимостей нет.
+- Какие файлы созданы или изменены:
+  - изменены: `src/features/ads/components/ad-placeholder.tsx`,
+    `src/app/(tabs)/index.tsx`, `src/i18n/locales/{ru,en,es,kk,zh-Hans}.ts`,
+    `PROGRESS.md`, `README_staff.md`, `MAINTENANCE_AI.md`, `TESTING.md`
+- Какие команды запускались:
+  - `npm run typecheck`, `npm run lint`, `npm test`, `npx expo-doctor`
+  - smoke на iOS-симуляторе (dev build + Metro): перезапуск приложения,
+    проверка логов на redbox/runtime-ошибки
+- Результат проверок:
+  - typecheck/lint: чисто; тесты: 198/198 (stagger-тесты без изменений)
+  - expo-doctor: 20/21 (предсуществующий patch-дрейф expo/*)
+  - iOS: бандл загружен, ошибок в логах нет
+- Известные проблемы:
+  - Визуальные проверки (5 локалей, макс. системный шрифт, 3 темы, ~360 dp,
+    Reduced Motion) и физический Android — только вручную: устройства нет.
+    Для проверки на Android нужна новая сборка (APK v3 не содержит этих правок).
+  - iOS-визуал (minHeight/паддинги) — ручная приёмка.
+- Следующий шаг: ручная проверка слота на Android/iOS; затем задача 2
+  (Animated Grid List, Grid/List morph) — ждёт подтверждения камеры на Samsung.
 
 ---
 

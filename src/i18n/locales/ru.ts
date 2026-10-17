@@ -199,7 +199,7 @@ export const ru: Record<MessageKey, Message> = {
   'language.change': 'Сменить язык',
   'settings.support': 'Поддержать разработчика',
   'ads.label': 'Реклама',
-  'ads.placeholderText': 'которая в будущем поддержит приложение',
+  'ads.placeholderText': 'Здесь будет реклама — она поддержит приложение',
 
   'support.title': 'Поддержка',
   'support.header': 'Поддержать разработчика',
