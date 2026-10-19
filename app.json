@@ -14,7 +14,7 @@
     },
     "android": {
       "package": "com.anonymous.progressvisualizerapp",
-      "versionCode": 3,
+      "versionCode": 4,
       "adaptiveIcon": {
         "backgroundColor": "#208AEF",
         "foregroundImage": "./assets/images/android-icon-foreground.png"
