@@ -9,18 +9,21 @@
  * - объявляет навигационный стек верхнего уровня (вкладки + экран проекта);
  * - через Stack.Protected показывает онбординг до его прохождения и не пускает
  *   на основные экраны до завершения;
- * - запускает фоновую миграцию миниатюр для старых фото.
+ * - запускает фоновую миграцию миниатюр для старых фото;
+ * - держит нативный splash до первого кадра JS-оверлея и проигрывает мягкую
+ *   заставку («дыхание» знака + короткий fade-out).
  *
  * Слой: UI (/src/app). Использует Stack из expo-router/stack.
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Stack } from 'expo-router/stack';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { BiometricsGate } from '@/features/privacy/components/biometrics-gate';
+import { SoftSplashOverlay } from '@/features/splash/components/soft-splash-overlay';
 import { useI18n } from '@/i18n';
 import { ToastProvider } from '@/components/ui/toast';
 import { initializeStorage } from '@/storage/init';
@@ -36,7 +39,13 @@ SplashScreen.preventAutoHideAsync();
 configureNotificationHandler();
 
 export default function RootLayout() {
-  const [ready, setReady] = useState(false);
+  // storageReady — инициализация хранилища завершена;
+  // nativeSplashHidden — нативный splash скрыт после layout JS-оверлея;
+  // showSplashOverlay — JS-оверлей ещё виден.
+  const [storageReady, setStorageReady] = useState(false);
+  const [nativeSplashHidden, setNativeSplashHidden] = useState(false);
+  const [showSplashOverlay, setShowSplashOverlay] = useState(true);
+  const hideStartedRef = useRef(false);
 
   useEffect(() => {
     initializeStorage()
@@ -45,19 +54,37 @@ export default function RootLayout() {
         console.error('Ошибка инициализации хранилища:', error);
       })
       .finally(() => {
-        setReady(true);
-        SplashScreen.hideAsync();
+        setStorageReady(true);
       });
   }, []);
 
-  if (!ready) {
-    return null;
-  }
+  // Скрываем нативный splash только после первого layout оверлея.
+  const handleOverlayLayout = useCallback(() => {
+    if (hideStartedRef.current) {
+      return;
+    }
+    hideStartedRef.current = true;
+    void SplashScreen.hideAsync()
+      .then(() => setNativeSplashHidden(true))
+      .catch((error) => {
+        console.error('Не удалось скрыть нативный splash:', error);
+        // Не оставляем интерфейс заблокированным из-за ошибки hideAsync.
+        setNativeSplashHidden(true);
+      });
+  }, []);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>
-        <AppRoot />
+        {storageReady ? <AppRoot /> : null}
+        {showSplashOverlay ? (
+          <SoftSplashOverlay
+            isReady={storageReady && nativeSplashHidden}
+            startAnimation={nativeSplashHidden}
+            onOverlayLayout={handleOverlayLayout}
+            onFinish={() => setShowSplashOverlay(false)}
+          />
+        ) : null}
       </ThemeProvider>
     </GestureHandlerRootView>
   );

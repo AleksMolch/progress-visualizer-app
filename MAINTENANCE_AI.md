@@ -272,6 +272,44 @@ Material и Gallery отдельными темами — пользовател
 - Новые обязательные при первом запуске экраны добавляй в Protected-группу, а не
   в `(tabs)`.
 
+### Анимированный splash и брендовые ассеты
+
+- Источник знака — `assets/brand/logo-source.png`; все слои и иконки генерируются
+  `scripts/generate-brand-assets.py` (Pillow, вне бандла). НЕ редактируй PNG вручную:
+  меняй источник/скрипт и перегенерируй.
+- Ассеты: splash — `splash-icon.png` (оригинальный знак с синим лепестком);
+  иконки — `icon.png`/`android-icon-*`. Слоёв/секторов/блика нет — не добавляй их.
+- Нативный splash и JS-оверлей должны совпадать по фону/размеру/позиции:
+  `app.json` — `#0B0D12`, `imageWidth 160`, `splash-icon.png`, dark-вариант.
+  JS-оверлей импортирует ТОТ ЖЕ файл, иначе на стыке будет подмена знака.
+  `SplashScreen.hideAsync()` вызывается ТОЛЬКО из `onLayout` оверлея
+  (`src/features/splash/components/soft-splash-overlay.tsx`), не из инициализации.
+- Анимация: пока storage не готов — дыхание `scale 1↔1.018` (цикл ~1.8 с);
+  после готовности — `1→1.025→1` (2×220 мс), затем fade 200 мс (~640 мс всего),
+  `onFinish` один раз. Начальный кадр строго `opacity 1`, `scale 1`.
+- Reduced Motion: без движения, оверлей скрывается сразу. Никаких blur/glow,
+  вращения и новых ассетов. Любое изменение иконок/splash/app.json требует
+  native-сборки.
+
+### Релизная конфигурация и CI
+
+- Package/bundle: `ru.nov.molcha.progressvisualizer` (iOS и Android), iOS
+  buildNumber, Android versionCode — в `app.json`. **Package name нельзя менять
+  после первой публикации**; согласовано с владельцем (домен `molcha.nov.ru`).
+- Разрешения Android: только CAMERA и USE_BIOMETRIC. `WRITE_EXTERNAL_STORAGE` и
+  `USE_FINGERPRINT` удалены из `android.permissions` и продублированы в
+  `android.blockedPermissions`, потому что плагины добавляют их снова. После
+  изменения проверяй итоговый AndroidManifest (и APK на устройстве).
+- EAS-профили: `preview` (internal APK), `production` (store AAB),
+  `production-apk` (store APK для RuStore/AppGallery/GetApps), `apk` — прежний.
+  Не удаляй `production`, на него ссылается `submit.production`.
+- Ad-заглушки: перед магазинами `SHOW_AD_PLACEHOLDERS = false`; компонент и
+  интеграцию не удалять (SDK планируется позже).
+- Политика: канонический источник — `docs/privacy-policy.html` (GitHub Pages),
+  `PRIVACY.md`/`PRIVACY_POLICY.md` — указатели. URL — `extra.privacyPolicyUrl`.
+- CI: `.github/workflows/ci.yml` (typecheck/lint/test; expo-doctor non-blocking,
+  т.к. ходит в сеть). Не делать expo-doctor блокирующим.
+
 ### Миниатюры (thumbnails)
 
 - Генерация миниатюр — ТОЛЬКО в storage-слое (`src/storage/photoFiles.ts`:

@@ -131,6 +131,19 @@ npm test
 npx expo-doctor
 ```
 
+### EAS-профили
+
+```bash
+npx eas-cli build --profile preview       --platform android  # внутренний APK
+npx eas-cli build --profile production    --platform android  # AAB для Google Play
+npx eas-cli build --profile production-apk --platform android # APK для RuStore/AppGallery/GetApps
+```
+
+`apk` — прежний внутренний APK-профиль (оставлен для совместимости).
+Для `pod install` при проблемах с Maven используйте `ENTERPRISE_REPOSITORY`
+(см. раздел 9 и STACK_RESOLVED.md). CI: `.github/workflows/ci.yml`
+(typecheck/lint/test, expo-doctor non-blocking).
+
 ---
 
 ## 7. Тестирование
@@ -154,9 +167,9 @@ npx expo-doctor
 Требуется:
 - аккаунт Apple Developer;
 - аккаунт Google Play Console;
-- заполненная Privacy Nutrition Label в App Store (см. PRIVACY.md);
+- заполненная Privacy Nutrition Label в App Store (см. опубликованную политику);
 - замена временного bundleIdentifier (`com.anonymous.progress-visualizer-app`)
-  на реальный.
+  на реальный (актуально: `ru.nov.molcha.progressvisualizer`).
 
 ---
 
@@ -414,8 +427,9 @@ npx expo-doctor
   показывается один раз). Гейтинг — `Stack.Protected` в `src/app/_layout.tsx`:
   без флага доступен только `/onboarding`, после — основные экраны; ручных
   redirect нет. «Пропустить»/«Начать» просто выставляют флаг.
-- Политика: магазинная EN-версия — `PRIVACY_POLICY.md`, русская — `PRIVACY.md`.
-  `docs/privacy-policy.html` — для GitHub Pages (включается вручную). Ссылка
+- Политика: канонический источник — `docs/privacy-policy.html`
+  (GitHub Pages: https://aleksmolch.github.io/progress-visualizer-app/privacy-policy.html).
+  Файлы `PRIVACY.md`/`PRIVACY_POLICY.md` — короткие указатели на неё. Ссылка
   приложения — `app.json extra.privacyPolicyUrl`, кнопка в Настройках открывает
   её через `Linking.openURL`. Не отправлять фото/метаданные по этой ссылке.
 
@@ -431,10 +445,44 @@ npx expo-doctor
   ломает сохранение (фото пишется без миниатюры). Удаление фото удаляет миниатюру
   (`deletePhotoFile`), удаление проекта — всю папку.
 - Миграция старых фото: `ensureThumbnails()` (projectStore) вызывается из root
-  layout после гидратации, последовательно, с одним batched `set`. Повторный
-  запуск досоздаёт только недостающие миниатюры.
+  layout после гидратации, последовательно, с одним batched `set`. Фото с
+  отсутствующим файлом пропускаются (`photoFileExists`).
 - `expo-image-manipulator` — native-модуль: после его добавления/обновления нужна
   native-пересборка (старый dev build/APK без модуля упадёт при старте).
+
+### 11.13. Мягкий splash и иконки
+
+- Ассеты генерируются из `assets/brand/logo-source.png` скриптом
+  `scripts/generate-brand-assets.py` (Pillow; вне бандла): `splash-icon.png`
+  (оригинальный знак с синим лепестком) и иконки 1024 (`icon.png` opaque
+  `#0B0D12`, `android-icon-foreground/background/monochrome`). Вручную ассеты
+  не редактировать — менять источник/скрипт.
+- Нативный splash (`app.json`): `#0B0D12`, `imageWidth 160`, dark-вариант,
+  `splash-icon.png` (оригинальный знак, синий лепесток виден). JS-оверлей
+  `SoftSplashOverlay`
+  (`src/features/splash/components/soft-splash-overlay.tsx`) повторяет первый
+  кадр (opacity 1, scale 1): пока хранилище не готово — дыхание 1↔1.018
+  (~1.8 с), после готовности — 1→1.025→1 (2×220 мс) и fade 200 мс, всего ~640 мс.
+  Reduced Motion отключает движение. Никаких слоёв, blur, glow и вращения.
+- Нативный splash скрывается из `onLayout` оверлея (один раз, ref-guard), и
+  только после успешного `hideAsync()` запускается анимация. `onFinish` —
+  ровно один раз. `BiometricsGate`/онбординг/status bar не затронуты.
+- После изменения иконок/splash/app.json нужна native-пересборка (OTA не применит).
+
+### 11.14. Релизная конфигурация
+
+- Package/bundle: `ru.nov.molcha.progressvisualizer` (одинаковый iOS/Android),
+  iOS buildNumber 1, Android versionCode 5. **Package name нельзя менять после
+  первой публикации** — согласовано с владельцем (домен `molcha.nov.ru`).
+- Разрешения Android: только CAMERA и USE_BIOMETRIC; `WRITE_EXTERNAL_STORAGE` и
+  `USE_FINGERPRINT` удалены из `android.permissions` и дополнительно
+  заблокированы через `android.blockedPermissions` (плагины добавляли их снова).
+- Политика: канонический источник — `docs/privacy-policy.html`, публикуется на
+  GitHub Pages (https://aleksmolch.github.io/progress-visualizer-app/privacy-policy.html);
+  `PRIVACY.md`/`PRIVACY_POLICY.md` — указатели. URL приложения — в
+  `app.json extra.privacyPolicyUrl`.
+- Ad-заглушки перед магазинами выключены: `SHOW_AD_PLACEHOLDERS = false`
+  (`src/features/ads/config.ts`), компонент и интеграция сохранены.
 
 ---
 
@@ -458,4 +506,4 @@ npx expo-doctor
 - TESTING.md — протокол тестов
 - DECISIONS.md — журнал решений
 - MAINTENANCE_AI.md — инструкция для ИИ поддержки и развития
-- PRIVACY.md — политика конфиденциальности
+- docs/privacy-policy.html — каноническая политика конфиденциальности (GitHub Pages)

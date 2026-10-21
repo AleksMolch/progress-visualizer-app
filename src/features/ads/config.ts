@@ -10,4 +10,4 @@
  * Реальный SDK здесь НЕ подключается. Перед публикацией без рекламы поставьте
  * флаг в `false`, чтобы заглушки не показывались пользователям.
  */
-export const SHOW_AD_PLACEHOLDERS = true;
+export const SHOW_AD_PLACEHOLDERS = false;

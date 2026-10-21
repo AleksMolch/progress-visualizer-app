@@ -1,5 +1,7 @@
 # ProgressPrivate — приватное приложение для прогресс-фотографий
 
+[![CI](https://github.com/AleksMolch/progress-visualizer-app/actions/workflows/ci.yml/badge.svg)](https://github.com/AleksMolch/progress-visualizer-app/actions/workflows/ci.yml)
+
 **Отслеживайте изменения во времени: тело, растения, ремонт, что угодно.
 Все фотографии остаются только на вашем телефоне.**
 
@@ -46,7 +48,7 @@ ProgressPrivate — приложение для регулярных фотог�
 - фото по умолчанию хранятся в защищённой области приложения (sandbox);
 - вы сами решаете, экспортировать ли фото в галерею.
 
-Подробнее — в [PRIVACY.md](PRIVACY.md).
+Подробнее — в [политике конфиденциальности](https://aleksmolch.github.io/progress-visualizer-app/privacy-policy.html).
 
 ---
 

@@ -1,147 +1,114 @@
-# APP_ICON_AND_SPLASH — план обновления иконки и splash-экрана
+# APP_ICON_AND_SPLASH — иконка, adaptive icon и анимированный splash
 
-> Цель: заменить дефолтные Expo-ассеты на фирменные иконку и splash.
-> Сейчас иконка и splash — дефолтные заглушки Expo (logo, react-logo).
-> Splash-фон уже в фирменном цвете `#208AEF`.
-
----
-
-## 1. Концепция метки (mark)
-
-Простое, узнаваемое на малом размере: **апертура/диафрагма камеры, где кольцо
-частично превращено в дугу прогресса** (символ «прогресс через фото»).
-
-Цвета: фон `#208AEF` (фирменный), mark — белый.
-
-Запасные концепции (если первая плохо отрисуется):
-- две наложенные фоторамки «до/после» с вертикальным разрезом;
-- фоторамка со стрелкой/полосой роста вверх.
+> Статус: реализовано 2026-10-20 по `AI_CODER_ANIMATED_SPLASH_FOCUS_PULL.md` и
+> `AI_CODER_PREPRODUCTION_READINESS.md` (задача 3). Ниже — фактическое состояние,
+> а не первоначальный план.
 
 ---
 
-## 2. Источники (бесплатные для коммерческого использования)
+## 1. Источник и генерация ассетов
 
-Если не хотите генерировать, а собрать из готовых иконок:
+Исходник: `assets/brand/logo-source.png` (растровый логотип: диафрагма с белыми
+лепестками и одним синим `#208AEF` на тёмной подложке).
 
-| Набор | Лицензия | Что это |
-|-------|----------|---------|
-| Material Symbols (Google) | Apache 2.0 | глифы (камера, диафрагма, прогресс) |
-| Lucide | ISC | line-иконки |
-| Heroicons (Tailwind) | MIT | line/solid иконки |
-| Remix Icon | Apache 2.0 | глифы |
-| Tabler Icons | MIT | line-иконки |
-| Feather | MIT | line-иконки |
-| unDraw | free (без атрибуции) | иллюстрации |
+Генератор: `scripts/generate-brand-assets.py` (Python 3 + Pillow, вне бандла).
+Он:
 
-Для целостной иконки проще сгенерировать (см. раздел 3) — тогда ассет ваш,
-без вопросов лицензирования готовых наборов.
+- разделяет знак на слои по цвету и восстанавливает alpha из смеси с тёмным фоном;
+- отсекает кант скруглённой подложки исходника;
+- масштабирует слои с premultiplied alpha (без тёмных ореолов);
+- собирает все ассеты.
 
----
+Запуск:
 
-## 3. Промпты для Nano Banana (Gemini image)
-
-> Модели дают лучший результат на английском. Промпты ниже — готовые к вставке.
-
-### 3.1 Основная иконка (opaque, 1024×1024)
-
-```
-Flat minimalist mobile app icon. The entire canvas is a solid deep blue color
-(#208AEF), perfectly opaque, no rounded corners, no border. Centered large white
-geometric mark: a camera aperture / iris symbol (a circle of overlapping rounded
-blades) where the ring is partially drawn as a progress arc (about two-thirds
-complete) ending in a small dot. Clean crisp vector style, subtle soft gradient
-for depth, high contrast, no text, no letters, no drop shadow outside the mark.
-The mark occupies about 60% of the canvas. 1024x1024, PNG.
+```bash
+python3 -m pip install pillow numpy
+python3 scripts/generate-brand-assets.py
 ```
 
-### 3.2 Android adaptive foreground (прозрачный, mark по центру)
+## 2. Splash-ассет
 
-```
-Minimal white camera-aperture-progress symbol on a fully transparent background.
-Centered, with the mark occupying only the middle 60% of the canvas (leave safe
-margins for Android adaptive icon cropping). Flat vector, crisp edges, no
-background fill, no text, no letters. 1024x1024, transparent PNG.
+```text
+assets/images/splash-icon.png — полный оригинальный знак (белые лепестки +
+                               синий акцент), 1024, прозрачный фон
 ```
 
-### 3.3 Splash-логотип (прозрачный, маленький mark)
+Один и тот же файл используется нативным splash и JS-оверлеем: знак рисуется
+160 dp. Никаких слоёв, белых версий, бликов и размытия.
 
-```
-Minimal app logo mark: a white camera-aperture-progress symbol, flat vector, on
-a fully transparent background, centered, simple and clean, no text. Designed to
-look good at small sizes (about 200px wide). Transparent PNG.
-```
+## 3. Иконки
 
-### 3.4 Splash-фон (опционально, вместо flat-цвета)
-
-```
-Simple splash screen background: solid deep blue (#208AEF) with a very subtle
-soft radial glow slightly brighter in the center, flat, no text, no logo, no
-borders. 2732x2732.
+```text
+assets/images/icon.png                       — opaque #0B0D12, знак ~74%
+assets/images/android-icon-foreground.png    — прозрачный, знак в центральных ~66%
+assets/images/android-icon-background.png    — сплошной #0B0D12 (1024×1024)
+assets/images/android-icon-monochrome.png    — белый силуэт для Android 13+
+assets/images/splash-icon.png                — полный знак (1024×1024, прозрачный)
 ```
 
----
+`icon.png`, `android-icon-*` и `splash-icon.png` генерируются тем же скриптом из полного знака; splash использует `splash-icon.png` (оригинальные цвета, с синим лепестком).
 
-## 4. Куда положить файлы и что поменять в app.json
-
-1. `assets/images/icon.png` ← основная иконка (3.1), opaque 1024×1024.
-2. `assets/images/android-icon-foreground.png` ← adaptive foreground (3.2),
-   прозрачный, mark в средней зоне.
-3. `assets/images/splash-icon.png` ← splash-логотип (3.3), прозрачный.
-
-В `app.json`:
+## 4. app.json
 
 ```jsonc
 {
-  "icon": "./assets/images/icon.png",        // уже так — файл просто заменяем
+  "icon": "./assets/images/icon.png",
   "ios": {
-    "icon": "./assets/images/icon.png",       // убрать "./assets/expo.icon"
-    "bundleIdentifier": "com.anonymous.progress-visualizer-app"
+    "icon": "./assets/images/icon.png",
+    "bundleIdentifier": "ru.nov.molcha.progressvisualizer",
+    "buildNumber": "1"
   },
   "android": {
+    "package": "ru.nov.molcha.progressvisualizer",
+    "versionCode": 5,
     "adaptiveIcon": {
-      "backgroundColor": "#208AEF",           // цвет под adaptive-иконкой
-      "foregroundImage": "./assets/images/android-icon-foreground.png"
-      // "backgroundImage" и "monochromeImage" можно убрать
-    }
+      "backgroundColor": "#0B0D12",
+      "foregroundImage": "./assets/images/android-icon-foreground.png",
+      "monochromeImage": "./assets/images/android-icon-monochrome.png"
+    },
+    "blockedPermissions": [
+      "android.permission.WRITE_EXTERNAL_STORAGE",
+      "android.permission.USE_FINGERPRINT"
+    ]
   },
   "plugins": [
     [
       "expo-splash-screen",
       {
-        "backgroundColor": "#208AEF",
+        "backgroundColor": "#0B0D12",
         "image": "./assets/images/splash-icon.png",
-        "imageWidth": 200                      // подобрать размер mark
+        "imageWidth": 160,
+        "dark": {
+          "backgroundColor": "#0B0D12",
+          "image": "./assets/images/splash-icon.png"
+        }
       }
     ]
   ]
 }
 ```
 
----
+## 5. Мягкий splash
 
-## 5. Как сгенерировать все нужные размеры
-
-Expo делает это автоматически при prebuild из одного исходного PNG:
-
-```bash
-export PATH="/opt/homebrew/bin:$PATH"
-npx expo prebuild --platform ios   # генерирует AppIcon.appiconset (все размеры)
-npx expo run:ios                    # собрать и проверить на симуляторе
-```
-
-- iOS: достаточно одного 1024×1024 PNG — prebuild нарежет все размеры.
-- Android: adaptive icon собирается из `foregroundImage` + `backgroundColor`.
-
-Важные требования:
-
-- iOS-иконка должна быть **без прозрачности** (Apple режет скругление сам).
-- Не использовать текст и брендовые знаки (Apple/Google отклоняют).
-- Adaptive foreground — наоборот **с прозрачностью**, mark в центральных ~66%.
-
----
+- Нативный splash: тёмный `#0B0D12`, знак 160 dp, `splash-icon.png` — тот же
+  оригинальный логотип с синим лепестком, что и иконка приложения.
+- JS-оверлей: `src/features/splash/components/soft-splash-overlay.tsx` — тот же
+  фон, PNG, размер и центр; первый кадр строго `opacity: 1`, `scale: 1`.
+- Пока хранилище не готово — спокойное дыхание `scale 1 ↔ 1.018`, цикл ~1.8 с,
+  `Easing.inOut(Easing.quad)`, без пульсации яркости.
+- После готовности: `1 → 1.025` (220 мс) → `1` (220 мс), затем fade-out 200 мс;
+  всего ~640 мс. `onFinish` вызывается ровно один раз.
+- Reduced Motion: без движения, оверлей скрывается сразу после готовности.
+- Жизненный цикл: `onLayout` оверлея → `SplashScreen.hideAsync()` →
+  `nativeSplashHidden` → старт анимации. `hideAsync()` защищён ref-guard.
+- Никаких слоёв, вращения, blur, glow и новых ассетов.
 
 ## 6. Проверка результата
 
-- Собрать dev build и посмотреть иконку на домашнем экране симулятора.
-- Splash — увидеть при холодном старте приложения.
-- При необходимости прислать скриншоты в `screenshots/` для итерации.
+- `npx expo prebuild --platform ios --clean` + `npx expo run:ios` (или EAS) —
+  обязательна native-пересборка после изменения app.json/иконок/splash.
+- Холодный запуск: нет белой вспышки, знак по центру, первый кадр совпадает.
+- Проверить на Android: иконка в круглой/квадратной маске, monochrome (Android 13+),
+  adaptive foreground не обрезается.
+- iPad/планшет: знак того же физического размера, по центру.
+- Reduced Motion и медленная инициализация — ручная проверка (см. TESTING.md).

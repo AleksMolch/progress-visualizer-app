@@ -7,23 +7,21 @@
 
 ## ⚠️ ВАЖНО ДЛЯ СЛЕДУЮЩЕЙ СЕССИИ (читай первым)
 
-- **Где мы сейчас**: выполнены `AI_CODER_ANDROID_CAMERA_SHUTTER_SOUND_FIX.md` и
-  `TECHNICAL_SPEC_ALL_UI_ENHANCEMENTS.md` (коммит `b277495`),
-  `AI_CODER_CAMERA_FIX_AND_ANIMATED_GRID_LIST.md` задача 1 (коммит `0fb76c1`,
-  EAS APK v2: https://expo.dev/accounts/alomium/projects/progress-visualizer-app/builds/12d375a6-adc0-4a0d-adfd-e5c9a8939210),
-  затем `IMPLEMENTATION_IPAD_ONBOARDING_PRIVACY_THUMBNAILS.md` (iPad, онбординг,
-  политика, миниатюры; см. запись 2026-10-12 ниже). Все проверки зелёные:
-  typecheck/lint, тесты 197/197, expo export iOS.
-- **Native-пересборка iOS выполнена (2026-10-13)**: dev build с
-  `expo-image-manipulator` собран и запущен на симуляторе (см. запись ниже).
-  APK v3 (EAS) собран от коммита `b436557`, но НЕ включает правки ad-placeholder
-  от 2026-10-13 — для проверки слота на Android нужна новая сборка.
-  Для pod install может потребоваться `ENTERPRISE_REPOSITORY` (зеркало Maven) —
-  см. STACK_RESOLVED.md.
-- **Следующая задача**: владелец проверяет на Samsung камеру по APK v2, затем
-  `AI_CODER_CAMERA_FIX_AND_ANIMATED_GRID_LIST.md` задача 2 (Animated Grid List
-  Grid/List morph). Отдельно: включить GitHub Pages для docs/privacy-policy.html
-  (вручную), новая native-сборка для iPad/онбординга/миниатюр.
+- **Где мы сейчас**: выполнены `AI_CODER_ANIMATED_SPLASH_FOCUS_PULL.md` и
+  `AI_CODER_PREPRODUCTION_READINESS.md` (см. записи 2026-10-20 ниже). Секторная/
+  кометная анимация splash отклонена владельцем и заменена мягкой заставкой по
+  `AI_CODER_SOFT_ANIMATED_SPLASH` (дыхание + fade, один цельный PNG). Проверки:
+  typecheck/lint чисто, тесты 198/198; Android-manifest проверен.
+  Выполнена native-пересборка iOS (новый bundle ID).
+- **Следующая задача**: native/EAS-сборка `preview` и проверка на физическом
+  Android (splash без вспышки, иконки, разрешения, камера, онбординг); проверить
+  публикацию обновлённой политики после пуша; затем задача 2 из
+  `AI_CODER_CAMERA_FIX_AND_ANIMATED_GRID_LIST.md` (Grid/List morph).
+- **Package name**: `ru.nov.molcha.progressvisualizer` (Android и iOS; менять
+  после публикации нельзя). versionCode 5, iOS buildNumber 1.
+- **GitHub Pages**: включён, каноническая политика —
+  https://aleksmolch.github.io/progress-visualizer-app/privacy-policy.html
+  (обновлённое содержимое появится после пуша `main`).
 - **Рабочая папка проекта**: `/Users/aleks/dev/progress-visualizer-app` (ASCII-путь).
 - **Git remote**: origin = `https://github.com/AleksMolch/progress-visualizer-app.git`.
 - **PATH**: `pod`/`brew`/CocoaPods — в `/opt/homebrew/bin`; перед prebuild/run:ios/pod install
@@ -43,6 +41,128 @@
 - Результат проверок:
 - Известные проблемы:
 - Следующий шаг:
+
+---
+
+### 2026-10-20 — Мягкий splash: дыхание + fade (по AI_CODER_SOFT_ANIMATED_SPLASH)
+
+- Что сделано:
+  - (1) **Новый `SoftSplashOverlay`**
+    (`src/features/splash/components/soft-splash-overlay.tsx`): один цельный
+    `splash-icon.png` (оригинальный знак с синим лепестком), фон `#0B0D12`,
+    160 dp, первый кадр строго `opacity 1` / `scale 1` — совпадает с нативным.
+  - (2) **Анимация**: пока storage не готов — дыхание `1 ↔ 1.018` (цикл ~1.8 с,
+    inOut quad); после готовности — `1 → 1.025` (220 мс) → `1` (220 мс), затем
+    fade-out 200 мс (всего ~640 мс). `onFinish` — ровно один раз (ref-guard),
+    анимации отменяются при размонтировании. Reduced Motion — без движения и
+    задержек.
+  - (3) **Жизненный цикл** (`src/app/_layout.tsx`): оверлей монтируется сразу,
+    `onLayout` → `SplashScreen.hideAsync()` (ref-guard) → `nativeSplashHidden` →
+    старт анимации; `AppRoot` — только после `storageReady`. Флаги
+    `storageReady`/`nativeSplashHidden`/`showSplashOverlay` раздельные.
+  - (4) **Удалено лишнее**: старый `animated-splash.tsx`, `splash-timing.ts` +
+    тест, ассеты `iris-glow.png`/`sector-0..5.png`; генератор упрощён (splash —
+    один PNG). `app.json` не менялся.
+- Какие файлы созданы или изменены:
+  - создан: `src/features/splash/components/soft-splash-overlay.tsx`
+  - изменены: `src/app/_layout.tsx`, `scripts/generate-brand-assets.py`,
+    `APP_ICON_AND_SPLASH.md`, `README_staff.md`, `MAINTENANCE_AI.md`,
+    `TESTING.md`, `DECISIONS.md`, `PROGRESS.md`
+  - удалены: `src/features/splash/components/animated-splash.tsx`,
+    `src/features/splash/splash-timing.ts`, `splash-timing.test.ts`,
+    `assets/images/splash/{iris-glow,sector-0..5}.png`
+- Какие команды запускались:
+  - генерация ассетов, `npm run typecheck`, `npm run lint`, `npm test`
+    (198/198), `npx expo-doctor` (20/21 — прежний patch-дрейф)
+- Результат проверок:
+  - typecheck/lint: чисто; тесты: 198/198 (удалены тесты старого тайминга)
+  - iOS: запуск на симуляторе после изменений (JS-only) без ошибок/redbox
+- Известные проблемы:
+  - Бесшовность первого кадра, статус-бары и Reduced Motion — только ручная
+    проверка на физических iOS/Android (устройств нет).
+  - **Фикс визуального стыка**: нативный splash и оверлей переведены на
+    `splash-icon.png` (оригинальный знак с синим лепестком). Раньше native/JS
+    использовали белую версию, из-за чего на стыке была видна подмена знака.
+    `app.json` обновлён (`image` → `splash-icon.png`), нужна native-пересборка.
+- Следующий шаг: ручная приёмка заставки; затем EAS `preview` (versionCode 5) и
+  проверка на Android.
+
+---
+
+### 2026-10-20 — Анимированный splash «фокус-пул» + preproduction-подготовка
+
+- Что сделано:
+  - (1) **Логотип разделён на слои** скриптом `scripts/generate-brand-assets.py`
+    (Pillow): splash-слои 512 — `iris-white` (белый знак), `iris-glow` (блик),
+    `sector-0..5` (6 синих секторов); `iris-full` 1024 (иконки/канон). Отсечён
+    кант исходной подложки, alpha восстановлена из смеси с фоном, premultiplied.
+  - (2) **Анимированный splash**: `AnimatedSplash` (Reanimated) — покой → синие
+    сектора вспыхивают поочерёдно по часовой стрелке (6×280 мс, без вращения;
+    цикл повторяется до готовности) → фокус-пул (blur 3→0) → блик → финал
+    (scale 1.08, fade, фон в цвет темы).
+  - (2b) **Тайминг**: вспышка-задержка-угасание 280 мс на сектор (60/160/60),
+    полный круг 1680 мс, финал не раньше полного круга (INTRO 1830 мс), один
+    таймер-страж (`splash-timing.ts`); reduced motion отключает сцену; нативный
+    splash скрывается после первого layout оверлея.
+  - (2c) **Вариант 3 (один слой сектора)**: вместо 6 смонтированных слоёв —
+    ОДИН AnimatedImage, source которого переключается по `useAnimatedReaction`
+    (`Math.floor(sweep) % 6` → `runOnJS(setActiveSector)`); прозрачность вспышки —
+    один shared value. Меньше узлов и worklet'ов, код проще. Визуал откатан к
+    простой вспышке (без кометы/дыхания/замыкания/размытой базы); нативный splash
+    снова острый `iris-white`. 512-ассеты сохранены (≈257 КБ: white 77K +
+    glow 79K + сектора ~101K).
+  - (3) **Иконки/adaptive/splash**: icon.png (opaque #0B0D12, знак ~74%),
+    foreground (центральные ~66%), background #0B0D12, monochrome, splash-icon;
+    в app.json — splash `#0B0D12`/160/dark (`iris-white`) и `monochromeImage`.
+  - (4) **Preproduction**: `SHOW_AD_PLACEHOLDERS = false`; профили EAS `preview`,
+    `production` (AAB), `production-apk` (валидированы `eas config`);
+    package/bundle `ru.nov.molcha.progressvisualizer`, iOS buildNumber 1,
+    versionCode 5; убраны `WRITE_EXTERNAL_STORAGE`/`USE_FINGERPRINT` (+ blocked,
+    т.к. плагины добавляли их обратно); GitHub Pages включён (POST 201), политика
+    обновлена (no ads/purchases, дата), `PRIVACY.md`/`PRIVACY_POLICY.md` —
+    указатели на канонический `docs/privacy-policy.html`; удалены неиспользуемые
+    ассеты (react-logo, expo-logo/badge, logo-glow, tutorial-web, tabIcons,
+    expo.icon); добавлен CI `.github/workflows/ci.yml`; обновлён
+    `APP_ICON_AND_SPLASH.md`.
+- Какие файлы созданы или изменены:
+  - созданы: `scripts/generate-brand-assets.py`, `assets/brand/logo-source.png`,
+    `assets/images/splash/{iris-white,iris-glow,sector-0..5,iris-full}.png`,
+    `src/features/splash/components/animated-splash.tsx`,
+    `src/features/splash/splash-timing.ts` + тест,
+    `src/types/assets.d.ts`,
+    `.github/workflows/ci.yml`
+  - изменены: `app.json`, `eas.json`, `src/features/ads/config.ts`,
+    `src/app/_layout.tsx`, иконки в `assets/images/`, `docs/privacy-policy.html`,
+    `PRIVACY.md`, `PRIVACY_POLICY.md`, `README.md`, `README_staff.md`,
+    `MAINTENANCE_AI.md`, `TESTING.md`, `APP_ICON_AND_SPLASH.md`, `DECISIONS.md`
+  - удалены: `assets/images/{react-logo*,expo-logo,expo-badge*,logo-glow,tutorial-web}.png`,
+    `assets/images/tabIcons/`, `assets/expo.icon/`
+- Какие команды запускались:
+  - генерация ассетов (Pillow), `npm run typecheck`, `npm run lint`, `npm test`
+    (203/203), `npx expo-doctor` (20/21 — прежний patch-дрейф)
+  - `npx expo prebuild --platform android --clean --no-install` + проверка
+    AndroidManifest (CAMERA/USE_BIOMETRIC есть; WRITE/FINGERPRINT — remove;
+    `applicationId ru.nov.molcha.progressvisualizer`, versionCode 5)
+  - `npx expo prebuild --platform ios --clean` + `pod install` (через
+    ENTERPRISE_REPOSITORY) + `npx expo run:ios` (новый bundle ID)
+- Результат проверок:
+  - typecheck/lint: чисто; тесты: 203/203 (+4 теста тайминга splash)
+  - expo-doctor: 20/21 (только предсуществующий дрейф patch-версий expo/*)
+  - Pages: `privacy-policy.html` отдаёт 200
+  - iOS: `expo prebuild --platform ios --clean` + `pod install` + `run:ios` —
+    Build Succeeded (0 errors/0 warnings), приложение с новым bundle ID
+    `ru.nov.molcha.progressvisualizer` установлено и запущено, JS-бандл загружен,
+    MMKV чистый (0 ключей → показывается онбординг), redbox/ошибок в логах нет
+- Известные проблемы:
+  - Физический Android и визуальная сверка первого кадра splash — только вручную.
+    EAS-сборка не запускалась (по условию предыдущей задачи; для проверки нужна).
+  - Первый кадр JS-оверлея слегка размыт (blur 3), нативный splash — резкий:
+    лёгкое несовпадение по фокусу, но без скачка фона/позиции/размера.
+  - Обновлённая политика на Pages появится после пуша `main`.
+  - Удаление `WRITE_EXTERNAL_STORAGE` может повлиять на экспорт в галерею на
+    очень старых Android (≤ API 28) — проверить на устройстве.
+- Следующий шаг: EAS `preview` APK (versionCode 5) + прогон чек-листа на
+  физическом Android/iOS; затем задача 2 (Grid/List morph).
 
 ---
 

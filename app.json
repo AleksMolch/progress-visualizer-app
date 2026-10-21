@@ -9,22 +9,26 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/images/icon.png",
-      "bundleIdentifier": "com.anonymous.progress-visualizer-app",
-      "supportsTablet": true
+      "bundleIdentifier": "ru.nov.molcha.progressvisualizer",
+      "supportsTablet": true,
+      "buildNumber": "1"
     },
     "android": {
-      "package": "com.anonymous.progressvisualizerapp",
-      "versionCode": 4,
+      "package": "ru.nov.molcha.progressvisualizer",
+      "versionCode": 5,
       "adaptiveIcon": {
-        "backgroundColor": "#208AEF",
-        "foregroundImage": "./assets/images/android-icon-foreground.png"
+        "backgroundColor": "#0B0D12",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": true,
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.USE_BIOMETRIC",
-        "android.permission.USE_FINGERPRINT",
-        "android.permission.WRITE_EXTERNAL_STORAGE"
+        "android.permission.USE_BIOMETRIC"
+      ],
+      "blockedPermissions": [
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.USE_FINGERPRINT"
       ]
     },
     "web": {
@@ -36,9 +40,13 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#0B0D12",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200
+          "imageWidth": 160,
+          "dark": {
+            "backgroundColor": "#0B0D12",
+            "image": "./assets/images/splash-icon.png"
+          }
         }
       ],
       "expo-secure-store",
@@ -82,7 +90,7 @@
       "eas": {
         "projectId": "af2e8419-a900-4483-b5d3-1ab27d411f6b"
       },
-      "privacyPolicyUrl": "https://github.com/AleksMolch/progress-visualizer-app/blob/main/PRIVACY_POLICY.md"
+      "privacyPolicyUrl": "https://aleksmolch.github.io/progress-visualizer-app/privacy-policy.html"
     },
     "owner": "alomium"
   }
