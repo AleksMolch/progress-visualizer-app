@@ -15,6 +15,10 @@ import { Platform } from 'react-native';
 import { isAppLanguage } from '@/i18n/locale';
 import { type AppSettings } from '@/models/settings';
 import { mmkvStorage } from '@/storage/mmkv';
+import {
+  DEFAULT_COLOR_PALETTE_ID,
+  isColorPaletteId,
+} from '@/theme/color-palettes';
 import { getDefaultDesignThemeId, resolveDesignThemeId } from '@/theme/design-themes';
 
 // Значения настроек по умолчанию (до первого изменения пользователем).
@@ -22,6 +26,7 @@ import { getDefaultDesignThemeId, resolveDesignThemeId } from '@/theme/design-th
 // реальные defaults для новых установок определяются платформой в normalizeSettings.
 export const DEFAULT_SETTINGS: AppSettings = {
   designTheme: 'modern',
+  colorScheme: DEFAULT_COLOR_PALETTE_ID,
   themeMode: 'system',
   language: 'ru',
   hapticsEnabled: true,
@@ -57,6 +62,11 @@ export function normalizeSettings(raw: unknown, platform: string): AppSettings {
 
   // Оформление: мигрируем ИСХОДНОЕ значение, учитывая платформу (Android без simple).
   settings.designTheme = resolveDesignThemeId(partial.designTheme, platform) ?? getDefaultDesignThemeId(platform);
+
+  // Цветовая схема: неизвестное значение заменяется схемой по умолчанию.
+  settings.colorScheme = isColorPaletteId(partial.colorScheme)
+    ? partial.colorScheme
+    : DEFAULT_COLOR_PALETTE_ID;
 
   // Язык: явный валидный выбор важнее; иначе — русский (default).
   settings.language = isAppLanguage(partial.language) ? partial.language : 'ru';

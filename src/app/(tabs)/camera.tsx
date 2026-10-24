@@ -16,6 +16,7 @@
  * useProjectStore.saveCapturedPhoto, который сам работает со storage-слоем.
  */
 
+import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions, type CameraPictureOptions } from 'expo-camera';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -26,6 +27,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -452,6 +454,13 @@ function ProjectSelector({
   onSelect: (id: string) => void;
 }) {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const { colors } = useAppTheme();
+
+  // Длинные названия не должны «съедать» весь ряд: чип ограничен по ширине.
+  const chipMaxWidth = Math.min(220, Math.round(width * 0.55));
+  const showScrollHint = projects.length > 1;
+
   return (
     <View style={[styles.selector, { paddingTop: insets.top + spacing.sm }]}>
       <ScrollView
@@ -466,14 +475,33 @@ function ProjectSelector({
               onPress={() => onSelect(project.id)}
               accessibilityRole="button"
               accessibilityState={{ selected: isActive }}
-              style={[styles.chip, isActive && styles.chipActive]}>
-              <AppText variant="caption" color="primaryText" numberOfLines={1}>
+              accessibilityLabel={project.name}
+              style={[
+                styles.chip,
+                { maxWidth: chipMaxWidth },
+                isActive && { backgroundColor: colors.primary, borderColor: colors.primary },
+              ]}>
+              <AppText
+                variant="caption"
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={[styles.chipText, { color: isActive ? colors.primaryText : '#FFFFFF' }]}>
                 {project.name}
               </AppText>
             </Pressable>
           );
         })}
       </ScrollView>
+
+      {/* Подсказка горизонтального скролла: мягкое затемнение + шеврон. */}
+      {showScrollHint ? (
+        <View
+          pointerEvents="none"
+          style={[styles.scrollHint, { top: insets.top + spacing.sm }]}>
+          <View style={styles.scrollHintFade} />
+          <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.85)" />
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -501,6 +529,8 @@ const styles = StyleSheet.create({
   },
   selectorContent: {
     paddingHorizontal: spacing.md,
+    // Место под градиентную подсказку скролла справа.
+    paddingRight: 64,
     gap: spacing.sm,
   },
   chip: {
@@ -513,9 +543,34 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.12)',
   },
-  chipActive: {
-    backgroundColor: '#208AEF',
-    borderColor: '#208AEF',
+  chipText: {
+    flexShrink: 1,
+  },
+  scrollHint: {
+    position: 'absolute',
+    right: 0,
+    width: 56,
+    height: 40,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    paddingRight: spacing.xs,
+  },
+  scrollHintFade: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    experimental_backgroundImage: [
+      {
+        type: 'linear-gradient',
+        direction: 'to right',
+        colorStops: [
+          { color: 'rgba(0,0,0,0)', positions: ['0%'] },
+          { color: 'rgba(0,0,0,0.72)', positions: ['100%'] },
+        ],
+      },
+    ],
   },
   errorBadge: {
     position: 'absolute',

@@ -1,7 +1,7 @@
 # MAINTENANCE_AI — инструкция для ИИ поддержки и развития приложения
 
 > Этот файл предназначен для ИИ, который будет СОПРОВОЖДАТЬ и РАЗВИВАТЬ
-> ProgressPrivate после первичной разработки, включая возможную web-версию.
+> «Мой ФотоПрогресс» (My Photo Progress) после первичной разработки, включая возможную web-версию.
 >
 > Читать вместе с: CONSTITUTION.md, ARCHITECTURE.md, STACK_RESOLVED.md,
 > TESTING.md, DOCS_TESTS_WORKFLOW.md, CODE_STYLE_RU.md, DECISIONS.md.
@@ -114,8 +114,8 @@ Material и Gallery отдельными темами — пользовател
 приложение само выглядит нативно под платформу. Новое оформление:
 
 1. Добавить `DesignThemeId` в `src/models/settings.ts`.
-2. Добавить определение (label, description, `previewLight`/`previewDark`) в
-   `DESIGN_THEMES` и ветку в `resolveDesignTheme(id, scheme, platform)`
+2. Добавить определение в `DESIGN_THEMES` и ветку в
+   `resolveDesignTheme(id, scheme, platform, colorScheme)`
    (`src/theme/design-themes.ts`).
 3. Включить его в `getPlatformThemeIds()`. Если нужен платформенный дефолт —
    поправить `getDefaultDesignThemeId()` и `migrateDesignThemeId()` (если нужна
@@ -130,6 +130,22 @@ Material и Gallery отдельными темами — пользовател
 - Не делать темы paywall'ом.
 - **Не ломать platform defaults и миграцию**: iOS/Android → `modern`, web → `simple`;
   явный пользовательский выбор всегда важнее дефолта.
+
+### Цветовые схемы (акцентные палитры)
+
+- Три схемы: `graphite` / `emerald` / `coral` (`ColorPaletteId` в
+  `src/models/settings.ts`), палитры — `src/theme/color-palettes.ts`.
+- Схема ортогональна `designTheme` (материалы/радиусы) и `themeMode`
+  (system/light/dark): `resolveDesignTheme(..., colorScheme)` применяет цвета ко
+  всем оформлениям; neumorphism-тени берутся из `getNeumorphismPaletteTokens`.
+- Default — `graphite`; `normalizeSettings` заменяет неизвестное значение на него,
+  валидный выбор сохраняет. Не добавляй схему только в одну тему/платформу.
+- Все light-primary должны быть тёмными (AA и как фон с белым текстом, и как
+  текст на светлом фоне); dark-primary — светлыми с тёмным `primaryText`.
+  `danger` не должен сливаться с primary.
+- В UI не хардкодь `#208AEF` или другие акценты — только `useAppTheme().colors`.
+  Новую схему добавляй в `COLOR_PALETTES`, `COLOR_PALETTE_IDS`, NEU_TOKENS и
+  i18n-ключи; обнови тест `color-palettes.test.ts`.
 
 ### Жесты камеры, compare и нижнее меню
 

@@ -23,9 +23,21 @@ export type AppLanguage = 'ru' | 'en' | 'zh-Hans' | 'kk' | 'es';
  */
 export type DesignThemeId = 'modern' | 'simple' | 'neumorphism';
 
+/**
+ * Стабильные идентификаторы цветовой схемы (акцентной палитры).
+ *
+ * Схемы ортогональны оформлению и светлой/тёмной теме:
+ * - `graphite` — графит и тёплый золотой акцент (T-Bank/Yandex Go);
+ * - `emerald` — глубокий зелёный и спокойные поверхности (Sber);
+ * - `coral` — тёплый коралловый акцент (Alfa/Monzo).
+ */
+export type ColorPaletteId = 'graphite' | 'emerald' | 'coral';
+
 export interface AppSettings {
   /** Визуальное оформление (тема дизайна). */
   designTheme: DesignThemeId;
+  /** Цветовая схема (акцентная палитра). */
+  colorScheme: ColorPaletteId;
   /** Режим темы: системная / светлая / тёмная. */
   themeMode: ThemeMode;
   /** Язык интерфейса. */

@@ -23,6 +23,7 @@ import { AppScreen } from '@/components/ui/app-screen';
 import { AppText } from '@/components/ui/app-text';
 import { AdPlaceholder } from '@/features/ads/components/ad-placeholder';
 import { AppearanceSettingsCard } from '@/features/settings/components/appearance-settings-card';
+import { ColorSchemeSettingsCard } from '@/features/settings/components/color-scheme-settings-card';
 import { LanguageSwitcher } from '@/features/settings/components/language-switcher';
 import { ReminderSettingsCard } from '@/features/settings/components/reminder-settings-card';
 import { MainTabSwipeGesture } from '@/features/navigation/components/main-tab-swipe-gesture';
@@ -106,6 +107,8 @@ export default function SettingsScreen() {
         </AppCard>
 
         <AppearanceSettingsCard />
+
+        <ColorSchemeSettingsCard />
 
         <AppCard style={styles.card}>
           <View style={styles.row}>

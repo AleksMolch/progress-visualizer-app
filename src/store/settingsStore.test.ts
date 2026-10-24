@@ -62,6 +62,14 @@ describe('settingsStore', () => {
     expect(DEFAULT_SETTINGS.hapticsEnabled).toBe(true);
   });
 
+  it('цветовая схема по умолчанию — графит; переключается и сохраняется', () => {
+    expect(DEFAULT_SETTINGS.colorScheme).toBe('graphite');
+
+    useSettingsStore.getState().updateSettings({ colorScheme: 'emerald' });
+
+    expect(useSettingsStore.getState().settings.colorScheme).toBe('emerald');
+  });
+
   it('онбординг по умолчанию не пройден и завершается обновлением', () => {
     expect(DEFAULT_SETTINGS.hasCompletedOnboarding).toBe(false);
 
@@ -129,6 +137,12 @@ describe('normalizeSettings (platform default + миграция)', () => {
 
   it('iOS: simple сохраняется (доступен)', () => {
     expect(normalizeSettings({ designTheme: 'simple' }, 'ios').designTheme).toBe('simple');
+  });
+
+  it('цветовая схема: неизвестное значение → графит, валидное сохраняется', () => {
+    expect(normalizeSettings({}, 'ios').colorScheme).toBe('graphite');
+    expect(normalizeSettings({ colorScheme: 'future' }, 'ios').colorScheme).toBe('graphite');
+    expect(normalizeSettings({ colorScheme: 'coral' }, 'ios').colorScheme).toBe('coral');
   });
 
   it('онбординг: старые записи без поля → false, пройденный сохраняется', () => {

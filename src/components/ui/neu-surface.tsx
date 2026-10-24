@@ -45,7 +45,7 @@ export function NeuSurface({
 
   // Неоморфные токены с нейтральным fallback, если тема не neumorphism.
   const shadowLight = neu?.shadowLight ?? '#FFFFFF';
-  const shadowDark = neu?.shadowDark ?? '#B7C4DD';
+  const shadowDark = neu?.shadowDark ?? '#D3CCBC';
   const surface = colors.surface;
   const surfacePressed = neu?.surfacePressed ?? colors.surface;
 

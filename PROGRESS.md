@@ -7,12 +7,12 @@
 
 ## ⚠️ ВАЖНО ДЛЯ СЛЕДУЮЩЕЙ СЕССИИ (читай первым)
 
-- **Где мы сейчас**: выполнены `AI_CODER_ANIMATED_SPLASH_FOCUS_PULL.md` и
-  `AI_CODER_PREPRODUCTION_READINESS.md` (см. записи 2026-10-20 ниже). Секторная/
-  кометная анимация splash отклонена владельцем и заменена мягкой заставкой по
-  `AI_CODER_SOFT_ANIMATED_SPLASH` (дыхание + fade, один цельный PNG). Проверки:
-  typecheck/lint чисто, тесты 198/198; Android-manifest проверен.
-  Выполнена native-пересборка iOS (новый bundle ID).
+- **Где мы сейчас**: выполнены `AI_CODER_SOFT_ANIMATED_SPLASH` (мягкая заставка),
+  preproduction-подготовка и итерация улучшений от 2026-10-24: название
+  «Мой ФотоПрогресс», адаптивные фиксы (сравнение/камера) и три цветовые схемы
+  (Графит/Изумруд/Коралл) с переключением в настройках. Проверки: typecheck/lint
+  чисто, тесты **206/206**; iOS-симулятор без ошибок, Android-manifest проверен.
+- **Native-пересборка выполнена**: `CFBundleDisplayName` = «Мой ФотоПрогресс», приложение запущено на симуляторе без ошибок.
 - **Следующая задача**: native/EAS-сборка `preview` и проверка на физическом
   Android (splash без вспышки, иконки, разрешения, камера, онбординг); проверить
   публикацию обновлённой политики после пуша; затем задача 2 из
@@ -41,6 +41,57 @@
 - Результат проверок:
 - Известные проблемы:
 - Следующий шаг:
+
+---
+
+### 2026-10-24 — Название, адаптивные фиксы и три цветовые схемы
+
+- Что сделано:
+  - (1) **Название**: `app.json expo.name = «Мой ФотоПрогресс»`; «My Photo
+    Progress» — в README/privacy/store-метаданных; UI-текст «О приложении»
+    обновлён во всех 5 локалях. Технические slug/package/bundle не менялись.
+  - (2) **Экран сравнения**: подписи режимов всегда в одну строку —
+    `numberOfLines={1}`, `maxFontSizeMultiplier=1.25`, `minWidth:0`,
+    `minHeight:44`, меньшие отступы; EN/ES подписи сокращены (`Side`, `Lado`,
+    `Capa`, `Slider`), чтобы не было переносов/обрезки на узких окнах.
+  - (3) **Камера**: чип проекта ограничен `min(220, 55% ширины)` + ellipsis;
+    активный чип использует `colors.primary`/`primaryText` (без хардкода
+    синего); при >1 проекте справа добавлена градиентная подсказка скролла
+    (`experimental_backgroundImage`) с шевроном и правым padding контента.
+  - (4) **Анализ банковских интерфейсов** — `docs/color-schemes-research.md`
+    (≈16 приложений, выводы, доступность).
+  - (5) **Три цветовые схемы**: `graphite` (Графит), `emerald` (Изумруд),
+    `coral` (Коралл) — светлые и тёмные палитры + neumorphism-токены
+    (`src/theme/color-palettes.ts`). Схема ортогональна designTheme и themeMode;
+    `resolveDesignTheme(..., colorScheme)`; default — graphite.
+    Переключатель — `ColorSchemeSettingsCard` в Настройках, persist в MMKV.
+    Light-primary тёмные (AA и как текст, и как фон с белым текстом),
+    dark-primary светлые с тёмным `primaryText`.
+- Какие файлы созданы или изменены:
+  - созданы: `src/theme/color-palettes.ts`, `src/theme/color-palettes.test.ts`,
+    `src/features/settings/components/color-scheme-settings-card.tsx`,
+    `docs/color-schemes-research.md`
+  - изменены: `app.json`, `src/models/settings.ts`, `src/theme/index.ts`,
+    `src/theme/design-themes.ts`, `src/theme/ThemeProvider.tsx`,
+    `src/store/settingsStore.ts`, `src/theme/design-themes.test.ts`,
+    `src/store/settingsStore.test.ts`,
+    `src/features/settings/components/appearance-settings-card.tsx`,
+    `src/app/(tabs)/settings.tsx`, `src/app/(tabs)/camera.tsx`,
+    `src/app/project/[id]/compare.tsx`, `src/i18n/locales/*.ts`,
+    `README.md`, `README_staff.md`, `MAINTENANCE_AI.md`, `DECISIONS.md`,
+    `PROGRESS.md`, `TESTING.md`
+- Какие команды запускались:
+  - `npm run typecheck`, `npm run lint`, `npm test` (206/206)
+- Результат проверок:
+  - typecheck/lint: чисто; тесты: 206/206 (+ palette/settings/design tests)
+  - i18n-полнота: все 5 локалей содержат новые ключи
+- Известные проблемы:
+  - Native-пересборка имени выполнена; ручная визуальная приёмка схем/адаптива — за владельцем.
+  - Визуальный контраст палитр, узкие окна/split-screen и large font — ручная
+    приёмка на устройствах.
+  - Цвета можно подкрутить без изменения архитектуры.
+- Следующий шаг: native-пересборка (имя/иконки), ручная приёмка схем и
+  адаптивных экранов; затем EAS `preview` и Android-проверка.
 
 ---
 

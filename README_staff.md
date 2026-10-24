@@ -1,4 +1,4 @@
-# README_staff — техническая документация ProgressPrivate
+# README_staff — техническая документация «Мой ФотоПрогресс»
 
 > Внутренний документ для команды поддержки и разработки.
 > Обновляется при каждом значимом изменении архитектуры или функций.
@@ -7,7 +7,7 @@
 
 ## 1. Назначение приложения
 
-ProgressPrivate — privacy-first мобильное приложение для прогресс-фотографий.
+«Мой ФотоПрогресс» (My Photo Progress) — privacy-first мобильное приложение для прогресс-фотографий.
 Все данные хранятся локально. Нет сети для пользовательского контента,
 нет рекламы, нет аналитики, нет облачного ML.
 
@@ -191,21 +191,23 @@ npx eas-cli build --profile production-apk --platform android # APK для RuSto
 
 ## 10. Оформления, ghost reference, экран проекта и compare
 
-### 10.1. Три оформления
+### 10.1. Оформления и цветовые схемы
 
-- `designTheme`: `modern` | `simple` | `neumorphism` (контракт в `src/models/settings.ts`).
-- `themeMode`: `system` | `light` | `dark` — независимый цветовой режим.
+- `designTheme`: `modern` | `simple` | `neumorphism` — материалы и радиусы.
+- `colorScheme`: `graphite` | `emerald` | `coral` — акцентная палитра
+  (Графит / Изумруд / Коралл), независима от оформления.
+- `themeMode`: `system` | `light` | `dark` — цветовой режим.
 
-Определения тем, палитры, радиусы и материалы — в `src/theme/design-themes.ts`.
-`resolveDesignTheme(id, scheme, platform)` резолвит пару «оформление + схема +
-платформа». Для `modern` рендерер зависит от платформы:
+Определения — `src/theme/design-themes.ts` (оформления) и
+`src/theme/color-palettes.ts` (палитры). `resolveDesignTheme(id, scheme, platform,
+colorScheme)` резолвит цвета и токены. Для `modern` рендерер зависит от платформы:
 
 - iOS → native-glass таббар + frosted-карточки (Liquid Glass);
 - Android → elevated-карточки + solid-таббар (Material 3);
 - web/прочее → solid fallback.
 
-Акцентная палитра общая (#208AEF) на всех платформах — различаются только
-поверхности и радиусы.
+Все light-primary подобраны тёмными (работают и как фон кнопки с белым текстом,
+и как цвет ссылок); dark-primary светлые с тёмным `primaryText`. Default — `graphite`.
 
 Провайдер (`src/theme/ThemeProvider.tsx`) отдаёт через `useAppTheme()`:
 `colors`, `scheme`, `designTheme`, `metrics`, `material`, `neu`.
@@ -217,6 +219,8 @@ npx eas-cli build --profile production-apk --platform android # APK для RuSto
   `liquid-glass|material|gallery → modern`, `neumorphism → neumorphism`.
 - `normalizeSettings(raw, platform)` в `src/store/settingsStore.ts`: мигрирует или
   подставляет platform default; явный валидный выбор пользователя не перезаписывается.
+- `colorScheme` нормализуется отдельно: неизвестное значение → `graphite`,
+  валидный выбор сохраняется.
 - persist использует кастомный `merge` (передаёт `Platform.OS`); `skipHydration: true`.
 
 ### 10.3. Материал поверхностей

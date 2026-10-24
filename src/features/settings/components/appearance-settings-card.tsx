@@ -7,8 +7,8 @@
  * - выбор цветового режима: системный / светлый / тёмный;
  * - выбор применяется сразу через settingsStore и персистится.
  *
- * Слой: UI (/src/features/settings/components). Палитру оформлений берёт из
- * DESIGN_THEMES; список платформы — getPlatformThemeIds; тексты — через useI18n.
+ * Слой: UI (/src/features/settings/components). Превью использует текущую
+ * палитру; список оформлений платформы — getPlatformThemeIds; тексты — useI18n.
  */
 
 import { Ionicons } from '@expo/vector-icons';
@@ -19,12 +19,8 @@ import { type MessageKey } from '@/i18n';
 import { useI18n } from '@/i18n';
 import { type DesignThemeId, type ThemeMode } from '@/models/settings';
 import { useSettingsStore } from '@/store/settingsStore';
-import { radii, spacing } from '@/theme';
-import {
-  DESIGN_THEMES,
-  getPlatformThemeIds,
-  type DesignThemeDefinition,
-} from '@/theme/design-themes';
+import { radii, spacing, type ThemeColors } from '@/theme';
+import { getPlatformThemeIds } from '@/theme/design-themes';
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { triggerHaptic } from '@/utils/haptics';
 
@@ -64,7 +60,6 @@ export function AppearanceSettingsCard() {
 
       <View style={styles.themeList}>
         {platformThemeIds.map((id) => {
-          const def = DESIGN_THEMES[id];
           const selected = designTheme === id;
           const label = t(THEME_LABEL_KEYS[id]);
           return (
@@ -86,7 +81,7 @@ export function AppearanceSettingsCard() {
                   borderColor: selected ? colors.primary : colors.border,
                 },
               ]}>
-              <ThemePreview def={def} />
+              <ThemePreview palette={colors} />
               <View style={styles.themeText}>
                 <AppText variant="subtitle">{label}</AppText>
                 <AppText color="textSecondary" variant="caption">
@@ -145,9 +140,7 @@ export function AppearanceSettingsCard() {
  * Искусственное превью оформления: цветная мини-карточка и мини-таббар.
  * Строится на палитре темы, без пользовательских фото и реального навигатора.
  */
-function ThemePreview({ def }: { def: DesignThemeDefinition }) {
-  const palette = def.previewLight;
-
+function ThemePreview({ palette }: { palette: ThemeColors }) {
   return (
     <View style={styles.preview}>
       <View

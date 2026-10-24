@@ -191,7 +191,12 @@ export default function CompareScreen() {
                   styles.modeChip,
                   { backgroundColor: selected ? colors.primary : 'transparent' },
                 ]}>
-                <AppText variant="caption" color={selected ? 'primaryText' : 'text'}>
+                <AppText
+                  variant="caption"
+                  color={selected ? 'primaryText' : 'text'}
+                  numberOfLines={1}
+                  maxFontSizeMultiplier={1.25}
+                  style={styles.modeLabel}>
                   {t(m.key)}
                 </AppText>
               </Pressable>
@@ -263,10 +268,17 @@ const styles = StyleSheet.create({
   },
   modeChip: {
     flex: 1,
+    minWidth: 0,
+    minHeight: 44,
     alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.sm,
     borderRadius: radii.full,
+  },
+  modeLabel: {
+    flexShrink: 1,
+    textAlign: 'center',
   },
   empty: {
     flex: 1,

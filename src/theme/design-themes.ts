@@ -16,9 +16,15 @@
  * (iOS — Liquid Glass, Android — Material 3), без отдельного выбора пользователем.
  */
 
-import { type DesignThemeId } from '@/models/settings';
+import { type ColorPaletteId, type DesignThemeId } from '@/models/settings';
 
-import { darkColors, lightColors, type ColorScheme, type ThemeColors } from './index';
+import {
+  COLOR_PALETTES,
+  DEFAULT_COLOR_PALETTE_ID,
+  getColorPalette,
+  getNeumorphismPaletteTokens,
+} from './color-palettes';
+import { type ColorScheme, type ThemeColors } from './index';
 import { type SurfaceKind } from './material';
 
 /** Радиусы скругления, различающиеся между оформлениями. */
@@ -56,45 +62,22 @@ export interface DesignThemeDefinition {
   previewDark: ThemeColors;
 }
 
-// Палитра «Неоморфизм» (светлая/тёмная) и её теневые токены.
-const neuLight: ThemeColors = {
-  background: '#EAF0FA',
-  surface: '#E6EEF9',
-  text: '#2E3440',
-  textSecondary: '#6C7A93',
-  primary: '#7B9BFF',
-  primaryText: '#FFFFFF',
-  border: '#C6D0E4',
-  danger: '#D64545',
-};
-
-const neuDark: ThemeColors = {
-  background: '#18191D',
-  surface: '#1E1F24',
-  text: '#E1E4EB',
-  textSecondary: '#8B93A6',
-  primary: '#7B9BFF',
-  primaryText: '#0F1117',
-  border: '#2E3138',
-  danger: '#FF6B6B',
-};
-
 /** Все доступные оформления (порядок — канонический, не UI-порядок). */
 export const DESIGN_THEMES: Record<DesignThemeId, DesignThemeDefinition> = {
   modern: {
     id: 'modern',
-    previewLight: lightColors,
-    previewDark: darkColors,
+    previewLight: COLOR_PALETTES[DEFAULT_COLOR_PALETTE_ID].light,
+    previewDark: COLOR_PALETTES[DEFAULT_COLOR_PALETTE_ID].dark,
   },
   simple: {
     id: 'simple',
-    previewLight: lightColors,
-    previewDark: darkColors,
+    previewLight: COLOR_PALETTES[DEFAULT_COLOR_PALETTE_ID].light,
+    previewDark: COLOR_PALETTES[DEFAULT_COLOR_PALETTE_ID].dark,
   },
   neumorphism: {
     id: 'neumorphism',
-    previewLight: neuLight,
-    previewDark: neuDark,
+    previewLight: COLOR_PALETTES[DEFAULT_COLOR_PALETTE_ID].light,
+    previewDark: COLOR_PALETTES[DEFAULT_COLOR_PALETTE_ID].dark,
   },
 };
 
@@ -184,12 +167,6 @@ export interface ResolvedDesignTheme {
   neu?: NeumorphismTokens;
 }
 
-// Неоморфные токены по схемам (для оформления neumorphism).
-const NEU_TOKENS: Record<ColorScheme, NeumorphismTokens> = {
-  light: { shadowLight: '#FFFFFF', shadowDark: '#B7C4DD', surfacePressed: '#DCE6F5' },
-  dark: { shadowLight: '#2A2C34', shadowDark: '#0D0E11', surfacePressed: '#17181C' },
-};
-
 // Токены оформления «Простой» (solid-поверхности, минимальные эффекты).
 const SIMPLE_METRICS: ThemeMetrics = { cardRadius: 14, buttonRadius: 10, tabBarRadius: 0 };
 const SIMPLE_MATERIAL: ThemeMaterial = { card: 'solid', tabBar: 'solid' };
@@ -207,11 +184,15 @@ export function resolveDesignTheme(
   id: DesignThemeId,
   scheme: ColorScheme,
   platform: string,
+  paletteId: ColorPaletteId = DEFAULT_COLOR_PALETTE_ID,
 ): ResolvedDesignTheme {
+  // Палитра едина для всех оформлений; оформление задаёт материалы и радиусы.
+  const colors = getColorPalette(paletteId, scheme);
+
   if (id === 'simple') {
     return {
       id,
-      colors: scheme === 'dark' ? darkColors : lightColors,
+      colors,
       metrics: SIMPLE_METRICS,
       material: SIMPLE_MATERIAL,
     };
@@ -220,16 +201,15 @@ export function resolveDesignTheme(
   if (id === 'neumorphism') {
     return {
       id,
-      colors: scheme === 'dark' ? neuDark : neuLight,
+      colors,
       metrics: { cardRadius: 20, buttonRadius: 20, tabBarRadius: 24 },
       material: { card: 'neumorphic', tabBar: 'neumorphic' },
-      neu: NEU_TOKENS[scheme],
+      neu: getNeumorphismPaletteTokens(paletteId, scheme),
     };
   }
 
-  // modern: акцент и базовая палитра одинаковы на всех платформах, различаются
-  // только поверхности (стекло / material / solid) и радиусы.
-  const colors = scheme === 'dark' ? darkColors : lightColors;
+  // modern: одна палитра на всех платформах, различаются только поверхности
+  // (стекло / material / solid) и радиусы.
 
   if (platform === 'ios') {
     return {

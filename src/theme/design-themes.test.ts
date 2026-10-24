@@ -33,9 +33,19 @@ describe('design-themes', () => {
   it('simple использует фирменную палитру и solid-поверхности', () => {
     const r = resolveDesignTheme('simple', 'light', 'ios');
     expect(r.id).toBe('simple');
-    expect(r.colors.primary).toBe('#208AEF');
+    expect(r.colors.primary).toBe('#8A6A00');
     expect(r.material.card).toBe('solid');
     expect(r.material.tabBar).toBe('solid');
+  });
+
+  it('цветовая схема меняет палитру, не меняя материалы оформления', () => {
+    const emerald = resolveDesignTheme('modern', 'light', 'ios', 'emerald');
+    expect(emerald.colors.primary).toBe('#0F7B45');
+    expect(emerald.material.card).toBe('frosted');
+
+    const coral = resolveDesignTheme('neumorphism', 'dark', 'android', 'coral');
+    expect(coral.colors.primary).toBe('#FF6B57');
+    expect(coral.neu?.surfacePressed).toBe('#17100D');
   });
 
   it('neumorphism имеет neu-токены и neumorphic поверхности', () => {

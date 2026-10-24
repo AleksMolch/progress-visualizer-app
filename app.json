@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "progress-visualizer-app",
+    "name": "Мой ФотоПрогресс",
     "slug": "progress-visualizer-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -15,7 +15,7 @@
     },
     "android": {
       "package": "ru.nov.molcha.progressvisualizer",
-      "versionCode": 5,
+      "versionCode": 6,
       "adaptiveIcon": {
         "backgroundColor": "#0B0D12",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

@@ -29,28 +29,28 @@ export interface ThemeColors {
   danger: string;
 }
 
-/** Светлая палитра. */
+/** Светлая палитра по умолчанию — «Графит» (тёплый нейтральный + золотой акцент). */
 export const lightColors: ThemeColors = {
-  background: '#FFFFFF',
-  surface: '#F2F2F7',
-  text: '#000000',
-  textSecondary: '#6B6B70',
-  primary: '#208AEF',
+  background: '#F6F4EE',
+  surface: '#FFFFFF',
+  text: '#171614',
+  textSecondary: '#6F6A60',
+  primary: '#8A6A00',
   primaryText: '#FFFFFF',
-  border: '#E5E5EA',
-  danger: '#FF3B30',
+  border: '#E5E0D4',
+  danger: '#B3261E',
 };
 
-/** Тёмная палитра. */
+/** Тёмная палитра по умолчанию — «Графит». */
 export const darkColors: ThemeColors = {
-  background: '#000000',
-  surface: '#1C1C1E',
-  text: '#FFFFFF',
-  textSecondary: '#AEAEB2',
-  primary: '#208AEF',
-  primaryText: '#FFFFFF',
-  border: '#2C2C2E',
-  danger: '#FF453A',
+  background: '#0E0E0C',
+  surface: '#1B1A17',
+  text: '#F7F3E8',
+  textSecondary: '#ABA395',
+  primary: '#FFD60A',
+  primaryText: '#171614',
+  border: '#2C2A24',
+  danger: '#FF6B6B',
 };
 
 /** Шкала отступов. */

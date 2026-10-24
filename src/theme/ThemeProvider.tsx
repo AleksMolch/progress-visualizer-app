@@ -2,8 +2,8 @@
  * Назначение: провайдер темы и хук доступа к текущему оформлению.
  *
  * Функции:
- * - определяет итоговую цветовую схему из themeMode (system/light/dark) и системной схемы;
- * - резолвит палитру и визуальные токены выбранного designTheme;
+ * - определяет итоговый светлый/тёмный режим из themeMode (system/light/dark);
+ * - резолвит акцентную палитру (colorScheme) и токены выбранного designTheme;
  * - хук useAppTheme возвращает цвета, схему, оформление, метрики и материалы.
  *
  * Слой: theme (/src/theme). Читает выбор оформления и режима из settingsStore.
@@ -44,6 +44,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   // Выбор пользователя читается из store — смена темы применяется сразу.
   const themeMode = useSettingsStore((s) => s.settings.themeMode);
   const designTheme = useSettingsStore((s) => s.settings.designTheme);
+  const colorScheme = useSettingsStore((s) => s.settings.colorScheme);
 
   // Разрешение схемы: system → системная (null → light), иначе явный light/dark.
   const scheme: ColorScheme =
@@ -55,7 +56,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
           ? 'dark'
           : 'light';
 
-  const resolved = resolveDesignTheme(designTheme, scheme, Platform.OS);
+  const resolved = resolveDesignTheme(designTheme, scheme, Platform.OS, colorScheme);
 
   // Кэшируем значение, чтобы не пересоздавать контекст на каждый рендер.
   const value = useMemo(
